@@ -1,0 +1,389 @@
+{
+  "@@locale": "ar",
+  "appName": "بن مهدية",
+  "appTagline": "مرافقة التعافي",
+  "welcomeTitle": "كل يوم جديد خطوة نحو التعافي",
+  "welcomeBody": "رفيقك بين الجلسات: تابع تقدّمك ومواعيدك وأدويتك، واستعد جودة حياتك بمرافقة طبيبك.",
+  "createAccount": "إنشاء حساب",
+  "haveAccount": "لدي حساب — تسجيل الدخول",
+  "secureFooter": "بياناتك مشفّرة ومستضافة في الجزائر",
+  "langArabic": "العربية",
+  "langFrench": "Français",
+  "splashLine1": "خطوة بخطوة نحو التعافي",
+  "splashLine2": "من أجل جودة الحياة",
+  "introSkip": "تخطي",
+  "introNext": "التالي",
+  "introStart": "ابدأ الآن",
+  "introPageOf": "الصفحة {page} من {count}",
+  "@introPageOf": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "intro1Title": "كل يوم يُحسب",
+  "intro1Body": "تابع أيامك دون تعاطٍ، سجّل حالتك كل يوم في دقيقة، واحتفل بكل خطوة تقطعها.",
+  "intro2Title": "لست وحدك، في أي ساعة",
+  "intro2Body": "مرافق رقمي يردّ عليك ليلاً ونهاراً عند الرغبة أو القلق، وينبّه طبيبك إذا احتجت مساعدة عاجلة.",
+  "intro3Title": "طبيبك معك بين المواعيد",
+  "intro3Body": "احجز موعدك بسهولة، تلقَّ تذكير أدويتك في وقتها، وشارك تقدّمك مع طبيبك.",
+  "ringDaysLabel": "{count, plural, =0{يوم دون تعاطٍ} =1{يوم دون تعاطٍ} =2{يومان دون تعاطٍ} few{أيام دون تعاطٍ} many{يوماً دون تعاطٍ} other{يوم دون تعاطٍ}}",
+  "@ringDaysLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ringOfGoal": "{days} من أصل {goal} يوماً",
+  "@ringOfGoal": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "goal": {
+        "type": "int"
+      }
+    }
+  },
+  "ringNextGoal": "الهدف التالي: {goal} يوماً",
+  "@ringNextGoal": {
+    "placeholders": {
+      "goal": {
+        "type": "int"
+      }
+    }
+  },
+  "introWeek": "هذا الأسبوع: {done} أيام من {total}",
+  "@introWeek": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "companionName": "المرافق",
+  "companionOnline": "متاح الآن · 24/24",
+  "chatSample": "الرغبة قوية بزاف الليلة، ما قدرتش نرقد…",
+  "chatReplySample": "أنا هنا معك. خذ نفساً عميقاً لأربع ثوانٍ، ثم أخرجه ببطء. ماذا حدث اليوم قبل أن تبدأ الرغبة؟",
+  "chipBreathing": "تمرين تنفّس",
+  "chipEmergency": "أرقام الطوارئ",
+  "apptNext": "موعدك القادم",
+  "apptDoctorSample": "د. بن مهدية حسين",
+  "apptWhenSample": "الاثنين 19 أكتوبر · 10:30",
+  "apptConfirmed": "مؤكّد",
+  "medMorning": "دواء الصباح",
+  "medEvening": "دواء المساء",
+  "medTaken": "تم",
+  "medLater": "لاحقاً",
+  "doctorWeeklySummary": "يصل طبيبك ملخّص أسبوعي عن تقدّمك",
+  "verifyTitle": "التحقق من الهوية",
+  "verifyStep": "{step} / {total}",
+  "@verifyStep": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "verifyStepSemantics": "الخطوة {step} من {total}",
+  "@verifyStepSemantics": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "verifyContinue": "متابعة",
+  "selfieTitle": "ضع وجهك داخل الإطار",
+  "selfieHint": "إضاءة جيدة، بدون نظارات شمسية أو قبعة",
+  "livenessLook": "انظر إلى الكاميرا",
+  "livenessTurn": "أدر رأسك ببطء",
+  "livenessBlink": "ارمش مرتين",
+  "selfieCaptured": "تم التقاط الصورة",
+  "selfieAuto": "تُلتقط الصورة تلقائياً عند اكتمال الخطوات",
+  "selfiePrivacy": "تُقارن صورتك بصورة البطاقة فقط، ولا تُنشر",
+  "idTitle": "بطاقة التعريف الوطنية",
+  "idFront": "الوجه الأمامي",
+  "idBack": "الوجه الخلفي",
+  "idPlaceFront": "ضع الوجه الأمامي داخل الإطار",
+  "idPlaceBack": "اقلب البطاقة وضع الوجه الخلفي داخل الإطار",
+  "idSearching": "نبحث عن البطاقة…",
+  "idDetected": "تم رصد البطاقة، ثبّت الهاتف",
+  "idTipSurface": "ضع البطاقة على سطح داكن ومستوٍ",
+  "idTipGlare": "تجنّب الانعكاس والضوء المباشر",
+  "idTipCorners": "يجب أن تظهر الزوايا الأربع داخل الإطار",
+  "idCaptureFront": "التقاط الوجه الأمامي",
+  "idCaptureBack": "التقاط الوجه الخلفي",
+  "idPrivacy": "تُستخدم صورة البطاقة للتحقق فقط",
+  "reviewTitle": "راجع وأرسل",
+  "reviewBody": "تأكّد أن كل شيء جاهز قبل إرسال ملفك إلى العيادة.",
+  "reviewSelfie": "صورة شخصية حيّة",
+  "reviewIdSides": "الوجهان الأمامي والخلفي للبطاقة",
+  "reviewSharp": "صورة البطاقة واضحة",
+  "reviewNoGlare": "دون انعكاس للضوء",
+  "reviewCorners": "الزوايا الأربع ظاهرة",
+  "reviewPrivacy": "لا يرى صورك إلا فريق المراجعة في العيادة وطبيبك.",
+  "reviewSubmit": "إرسال الملف",
+  "reviewRetake": "إعادة تصوير البطاقة",
+  "pendingTitle": "تم إرسال ملفك",
+  "pendingBody": "ستراجع العيادة ملفك، وسنُعلمك فور الموافقة لتحجز موعدك الأول.",
+  "pendingStatus": "قيد المراجعة",
+  "bookTitle": "حجز موعد",
+  "bookDoctorTitle": "اختر طبيبك",
+  "bookDoctorBody": "أول طبيب تحجز معه يصبح طبيبك المتابع في العيادة.",
+  "bookClinic": "عيادة بن مهدية",
+  "bookMinutes": "{minutes} دقيقة",
+  "@bookMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "bookPrice": "{amount} دج",
+  "@bookPrice": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "bookNextFree": "أقرب موعد: {when}",
+  "@bookNextFree": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "bookNoFree": "لا مواعيد متاحة خلال الشهرين القادمين",
+  "bookNotice": "الحجز قبل 24 ساعة على الأقل من الموعد",
+  "bookChooseTime": "اختيار اليوم والوقت",
+  "bookSlotTitle": "اليوم والوقت",
+  "bookChange": "تغيير",
+  "bookMorning": "صباحاً",
+  "bookAfternoon": "مساءً",
+  "bookLegendFree": "متاح",
+  "bookLegendTaken": "غير متاح",
+  "bookLegendYours": "اختيارك",
+  "bookNoSlots": "لا مواعيد في هذا اليوم",
+  "bookTooSoon": "يكون الحجز قبل 24 ساعة على الأقل من الموعد.",
+  "bookClosed": "لا يستقبل الطبيب المرضى في هذا اليوم.",
+  "bookPickTime": "اختر وقتاً للمتابعة",
+  "bookContinue": "متابعة",
+  "bookSlotGone": "حجز شخص آخر هذا الوقت للتو. اختر وقتاً آخر.",
+  "bookConfirmTitle": "التأكيد والدفع",
+  "bookHeldFor": "محجوز لك لمدة {time}",
+  "@bookHeldFor": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "bookHeldBody": "إذا لم يكتمل الدفع، يُتاح الموعد لغيرك.",
+  "bookDate": "التاريخ",
+  "bookTime": "الوقت",
+  "bookAmount": "المبلغ",
+  "bookPayMethod": "طريقة الدفع",
+  "bookEdahabia": "البطاقة الذهبية",
+  "bookCib": "بطاقة CIB",
+  "bookViaChargily": "عبر Chargily Pay",
+  "bookClinicPay": "الدفع في العيادة",
+  "bookClinicPaySub": "خلال فترة التجربة، يؤكّده الطبيب",
+  "bookCancelRule": "الإلغاء ممكن حتى 24 ساعة قبل الموعد.",
+  "bookPay": "ادفع {amount} دج",
+  "@bookPay": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "bookPayNote": "دفع آمن عبر Chargily Pay. لا نحتفظ ببيانات بطاقتك.",
+  "bookConfirmClinic": "تأكيد الحجز",
+  "bookClinicNote": "تدفع في العيادة يوم الموعد.",
+  "bookExpiredTitle": "انتهت مدة الحجز",
+  "bookExpiredBody": "أُتيح هذا الموعد لغيرك. يمكنك اختيار وقت آخر.",
+  "bookPickAnother": "اختر وقتاً آخر",
+  "bookDoneTitle": "تم تأكيد موعدك",
+  "bookDoneBodyPaid": "وصلنا دفعك. سنذكّرك قبل الموعد.",
+  "bookDoneTitleClinic": "تم حجز موعدك",
+  "bookDoneBodyClinic": "ادفع في العيادة يوم الموعد. سنذكّرك قبله.",
+  "bookPaid": "المبلغ المدفوع: {amount} دج",
+  "@bookPaid": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "bookToPay": "يُدفع في العيادة: {amount} دج",
+  "@bookToPay": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "bookRemind": "سنذكّرك بإشعار",
+  "bookRemind24": "قبل 24 ساعة",
+  "bookRemind1": "قبل ساعة",
+  "bookChangeHint": "يمكنك إلغاء الموعد من «مواعيدي» حتى 24 ساعة قبله.",
+  "bookMyAppointments": "مواعيدي",
+  "bookHome": "العودة إلى الرئيسية",
+  "bookLoadError": "تعذّر التحميل. تحقّق من الاتصال وحاول مجدداً.",
+  "bookRetry": "إعادة المحاولة",
+  "bookWeekday": "{day, select, mon{الاثنين} tue{الثلاثاء} wed{الأربعاء} thu{الخميس} fri{الجمعة} sat{السبت} sun{الأحد} other{}}",
+  "@bookWeekday": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "bookWeekdayShort": "{day, select, mon{اثنين} tue{ثلاثاء} wed{أربعاء} thu{خميس} fri{جمعة} sat{سبت} sun{أحد} other{}}",
+  "@bookWeekdayShort": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "bookMonth": "{month, select, m1{جانفي} m2{فيفري} m3{مارس} m4{أفريل} m5{ماي} m6{جوان} m7{جويلية} m8{أوت} m9{سبتمبر} m10{أكتوبر} m11{نوفمبر} m12{ديسمبر} other{}}",
+  "@bookMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "bookDateLong": "{weekday} {day} {month}",
+  "@bookDateLong": {
+    "placeholders": {
+      "weekday": {
+        "type": "String"
+      },
+      "day": {
+        "type": "int"
+      },
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "apptAwaitingPayment": "بانتظار الدفع",
+  "apptCompleted": "تمّ",
+  "apptCancelledStatus": "ملغى",
+  "apptNoShow": "فائت",
+  "apptUpcoming": "القادمة · {count}",
+  "@apptUpcoming": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "apptPast": "السابقة",
+  "apptNew": "حجز موعد جديد",
+  "apptCancel": "إلغاء الموعد",
+  "apptCancelAsk": "إلغاء هذا الموعد؟",
+  "apptCancelBody": "سيُتاح هذا الوقت لمريض آخر.",
+  "apptKeep": "الإبقاء عليه",
+  "apptCancelled": "تم إلغاء الموعد",
+  "apptLocked": "بقي أقل من 24 ساعة، لذا لا يمكن الإلغاء من التطبيق. اتصل بالعيادة إذا تعذّر حضورك.",
+  "apptNoUpcoming": "لا مواعيد قادمة",
+  "apptNoPast": "لا مواعيد سابقة",
+  "apptPrivateNotes": "ملاحظات الطبيب خاصة ولا تظهر هنا.",
+  "bookDays": "{count, plural, =1{يوم واحد} =2{يومين} few{{count} أيام} many{{count} يوماً} other{{count} يوم}}",
+  "@bookDays": {"placeholders": {"count": {"type": "int"}}},
+  "bookFollowUpTitle": "المتابعة المقترحة: حوالي {date}",
+  "@bookFollowUpTitle": {"placeholders": {"date": {"type": "String"}}},
+  "bookFollowUpBody": "بعد {span} من موعدك يوم {date}. يمكنك اختيار يوم قبله أو بعده.",
+  "@bookFollowUpBody": {"placeholders": {"span": {"type": "String"}, "date": {"type": "String"}}},
+  "bookFollowUpOverdueTitle": "حان وقت موعد المتابعة",
+  "bookFollowUpOverdueBody": "مرّ أكثر من {span} على موعدك يوم {date}. اختر الوقت الذي يناسبك.",
+  "@bookFollowUpOverdueBody": {"placeholders": {"span": {"type": "String"}, "date": {"type": "String"}}},
+  "bookFollowUpShow": "عرض اليوم المقترح",
+  "bookFollowUpDay": "{date}، اليوم المقترح للمتابعة",
+  "@bookFollowUpDay": {"placeholders": {"date": {"type": "String"}}},
+  "apptFollowUp": "المتابعة القادمة",
+  "apptFollowUpWhen": "حوالي {date}",
+  "@apptFollowUpWhen": {"placeholders": {"date": {"type": "String"}}},
+  "apptFollowUpBook": "احجز موعد المتابعة",
+  "authSignUpTitle": "إنشاء حساب",
+  "authSignUpBody": "أدخل رقم هاتفك وسنرسل لك رمزاً للتأكيد.",
+  "authPhoneLabel": "رقم الهاتف",
+  "authPhoneInvalid": "أدخل رقم هاتف نقّال جزائرياً صحيحاً (يبدأ بـ 05 أو 06 أو 07).",
+  "authContinue": "متابعة",
+  "authOr": "أو",
+  "authGoogle": "المتابعة باستخدام Google",
+  "authApple": "المتابعة باستخدام Apple",
+  "authSocialNote": "حتى مع Google أو Apple، تتحقق العيادة من هويتك قبل أي حجز.",
+  "authHaveAccount": "لديك حساب؟",
+  "authLoginLink": "تسجيل الدخول",
+  "authNoAccount": "ليس لديك حساب؟",
+  "authCreateLink": "إنشاء حساب",
+  "authTerms": "بإنشاء حساب، فإنك توافق على شروط الاستخدام وسياسة الخصوصية.",
+  "authPhoneTaken": "هذا الرقم مسجّل في حساب آخر. سجّل الدخول بدلاً من ذلك.",
+  "authOtpTitle": "رمز التأكيد",
+  "authOtpBody": "أدخل الرمز المكوّن من 6 أرقام الذي أرسلناه إلى {phone}.",
+  "@authOtpBody": {"placeholders": {"phone": {"type": "String"}}},
+  "authOtpChangeNumber": "تغيير الرقم",
+  "authOtpResendIn": "يمكنك طلب رمز جديد بعد {time}",
+  "@authOtpResendIn": {"placeholders": {"time": {"type": "String"}}},
+  "authOtpResend": "إعادة إرسال الرمز",
+  "authOtpResent": "أرسلنا رمزاً جديداً",
+  "authOtpWrong": "الرمز غير صحيح. حاول مجدداً.",
+  "authOtpExpired": "انتهت صلاحية هذا الرمز. اطلب رمزاً جديداً.",
+  "authOtpTooMany": "محاولات كثيرة. اطلب رمزاً جديداً.",
+  "authOtpSemantics": "رمز التأكيد، 6 أرقام",
+  "authPasswordTitle": "اختر كلمة مرور",
+  "authPasswordCreateBody": "ستستعملها مع رقم هاتفك لتسجيل الدخول.",
+  "authPasswordResetTitle": "كلمة مرور جديدة",
+  "authPasswordResetBody": "اختر كلمة مرور جديدة لحسابك.",
+  "authPasswordLabel": "كلمة المرور",
+  "authPasswordConfirmLabel": "تأكيد كلمة المرور",
+  "authPasswordShow": "إظهار كلمة المرور",
+  "authPasswordHide": "إخفاء كلمة المرور",
+  "authRuleLength": "8 أحرف على الأقل",
+  "authRuleLetter": "حرف واحد على الأقل",
+  "authRuleDigit": "رقم واحد على الأقل",
+  "authRuleMatch": "كلمتا المرور متطابقتان",
+  "authRuleOk": "تم: {rule}",
+  "@authRuleOk": {"placeholders": {"rule": {"type": "String"}}},
+  "authRuleTodo": "لم يتحقق بعد: {rule}",
+  "@authRuleTodo": {"placeholders": {"rule": {"type": "String"}}},
+  "authCreateAccountButton": "إنشاء الحساب",
+  "authSavePassword": "حفظ كلمة المرور",
+  "authLoginTitle": "تسجيل الدخول",
+  "authLoginBody": "مرحباً بعودتك.",
+  "authLoginButton": "تسجيل الدخول",
+  "authForgot": "نسيت كلمة المرور؟",
+  "authWrongCredentials": "رقم الهاتف أو كلمة المرور غير صحيحة.",
+  "authLocked": "أوقفنا الدخول مؤقتاً بعد عدة محاولات خاطئة. حاول مجدداً بعد {minutes, plural, =1{دقيقة} =2{دقيقتين} few{{minutes} دقائق} many{{minutes} دقيقة} other{{minutes} دقيقة}}.",
+  "@authLocked": {"placeholders": {"minutes": {"type": "int"}}},
+  "authRateLimited": "طلبات كثيرة. حاول مجدداً بعد {seconds, plural, =1{ثانية} =2{ثانيتين} few{{seconds} ثوانٍ} many{{seconds} ثانية} other{{seconds} ثانية}}.",
+  "@authRateLimited": {"placeholders": {"seconds": {"type": "int"}}},
+  "authNetwork": "تعذّر الاتصال. تحقق من الإنترنت وحاول مجدداً.",
+  "authSocialUnavailable": "هذه الطريقة غير متاحة بعد. استعمل رقم هاتفك.",
+  "authForgotTitle": "استعادة كلمة المرور",
+  "authForgotBody": "أدخل رقم هاتفك وسنرسل لك رمزاً لاختيار كلمة مرور جديدة.",
+  "authAttachTitle": "رقم هاتفك",
+  "authAttachBody": "تستعمله العيادة للتواصل معك بشأن مواعيدك. سنرسل لك رمزاً للتأكيد.",
+  "authSendCode": "إرسال الرمز"
+}
