@@ -51,7 +51,11 @@ class Settings(BaseSettings):
     # (locally: an ngrok-style tunnel).
     public_base_url: str = "http://localhost:8000"
 
-    @field_validator("google_client_ids", "apple_client_ids", mode="before")
+    # Browser origins allowed to call the API (the doctor dashboard).
+    # Comma-separated in the environment.
+    cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173"]
+
+    @field_validator("google_client_ids", "apple_client_ids", "cors_origins", mode="before")
     @classmethod
     def _split(cls, value: object) -> object:
         if isinstance(value, str):
