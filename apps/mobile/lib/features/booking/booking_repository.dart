@@ -41,8 +41,21 @@ abstract interface class BookingRepository {
   /// Gives a held slot back, e.g. when the patient leaves or time runs out.
   Future<void> release(Hold hold);
 
-  /// Books the held slot with [method].
+  /// Books the held slot with [method]. With [cardsUseCheckout], only for
+  /// payment at the clinic: cards go through [checkout].
   Future<Appointment> confirm(Hold hold, PaymentMethod method);
+
+  /// Whether card payments open the Chargily checkout and wait for the
+  /// server's confirmation (PRD 4.4) instead of [confirm].
+  bool get cardsUseCheckout;
+
+  /// Opens a Chargily checkout for [hold] and returns the page to show.
+  Future<Uri> checkout(Hold hold, PaymentMethod method);
+
+  /// The booked appointment once the server confirmed the payment, or null
+  /// while it is still waiting. Throws [SlotUnavailable] if the slot was
+  /// given back (payment failed or time ran out).
+  Future<Appointment?> paid(Hold hold);
 
   /// This patient's appointments, oldest first.
   Future<List<Appointment>> appointments();

@@ -158,6 +158,16 @@ class FakeBookingRepository implements BookingRepository {
   }
 
   @override
+  bool get cardsUseCheckout => false;
+
+  @override
+  Future<Uri> checkout(Hold hold, PaymentMethod method) async =>
+      Uri.parse('https://pay.example.invalid/${hold.id}');
+
+  @override
+  Future<Appointment?> paid(Hold hold) => confirm(hold, PaymentMethod.edahabia);
+
+  @override
   Future<List<Appointment>> appointments() async =>
       [..._appointments]..sort((a, b) => a.start.compareTo(b.start));
 

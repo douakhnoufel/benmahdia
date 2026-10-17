@@ -7,6 +7,7 @@ import 'package:benmahdia_mobile/features/booking/booking_models.dart';
 import 'package:benmahdia_mobile/features/booking/booking_repository.dart';
 import 'package:benmahdia_mobile/features/booking/fake_booking_repository.dart';
 import 'package:benmahdia_mobile/features/booking/my_appointments_screen.dart';
+import 'package:benmahdia_mobile/features/booking/payment_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -45,6 +46,39 @@ List<Override> _with(BookingRepository repo) => [
 
 Future<Doctor> _doctor(BookingRepository repo) async =>
     (await repo.doctors()).single;
+
+/// The sample agenda, but card payments go through a checkout the server
+/// confirms, like the real API.
+class _CheckoutRepo extends FakeBookingRepository {
+  _CheckoutRepo() : super(clock: () => _now);
+
+  /// What [paid] answers next: null = still waiting.
+  Appointment? confirmed;
+  bool lost = false;
+  final checkouts = <PaymentMethod>[];
+  var released = 0;
+
+  @override
+  bool get cardsUseCheckout => true;
+
+  @override
+  Future<Uri> checkout(Hold hold, PaymentMethod method) async {
+    checkouts.add(method);
+    return Uri.parse('https://pay.example.invalid/${hold.id}');
+  }
+
+  @override
+  Future<Appointment?> paid(Hold hold) async {
+    if (lost) throw const SlotUnavailable();
+    return confirmed;
+  }
+
+  @override
+  Future<void> release(Hold hold) async {
+    released++;
+    await super.release(hold);
+  }
+}
 
 void main() {
   group('BookDoctorScreen', () {
@@ -371,6 +405,68 @@ void main() {
       expect(booked?.method, PaymentMethod.clinic);
       expect(booked?.status, AppointmentStatus.confirmed);
       expect(booked?.priceDzd, 2000);
+    });
+
+    testWidgets('card payment opens Chargily and waits for the server', (
+      tester,
+    ) async {
+      Appointment? booked;
+      final opened = <Uri>[];
+      final repo = _CheckoutRepo();
+      final hold = await held(repo);
+      await pumpApp(
+        tester,
+        BookConfirmScreen(
+          hold: hold,
+          onDone: (a) => booked = a,
+          onExpired: () {},
+        ),
+        overrides: [
+          ..._with(repo),
+          openUrlProvider.overrideWithValue((url) async {
+            opened.add(url);
+            return true;
+          }),
+        ],
+      );
+      await pumpFor(tester, _second);
+      await tester.tap(find.text('ادفع 2000 دج'));
+      await pumpFor(tester, const Duration(seconds: 4));
+      expect(repo.checkouts, [PaymentMethod.edahabia]);
+      expect(opened.single.host, 'pay.example.invalid');
+      expect(booked, isNull);
+
+      repo.confirmed = _visit(_monday9, AppointmentStatus.confirmed);
+      await pumpFor(tester, const Duration(seconds: 4));
+      expect(booked?.status, AppointmentStatus.confirmed);
+      expect(repo.released, 0);
+    });
+
+    testWidgets('a failed card payment shows the time-up view', (
+      tester,
+    ) async {
+      var expired = 0;
+      final repo = _CheckoutRepo();
+      await pumpApp(
+        tester,
+        BookConfirmScreen(
+          hold: await held(repo),
+          onDone: (_) {},
+          onExpired: () => expired++,
+        ),
+        overrides: [
+          ..._with(repo),
+          openUrlProvider.overrideWithValue((_) async => true),
+        ],
+      );
+      await pumpFor(tester, _second);
+      await tester.tap(find.text('ادفع 2000 دج'));
+      await pumpFor(tester, _second);
+      repo.lost = true;
+      await pumpFor(tester, const Duration(seconds: 4));
+      expect(find.text('ادفع 2000 دج'), findsNothing);
+      // The server already gave the slot back; the app does not release it.
+      expect(repo.released, 0);
     });
 
     testWidgets('when time runs out the slot is released', (tester) async {

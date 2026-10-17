@@ -49,10 +49,12 @@ class ApiBookingRepository implements BookingRepository {
   @override
   Duration get holdFor => _holdFor;
 
-  /// Card payments are confirmed only by the payment provider's webhook, not
-  /// yet wired (PRD 4.4); the pilot pays at the clinic.
   @override
-  Set<PaymentMethod> get methods => const {PaymentMethod.clinic};
+  Set<PaymentMethod> get methods => PaymentMethod.values.toSet();
+
+  /// Cards are confirmed only by Chargily's signed webhook (PRD 4.4).
+  @override
+  bool get cardsUseCheckout => true;
 
   // --- time -----------------------------------------------------------------
 
@@ -119,6 +121,7 @@ class ApiBookingRepository implements BookingRepository {
     return switch (code) {
       'slot_unavailable' || 'hold_expired' => const SlotUnavailable(),
       'too_late_to_cancel' => const TooLateToCancel(),
+      'not_a_hold' || 'appointment_not_found' => const SlotUnavailable(),
       _ => const BookingUnavailable(),
     };
   }
@@ -264,6 +267,33 @@ class ApiBookingRepository implements BookingRepository {
             )
             as Map<String, dynamic>,
       );
+
+  @override
+  Future<Uri> checkout(Hold hold, PaymentMethod method) async {
+    final json =
+        await _send(
+              'POST',
+              'v1/appointments/${hold.id}/checkout',
+              body: {'method': method.name},
+            )
+            as Map<String, dynamic>;
+    return Uri.parse(json['checkout_url'] as String);
+  }
+
+  @override
+  Future<Appointment?> paid(Hold hold) async {
+    final mine = await appointments();
+    for (final a in mine) {
+      if (a.id != hold.id) continue;
+      return switch (a.status) {
+        AppointmentStatus.confirmed => a,
+        AppointmentStatus.awaitingPayment => null,
+        _ => throw const SlotUnavailable(),
+      };
+    }
+    // The server dropped the hold: payment failed or time ran out.
+    throw const SlotUnavailable();
+  }
 
   @override
   Future<List<Appointment>> appointments() async {

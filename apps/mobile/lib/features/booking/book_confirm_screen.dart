@@ -12,6 +12,7 @@ import 'booking_format.dart';
 import 'booking_models.dart';
 import 'booking_repository.dart';
 import 'booking_widgets.dart';
+import 'payment_launcher.dart';
 
 /// Booking step 3: the held slot with a live countdown, the summary and the
 /// payment choice (Edahabia or CIB through Chargily, or at the clinic during
@@ -36,6 +37,7 @@ class BookConfirmScreen extends ConsumerStatefulWidget {
 
 class _BookConfirmScreenState extends ConsumerState<BookConfirmScreen> {
   static const _tick = Duration(seconds: 1);
+  static const _pollEvery = Duration(seconds: 3);
 
   late final BookingRepository _repo = ref.read(bookingRepositoryProvider);
   late final Duration _total = _repo.holdFor;
@@ -46,6 +48,11 @@ class _BookConfirmScreenState extends ConsumerState<BookConfirmScreen> {
       : _repo.methods.first;
   bool _paying = false;
   bool _booked = false;
+
+  /// A Chargily checkout is open: from now on only the server decides
+  /// whether the slot is booked or given back.
+  bool _checkoutOpen = false;
+  Timer? _poll;
 
   bool get _expired => _left <= Duration.zero;
 
@@ -59,16 +66,17 @@ class _BookConfirmScreenState extends ConsumerState<BookConfirmScreen> {
     setState(() => _left -= _tick);
     if (_expired) {
       _timer?.cancel();
-      unawaited(_repo.release(widget.hold));
+      if (!_checkoutOpen) unawaited(_repo.release(widget.hold));
     }
   }
 
   Future<void> _confirm() async {
     setState(() => _paying = true);
+    if (_method.online && _repo.cardsUseCheckout) {
+      await _payByCard();
+      return;
+    }
     try {
-      // TODO(payment): for cards, open the Chargily checkout and wait for
-      // the backend to confirm from Chargily's webhook (PRD 4.4); the app
-      // never confirms a paid appointment on its own.
       final appointment = await _repo.confirm(widget.hold, _method);
       if (!mounted) return;
       _booked = true;
@@ -85,11 +93,59 @@ class _BookConfirmScreenState extends ConsumerState<BookConfirmScreen> {
     }
   }
 
+  /// Opens Chargily's checkout, then waits for the server to confirm the
+  /// payment from Chargily's webhook (PRD 4.4); the app never confirms a
+  /// card payment on its own.
+  Future<void> _payByCard() async {
+    final open = ref.read(openUrlProvider);
+    try {
+      final url = await _repo.checkout(widget.hold, _method);
+      _checkoutOpen = true;
+      await open(url);
+      if (!mounted) return;
+      _poll = Timer.periodic(_pollEvery, (_) => unawaited(_checkPaid()));
+    } on SlotUnavailable {
+      _showExpired();
+    } on BookingUnavailable {
+      if (mounted) setState(() => _paying = false);
+    }
+  }
+
+  Future<void> _checkPaid() async {
+    try {
+      final appointment = await _repo.paid(widget.hold);
+      if (appointment == null || !mounted || _booked) return;
+      _booked = true;
+      _poll?.cancel();
+      _timer?.cancel();
+      widget.onDone(appointment);
+    } on SlotUnavailable {
+      _showExpired();
+    } on BookingUnavailable {
+      // Offline for a moment: the next check tries again.
+    }
+  }
+
+  void _showExpired() {
+    _poll?.cancel();
+    _timer?.cancel();
+    if (mounted) {
+      setState(() {
+        _paying = false;
+        _left = Duration.zero;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
-    // Leaving without booking gives the slot back.
-    if (!_booked && !_expired) unawaited(_repo.release(widget.hold));
+    _poll?.cancel();
+    // Leaving without booking gives the slot back, unless a payment may be
+    // under way at Chargily: then the server decides.
+    if (!_booked && !_expired && !_checkoutOpen) {
+      unawaited(_repo.release(widget.hold));
+    }
     super.dispose();
   }
 

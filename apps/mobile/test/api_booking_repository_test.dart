@@ -99,8 +99,50 @@ void main() {
     ));
   });
 
-  test('only offers payment at the clinic for now', () {
-    expect(repo((_) => _json(200, const [])).methods, {PaymentMethod.clinic});
+  test('offers cards through the Chargily checkout and the clinic', () {
+    final r = repo((_) => _json(200, const []));
+    expect(r.methods, PaymentMethod.values.toSet());
+    expect(r.cardsUseCheckout, isTrue);
+  });
+
+  test('opens a checkout and returns its page', () async {
+    final r = repo(
+      (_) => _json(201, {
+        'payment_id': 'p-1',
+        'checkout_url': 'https://pay.chargily.net/test/checkouts/c-1/pay',
+      }),
+    );
+    final hold = Hold(
+      id: 'a-1',
+      doctor: _d,
+      start: DateTime(2026, 10, 19, 9),
+      end: DateTime(2026, 10, 19, 9, 15),
+      expiresAt: DateTime(2026, 10, 17, 19, 15),
+    );
+    final url = await r.checkout(hold, PaymentMethod.cib);
+    expect(sent.single.url.path, '/v1/appointments/a-1/checkout');
+    expect(jsonDecode(sent.single.body), {'method': 'cib'});
+    expect(url.host, 'pay.chargily.net');
+  });
+
+  test('paid waits, then confirms, or reports a lost slot', () async {
+    final hold = Hold(
+      id: 'a-1',
+      doctor: _d,
+      start: DateTime(2026, 10, 19, 9),
+      end: DateTime(2026, 10, 19, 9, 15),
+      expiresAt: DateTime(2026, 10, 17, 19, 15),
+    );
+    final waiting = repo(
+      (_) => _json(200, [
+        _appointment(status: 'awaiting_payment', method: null),
+      ]),
+    );
+    expect(await waiting.paid(hold), isNull);
+    final done = repo((_) => _json(200, [_appointment(method: 'cib')]));
+    expect((await done.paid(hold))!.method, PaymentMethod.cib);
+    final gone = repo((_) => _json(200, const []));
+    expect(gone.paid(hold), throwsA(isA<SlotUnavailable>()));
   });
 
   test('reads the calendar in clinic time', () async {
