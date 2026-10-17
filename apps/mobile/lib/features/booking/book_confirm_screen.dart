@@ -41,7 +41,9 @@ class _BookConfirmScreenState extends ConsumerState<BookConfirmScreen> {
   late final Duration _total = _repo.holdFor;
   late Duration _left = widget.hold.expiresAt.difference(_repo.now());
   Timer? _timer;
-  PaymentMethod _method = PaymentMethod.edahabia;
+  late PaymentMethod _method = _repo.methods.contains(PaymentMethod.edahabia)
+      ? PaymentMethod.edahabia
+      : _repo.methods.first;
   bool _paying = false;
   bool _booked = false;
 
@@ -72,6 +74,12 @@ class _BookConfirmScreenState extends ConsumerState<BookConfirmScreen> {
       _booked = true;
       _timer?.cancel();
       widget.onDone(appointment);
+    } on SlotUnavailable {
+      // The server gave the slot back (the hold ran out): show the same
+      // "time is up" view as the timer does.
+      if (!mounted) return;
+      _timer?.cancel();
+      setState(() => _left = Duration.zero);
     } finally {
       if (mounted) setState(() => _paying = false);
     }
@@ -131,6 +139,7 @@ class _BookConfirmScreenState extends ConsumerState<BookConfirmScreen> {
                             spacing: AppSpace.sm,
                             children: [
                               for (final m in PaymentMethod.values)
+                                if (_repo.methods.contains(m))
                                 _MethodCard(
                                   method: m,
                                   selected: m == _method,

@@ -38,6 +38,10 @@ abstract interface class AuthRepository {
 
   /// Adds the confirmed number to a Google / Apple account.
   Future<AuthSession> attachPhone(AuthSession session, String phoneProof);
+
+  /// Swaps the refresh token for a new pair when the access token ran out.
+  /// Throws [AuthFailure] if the login is no longer valid.
+  Future<AuthSession> refresh(AuthSession session);
 }
 
 /// The API's address, e.g.

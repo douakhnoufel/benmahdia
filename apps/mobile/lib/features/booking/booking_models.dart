@@ -164,3 +164,8 @@ class SlotUnavailable implements Exception {
 class TooLateToCancel implements Exception {
   const TooLateToCancel();
 }
+
+/// The booking server could not be reached or answered unexpectedly.
+class BookingUnavailable implements Exception {
+  const BookingUnavailable();
+}

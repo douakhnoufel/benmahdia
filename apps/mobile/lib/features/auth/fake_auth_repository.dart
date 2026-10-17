@@ -147,6 +147,9 @@ class FakeAuthRepository implements AuthRepository {
       _session(_Account(id: 'u${_next++}'), null);
 
   @override
+  Future<AuthSession> refresh(AuthSession session) async => session;
+
+  @override
   Future<AuthSession> attachPhone(
     AuthSession session,
     String phoneProof,

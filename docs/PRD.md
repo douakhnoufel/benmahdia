@@ -105,7 +105,7 @@ Every new patient proves who they are before using the app: a live face photo an
 
 ### 4.3 Appointment management
 
-- **Doctor availability:** weekly recurring schedule, short slots of 10–15 min (set per doctor), breaks, holidays and one-off blocked days.
+- **Doctor availability:** weekly recurring schedule, short slots of 5, 10 or 15 min (set per doctor), breaks, holidays and one-off blocked days.
 - **Booking:** patient picks a doctor and a free slot (the first doctor they book becomes their primary doctor) and pays online to confirm it (4.4); or the doctor books for the patient.
 - **Precision rules:**
   - All times stored in UTC, displayed in Africa/Algiers (UTC+1).
@@ -114,6 +114,7 @@ Every new patient proves who they are before using the app: a live face photo an
   - Minimum notice to book or cancel (e.g. 24 h, configurable per doctor).
   - Patients can book up to 60 days ahead.
 - **Follow-up:** after a visit, the app suggests the next one about 30 days later and opens the calendar on that day; the patient can pick an earlier or later day. A follow-up costs the same as any appointment.
+- **Pilot payment:** until Chargily is wired, the app confirms only "pay at the clinic" appointments; card payments are confirmed solely by the signed webhook, never by the app.
 - **Statuses:** requested → awaiting payment → confirmed → completed / cancelled / no-show / rescheduled. An unpaid hold is released after a short timeout (e.g. 15 min, to confirm).
 - **Reminders:** push notification 24 h and 1 h before; doctor sees a daily agenda.
 - **History:** patient sees past and upcoming appointments; doctor sees attendance rate per patient.
@@ -422,7 +423,7 @@ The five flows below are what the backend, the patient app and the dashboard mus
 
 ### 12.2 Booking and payment
 
-1. The patient picks a free 10–15 min slot; the slot is held.
+1. The patient picks a free 5–15 min slot; the slot is held for 15 min (one open hold per patient).
 2. Chargily checkout opens (CIB / Edahabia).
 3. The backend verifies Chargily's webhook → the appointment is confirmed → both sides are notified; reminders go out 24 h and 1 h before.
 4. After the visit the doctor marks it completed or no-show and can add a private note.

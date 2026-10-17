@@ -168,6 +168,16 @@ class ApiAuthRepository implements AuthRepository {
       throw const SocialUnavailable();
 
   @override
+  Future<AuthSession> refresh(AuthSession session) async {
+    final json = await _send(
+      'POST',
+      'v1/auth/refresh',
+      body: {'refresh_token': session.refreshToken},
+    );
+    return _session(json);
+  }
+
+  @override
   Future<AuthSession> attachPhone(
     AuthSession session,
     String phoneProof,

@@ -58,6 +58,9 @@ class FakeBookingRepository implements BookingRepository {
   Duration get holdFor => const Duration(minutes: 15);
 
   @override
+  Set<PaymentMethod> get methods => PaymentMethod.values.toSet();
+
+  @override
   Future<List<Doctor>> doctors() async => const [sampleDoctor];
 
   @override

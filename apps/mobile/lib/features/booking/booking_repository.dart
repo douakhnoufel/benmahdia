@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../auth/auth_models.dart';
+import '../auth/auth_repository.dart';
+import 'api_booking_repository.dart';
 import 'booking_models.dart';
 import 'fake_booking_repository.dart';
 
@@ -18,6 +21,9 @@ abstract interface class BookingRepository {
 
   /// How long a slot stays held while the patient pays.
   Duration get holdFor;
+
+  /// The ways a patient can pay for this clinic's appointments right now.
+  Set<PaymentMethod> get methods;
 
   Future<List<Doctor>> doctors();
 
@@ -45,7 +51,23 @@ abstract interface class BookingRepository {
   Future<Appointment> cancel(Appointment appointment);
 }
 
-// TODO(booking): replace with the API client once the backend exists.
-final bookingRepositoryProvider = Provider<BookingRepository>(
-  (ref) => FakeBookingRepository(),
-);
+/// The booking API when `API_BASE_URL` is set, otherwise sample data.
+final bookingRepositoryProvider = Provider<BookingRepository>((ref) {
+  if (apiBaseUrl.isEmpty) return FakeBookingRepository();
+  final auth = ref.read(authRepositoryProvider);
+  return ApiBookingRepository(
+    baseUrl: Uri.parse(apiBaseUrl),
+    token: () => ref.read(sessionProvider)?.accessToken,
+    refresh: () async {
+      final session = ref.read(sessionProvider);
+      if (session == null) return false;
+      try {
+        final AuthSession fresh = await auth.refresh(session);
+        ref.read(sessionProvider.notifier).set(fresh);
+        return true;
+      } on AuthFailure {
+        return false;
+      }
+    },
+  );
+});
