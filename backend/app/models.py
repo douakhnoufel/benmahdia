@@ -1,15 +1,20 @@
 import enum
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import (
+    CheckConstraint,
+    Date,
     DateTime,
+    DDL,
     Enum,
     ForeignKey,
+    Index,
     Integer,
     String,
     UniqueConstraint,
     Uuid,
+    event,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -145,3 +150,139 @@ class AuditLog(Base):
     target: Mapped[str | None] = mapped_column(String(128))
     ip: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now, index=True)
+
+
+# --- Appointments (PRD 4.3, 4.4, 9) -----------------------------------------
+
+
+class AppointmentStatus(str, enum.Enum):
+    awaiting_payment = "awaiting_payment"
+    confirmed = "confirmed"
+    completed = "completed"
+    cancelled = "cancelled"
+    no_show = "no_show"
+
+
+# Statuses that occupy the doctor's agenda. A cancelled, completed or no-show
+# appointment no longer blocks its slot for the overlap rule.
+ACTIVE_STATUSES = (AppointmentStatus.awaiting_payment, AppointmentStatus.confirmed)
+
+
+class PaymentMethod(str, enum.Enum):
+    edahabia = "edahabia"
+    cib = "cib"
+    # Paid at the clinic on the day; pilot only, confirmed by the doctor.
+    clinic = "clinic"
+
+
+class DoctorProfile(Base):
+    """Booking settings of one doctor, set by the super admin (PRD 4.3)."""
+
+    __tablename__ = "doctor_profiles"
+    __table_args__ = (
+        CheckConstraint("slot_minutes IN (5, 10, 15)", name="ck_slot_minutes"),
+        CheckConstraint("price_dzd >= 0", name="ck_price_dzd"),
+    )
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    name_ar: Mapped[str] = mapped_column(String(120))
+    name_fr: Mapped[str] = mapped_column(String(120))
+    slot_minutes: Mapped[int] = mapped_column(Integer, default=15)
+    price_dzd: Mapped[int] = mapped_column(Integer)
+    # Minimum notice to book or cancel, in hours (PRD 4.3: 24 h).
+    notice_hours: Mapped[int] = mapped_column(Integer, default=24)
+    # How long an unpaid slot stays held, in minutes (PRD 4.3: 15 min).
+    hold_minutes: Mapped[int] = mapped_column(Integer, default=15)
+
+
+class Availability(Base):
+    """One weekly consultation window. Times are minutes after midnight in
+    clinic time (Africa/Algiers). Breaks are the gaps between two windows."""
+
+    __tablename__ = "availabilities"
+    __table_args__ = (
+        CheckConstraint("weekday BETWEEN 0 AND 6", name="ck_weekday"),
+        CheckConstraint(
+            "start_minute >= 0 AND end_minute <= 1440 AND start_minute < end_minute",
+            name="ck_window",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    doctor_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("doctor_profiles.user_id", ondelete="CASCADE"), index=True
+    )
+    # Monday = 0 ... Sunday = 6 (Python's date.weekday()).
+    weekday: Mapped[int] = mapped_column(Integer)
+    start_minute: Mapped[int] = mapped_column(Integer)
+    end_minute: Mapped[int] = mapped_column(Integer)
+
+
+class AvailabilityException(Base):
+    """A day the doctor does not consult: a holiday or a one-off block."""
+
+    __tablename__ = "availability_exceptions"
+    __table_args__ = (UniqueConstraint("doctor_id", "day"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    doctor_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("doctor_profiles.user_id", ondelete="CASCADE"), index=True
+    )
+    day: Mapped[date] = mapped_column(Date)
+    reason: Mapped[str | None] = mapped_column(String(120))
+
+
+class Appointment(Base):
+    __tablename__ = "appointments"
+    __table_args__ = (
+        CheckConstraint("end_utc > start_utc", name="ck_appointment_range"),
+        Index("ix_appointments_doctor_start", "doctor_id", "start_utc"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    doctor_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("doctor_profiles.user_id", ondelete="RESTRICT")
+    )
+    patient_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    # UTC, stored without a zone like every other timestamp.
+    start_utc: Mapped[datetime] = mapped_column(DateTime)
+    end_utc: Mapped[datetime] = mapped_column(DateTime)
+    status: Mapped[AppointmentStatus] = mapped_column(
+        Enum(AppointmentStatus, name="appointment_status"),
+        default=AppointmentStatus.awaiting_payment,
+    )
+    price_dzd: Mapped[int] = mapped_column(Integer)
+    method: Mapped[PaymentMethod | None] = mapped_column(
+        Enum(PaymentMethod, name="payment_method")
+    )
+    # Set while awaiting payment; the slot is given back after this time.
+    hold_expires_at: Mapped[datetime | None] = mapped_column(DateTime)
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+# PostgreSQL only: the database itself refuses two active appointments that
+# overlap for the same doctor, so two simultaneous bookings cannot both win
+# (PRD 4.3). SQLite (local tests) relies on the application check instead.
+OVERLAP_DDL = """
+ALTER TABLE appointments ADD CONSTRAINT ex_appointments_no_overlap
+EXCLUDE USING gist (
+    doctor_id WITH =,
+    tsrange(start_utc, end_utc) WITH &&
+) WHERE (status IN ('awaiting_payment', 'confirmed'))
+"""
+
+event.listen(
+    Appointment.__table__,
+    "after_create",
+    DDL("CREATE EXTENSION IF NOT EXISTS btree_gist").execute_if(dialect="postgresql"),
+)
+event.listen(
+    Appointment.__table__,
+    "after_create",
+    DDL(OVERLAP_DDL).execute_if(dialect="postgresql"),
+)
