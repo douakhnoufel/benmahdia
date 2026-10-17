@@ -11,6 +11,9 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  flutter_riverpod: ^2.6.1
+  http: ^1.6.0
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
@@ -19,3 +22,4 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true

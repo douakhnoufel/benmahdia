@@ -40,6 +40,14 @@ abstract final class AppColors {
   static const onPrimary = Color(0xFFFFFFFF);
   static const onSand = Color(0xFF10302C);
 
+  // Third-party sign-in buttons: colours fixed by Google's and Apple's
+  // branding guidelines, not ours.
+  static const googleSurface = Color(0xFFFFFFFF);
+  static const googleBorder = Color(0xFF747775);
+  static const googleText = Color(0xFF1F1F1F);
+  static const appleSurface = Color(0xFF000000);
+  static const appleText = Color(0xFFFFFFFF);
+
   /// Background tint for badges/snackbars: semantic color at ~12% alpha.
   static Color tint(Color semantic) => semantic.withValues(alpha: 0.12);
 }
@@ -98,6 +106,24 @@ abstract final class AppMotion {
   static const slow = Duration(milliseconds: 600);
   static const stagger = Duration(milliseconds: 70);
   static const curve = Curves.easeOutCubic;
+
+  /// Small overshoot for badges and check marks popping in.
+  static const pop = Curves.easeOutBack;
+
+  /// One full breath of the splash logo (rings grow and fade, mark swells).
+  static const breath = Duration(milliseconds: 4000);
+
+  /// Day-counter ring filling while its number counts up.
+  static const ringFill = Duration(milliseconds: 1200);
+
+  /// One pass of the scan line over the ID card frame.
+  static const scan = Duration(milliseconds: 1800);
+
+  /// One beat of the pulse around the selfie oval.
+  static const pulse = Duration(milliseconds: 1400);
+
+  /// Shortest time the splash stays on screen, so it never just flashes.
+  static const splashMinimum = Duration(milliseconds: 1600);
 
   /// Collapses every animation to zero when the OS asks for reduced motion.
   static Duration of(BuildContext context, Duration d) =>
