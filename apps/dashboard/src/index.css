@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html[lang='ar'] body {
+  @apply font-ar;
+}
+html[lang='fr'] body {
+  @apply font-sans;
+}
+body {
+  @apply bg-background text-ink-body text-body;
+}

@@ -1,0 +1,139 @@
+// Client for the BenMahdia API's doctor routes (backend/app/routers/staff.py).
+
+const BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:8000/';
+
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    public code: string,
+  ) {
+    super(code);
+  }
+}
+
+type Session = { access_token: string; refresh_token: string };
+
+const KEY = 'benmahdia.session';
+
+// Kept for this browser tab only: closing the tab signs the doctor out.
+function load(): Session | null {
+  try {
+    const raw = sessionStorage.getItem(KEY);
+    return raw ? (JSON.parse(raw) as Session) : null;
+  } catch {
+    return null;
+  }
+}
+
+function save(session: Session | null) {
+  try {
+    if (session) sessionStorage.setItem(KEY, JSON.stringify(session));
+    else sessionStorage.removeItem(KEY);
+  } catch {
+    // Storage blocked: the session lives in memory only.
+  }
+}
+
+let session: Session | null = load();
+const listeners = new Set<(signedIn: boolean) => void>();
+
+function setSession(next: Session | null) {
+  session = next;
+  save(next);
+  listeners.forEach((l) => l(next !== null));
+}
+
+export function isSignedIn() {
+  return session !== null;
+}
+
+export function onSessionChange(listener: (signedIn: boolean) => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+export function signOut() {
+  setSession(null);
+}
+
+async function raw(method: string, path: string, body?: unknown, token?: string): Promise<Response> {
+  try {
+    return await fetch(new URL(path, BASE), {
+      method,
+      headers: {
+        'content-type': 'application/json',
+        accept: 'application/json',
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch {
+    throw new ApiError(0, 'offline');
+  }
+}
+
+async function parse<T>(res: Response): Promise<T> {
+  const text = await res.text();
+  const json = text ? JSON.parse(text) : null;
+  if (!res.ok) throw new ApiError(res.status, json?.detail?.code ?? 'unknown');
+  return json as T;
+}
+
+async function refresh(): Promise<boolean> {
+  if (!session) return false;
+  const res = await raw('POST', 'v1/auth/refresh', { refresh_token: session.refresh_token });
+  if (!res.ok) {
+    setSession(null);
+    return false;
+  }
+  setSession(await parse<Session>(res));
+  return true;
+}
+
+async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  let res = await raw(method, path, body, session?.access_token);
+  if (res.status === 401 && (await refresh())) {
+    res = await raw(method, path, body, session?.access_token);
+  }
+  if (res.status === 401) setSession(null);
+  return parse<T>(res);
+}
+
+export type AppointmentStatus = 'awaiting_payment' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
+
+export type AgendaItem = {
+  id: string;
+  patient_id: string;
+  patient_phone: string | null;
+  start: string;
+  end: string;
+  status: AppointmentStatus;
+  method: 'edahabia' | 'cib' | 'clinic' | null;
+  price_dzd: number;
+  paid: boolean;
+};
+
+export type Patient = {
+  id: string;
+  phone: string | null;
+  visits: number;
+  last_visit: string | null;
+  next_visit: string | null;
+};
+
+export type Signup = { id: string; phone: string | null; created_at: string };
+
+export const api = {
+  async login(email: string, password: string) {
+    const res = await raw('POST', 'v1/staff/login', { email, password });
+    setSession(await parse<Session>(res));
+  },
+  agenda: (day: string) => request<AgendaItem[]>('GET', `v1/staff/agenda?day=${day}`),
+  setStatus: (id: string, status: 'completed' | 'no_show') =>
+    request<AgendaItem>('POST', `v1/staff/appointments/${id}/status`, { status }),
+  setPaid: (id: string, paid: boolean) => request<AgendaItem>('POST', `v1/staff/appointments/${id}/paid`, { paid }),
+  patients: () => request<Patient[]>('GET', 'v1/staff/patients'),
+  signups: () => request<Signup[]>('GET', 'v1/staff/signups'),
+  approve: (id: string) => request<Signup>('POST', `v1/staff/signups/${id}/approve`),
+  reject: (id: string) => request<Signup>('POST', `v1/staff/signups/${id}/reject`),
+};
