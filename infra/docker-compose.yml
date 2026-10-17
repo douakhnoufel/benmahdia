@@ -1,0 +1,35 @@
+# Local development: PostgreSQL + the API on http://localhost:8000
+#   cp backend/.env.example backend/.env
+#   docker compose -f infra/docker-compose.yml up --build
+name: benmahdia
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: benmahdia
+      POSTGRES_PASSWORD: benmahdia
+      POSTGRES_DB: benmahdia
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      # Only reachable from this computer.
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U benmahdia"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: ../backend
+    env_file: ../backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      # 0.0.0.0 so a phone on the same Wi-Fi can reach it during development.
+      - "8000:8000"
+
+volumes:
+  db-data:

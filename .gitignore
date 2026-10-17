@@ -31,3 +31,7 @@ Thumbs.db
 
 # Separate repo (own git history) — not tracked by outer repo
 benmahdia_app/
+
+# Backend local files
+backend/*.db
+.pytest_cache/
