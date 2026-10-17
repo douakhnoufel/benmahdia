@@ -1,15 +1,20 @@
 """Creates the pilot clinic's doctor with sample consultation hours.
 
-    python -m app.seed
+    SEED_DOCTOR_PASSWORD=... python -m app.seed
+
+Signs in to the dashboard as dr.benmahdia@example.invalid.
 
 Safe to run twice. No real patient data: only the doctor shown in the app
 (PRD 4.3) and his weekly hours; change them in the database or, later, the
 dashboard."""
 
+import os
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .db import engine
+from . import security
 from .models import Availability, DoctorProfile, Role, User
 
 # Closed on Fridays (weekday 4), 09:00-12:00 and 14:00-16:00 otherwise.
@@ -24,6 +29,10 @@ def seed(db: Session) -> DoctorProfile:
         user = User(role=Role.doctor, email=email, language="ar")
         db.add(user)
         db.flush()
+    # Dashboard sign-in: set SEED_DOCTOR_PASSWORD to (re)set it. Never commit it.
+    password = os.environ.get("SEED_DOCTOR_PASSWORD")
+    if password:
+        user.password_hash = security.hash_password(password)
     profile = db.get(DoctorProfile, user.id)
     if profile is None:
         profile = DoctorProfile(

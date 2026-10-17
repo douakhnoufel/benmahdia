@@ -111,6 +111,7 @@ async def webhook(
             a.status = AppointmentStatus.confirmed
             a.method = payment.method
             a.hold_expires_at = None
+            a.paid_at = now
             audit.record(db, "appointment.confirmed", target=str(a.id))
         else:
             # The slot was lost before the money arrived: the clinic refunds.

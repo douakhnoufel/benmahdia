@@ -262,6 +262,8 @@ class Appointment(Base):
     # Set while awaiting payment; the slot is given back after this time.
     hold_expires_at: Mapped[datetime | None] = mapped_column(DateTime)
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Set by Chargily's webhook for cards, or by the doctor for pay-at-clinic.
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
