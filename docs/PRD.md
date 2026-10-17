@@ -112,6 +112,8 @@ Every new patient proves who they are before using the app: a live face photo an
   - Database constraint prevents overlapping appointments per doctor.
   - Slot is locked during booking to avoid two patients taking it at once.
   - Minimum notice to book or cancel (e.g. 24 h, configurable per doctor).
+  - Patients can book up to 60 days ahead.
+- **Follow-up:** after a visit, the app suggests the next one about 30 days later and opens the calendar on that day; the patient can pick an earlier or later day. A follow-up costs the same as any appointment.
 - **Statuses:** requested → awaiting payment → confirmed → completed / cancelled / no-show / rescheduled. An unpaid hold is released after a short timeout (e.g. 15 min, to confirm).
 - **Reminders:** push notification 24 h and 1 h before; doctor sees a daily agenda.
 - **History:** patient sees past and upcoming appointments; doctor sees attendance rate per patient.

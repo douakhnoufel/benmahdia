@@ -133,6 +133,12 @@ Cards rest on `shadow.card`. No hard/dark drop shadows.
 | `motion.slow` | 600 ms |
 | `motion.stagger` | 70 ms |
 | `motion.curve` | easeOutCubic |
+| `motion.pop` | easeOutBack (badges, check marks) |
+| `motion.breath` | 4000 ms (splash logo, one breath) |
+| `motion.ringFill` | 1200 ms (day ring fill + count-up) |
+| `motion.scan` | 1800 ms (ID frame scan line, one pass) |
+| `motion.pulse` | 1400 ms (selfie oval pulse) |
+| `motion.splashMinimum` | 1600 ms (shortest splash) |
 
 OS reduced-motion disables all transitions/animations.
 
