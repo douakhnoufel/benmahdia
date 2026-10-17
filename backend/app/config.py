@@ -40,6 +40,9 @@ class Settings(BaseSettings):
 
     deletion_grace_days: int = 30
 
+    # How far ahead a patient can book (PRD 4.3).
+    booking_horizon_days: int = 60
+
     @field_validator("google_client_ids", "apple_client_ids", mode="before")
     @classmethod
     def _split(cls, value: object) -> object:
