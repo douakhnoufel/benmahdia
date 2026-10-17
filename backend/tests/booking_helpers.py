@@ -73,6 +73,7 @@ def add_appointment(
         )
         db.add(a)
         db.commit()
+        db.refresh(a)
         db.expunge(a)
         return a
 
@@ -80,3 +81,14 @@ def add_appointment(
 def user_id(phone="0661234567"):
     with Session(engine) as db:
         return db.query(User).filter(User.phone == "+213" + phone.lstrip("0")).one().id
+
+
+def expire_holds() -> None:
+    """Lets every open hold run out without moving the clock past the 15 min
+    life of the test login."""
+    from app.clock import clock
+
+    with Session(engine) as db:
+        for a in db.query(Appointment).filter(Appointment.status == AppointmentStatus.awaiting_payment):
+            a.hold_expires_at = clock.now() - timedelta(minutes=1)
+        db.commit()
