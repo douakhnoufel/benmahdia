@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI
 
 from .config import get_settings
-from .routers import appointments, auth, doctors, me
+from .routers import appointments, auth, doctors, me, payments
 
 logging.basicConfig(level=logging.INFO)
 
@@ -22,6 +22,7 @@ def create_app() -> FastAPI:
     app.include_router(me.router)
     app.include_router(doctors.router)
     app.include_router(appointments.router)
+    app.include_router(payments.router)
 
     @app.get("/health", tags=["health"])
     def health() -> dict[str, str]:

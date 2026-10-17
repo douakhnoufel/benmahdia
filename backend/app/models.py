@@ -265,6 +265,38 @@ class Appointment(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
+class PaymentStatus(str, enum.Enum):
+    pending = "pending"
+    paid = "paid"
+    failed = "failed"
+    refunded = "refunded"
+
+
+class Payment(Base):
+    """One Chargily checkout (PRD 4.4). Only Chargily's id and status are kept,
+    never card details."""
+
+    __tablename__ = "payments"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    # Null when the slot was lost before the payment arrived: such a paid
+    # payment must be refunded by the clinic.
+    appointment_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("appointments.id", ondelete="SET NULL"), index=True
+    )
+    patient_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    amount_dzd: Mapped[int] = mapped_column(Integer)
+    method: Mapped[PaymentMethod] = mapped_column(Enum(PaymentMethod, name="payment_method"))
+    chargily_id: Mapped[str] = mapped_column(String(64), unique=True)
+    status: Mapped[PaymentStatus] = mapped_column(
+        Enum(PaymentStatus, name="payment_status"), default=PaymentStatus.pending
+    )
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
 # PostgreSQL only: the database itself refuses two active appointments that
 # overlap for the same doctor, so two simultaneous bookings cannot both win
 # (PRD 4.3). SQLite (local tests) relies on the application check instead.

@@ -43,6 +43,14 @@ class Settings(BaseSettings):
     # How far ahead a patient can book (PRD 4.3).
     booking_horizon_days: int = 60
 
+    # Chargily Pay v2 (PRD 4.4). The test URL and a test_sk_ key never move
+    # real money; production needs the live URL and a live key.
+    chargily_api_url: str = "https://pay.chargily.net/test/api/v2"
+    chargily_secret_key: str = ""
+    # Public address of this API, for Chargily's webhook and the return pages
+    # (locally: an ngrok-style tunnel).
+    public_base_url: str = "http://localhost:8000"
+
     @field_validator("google_client_ids", "apple_client_ids", mode="before")
     @classmethod
     def _split(cls, value: object) -> object:
@@ -59,6 +67,8 @@ class Settings(BaseSettings):
         if self.production:
             if self.sms_provider == "console":
                 raise ValueError("SMS_PROVIDER=console is for development only")
+            if self.chargily_secret_key.startswith("test_") or "/test/" in self.chargily_api_url:
+                raise ValueError("Chargily test mode is for development only")
             for name in ("jwt_secret", "otp_secret"):
                 value = getattr(self, name)
                 if value.startswith(_DEV_SECRET_PREFIX) or len(value) < 32:
