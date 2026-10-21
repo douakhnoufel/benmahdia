@@ -59,6 +59,7 @@ def add_appointment(
     minutes=15,
     hold_expires_at=None,
     method=PaymentMethod.clinic,
+    checkin_code=None,
 ) -> Appointment:
     with Session(engine) as db:
         a = Appointment(
@@ -70,6 +71,7 @@ def add_appointment(
             price_dzd=2000,
             method=method,
             hold_expires_at=hold_expires_at,
+            checkin_code=checkin_code,
         )
         db.add(a)
         db.commit()

@@ -27,9 +27,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      # Encrypted selfie files (ID declaration, PRD 4.2).
+      - selfies:/srv/data/selfies
     ports:
       # 0.0.0.0 so a phone on the same Wi-Fi can reach it during development.
       - "8000:8000"
 
 volumes:
   db-data:
+  selfies:

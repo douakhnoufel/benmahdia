@@ -1,11 +1,14 @@
 import os
+import tempfile
 
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["ENVIRONMENT"] = "test"
+os.environ["SELFIE_DIR"] = tempfile.mkdtemp(prefix="benmahdia-selfies-")
 os.environ["GOOGLE_CLIENT_IDS"] = "google-client.apps.googleusercontent.com"
 os.environ["APPLE_CLIENT_IDS"] = "dz.benmahdia.app"
 
 from datetime import datetime, timedelta, timezone  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 import jwt  # noqa: E402
 import pytest  # noqa: E402
@@ -75,6 +78,8 @@ def social() -> Social:
 def client(sms, social):
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
+    for leftover in Path(os.environ["SELFIE_DIR"]).glob("*"):
+        leftover.unlink()
     clock.frozen = START
     app.dependency_overrides[get_sms_sender] = lambda: sms
     app.dependency_overrides[get_social_verifier] = lambda: social.verifier

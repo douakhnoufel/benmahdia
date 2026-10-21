@@ -7,7 +7,7 @@ from datetime import timedelta
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from . import audit
+from . import audit, selfies
 from .clock import clock
 from .config import get_settings
 from .db import SessionLocal
@@ -23,6 +23,8 @@ def purge(db: Session) -> int:
         if user.phone:
             db.execute(delete(OtpCode).where(OtpCode.phone == user.phone))
         db.execute(delete(RefreshToken).where(RefreshToken.user_id == user.id))
+        if user.id_declaration is not None:
+            selfies.delete(user.id_declaration.selfie_file)
         audit.record(db, "account.purged", actor_id=user.id)
         db.delete(user)
     db.commit()

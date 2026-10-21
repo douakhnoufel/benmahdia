@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
-from .routers import appointments, auth, doctors, me, payments, staff
+from .routers import appointments, auth, doctors, identity, me, payments, staff, staff_identity
 
 logging.basicConfig(level=logging.INFO)
 
@@ -27,10 +27,12 @@ def create_app() -> FastAPI:
     )
     app.include_router(auth.router)
     app.include_router(me.router)
+    app.include_router(identity.router)
     app.include_router(doctors.router)
     app.include_router(appointments.router)
     app.include_router(payments.router)
     app.include_router(staff.router)
+    app.include_router(staff_identity.router)
 
     @app.get("/health", tags=["health"])
     def health() -> dict[str, str]:

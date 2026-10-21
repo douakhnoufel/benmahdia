@@ -8,7 +8,8 @@ COPY alembic ./alembic
 COPY app ./app
 RUN pip install --no-cache-dir .
 
-RUN useradd --create-home --uid 10001 api
+RUN useradd --create-home --uid 10001 api \
+ && mkdir -p /srv/data/selfies && chown -R api /srv/data
 USER api
 
 EXPOSE 8000

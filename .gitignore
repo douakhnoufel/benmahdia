@@ -34,5 +34,6 @@ benmahdia_app/
 
 # Backend local files
 backend/*.db
+backend/data/
 .pytest_cache/
 *.egg-info/

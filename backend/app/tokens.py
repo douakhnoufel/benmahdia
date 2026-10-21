@@ -7,7 +7,14 @@ from sqlalchemy.orm import Session
 from . import schemas, security
 from .clock import clock
 from .config import get_settings
-from .models import RefreshToken, User
+from .models import AccountStatus, RefreshToken, User
+
+
+def id_status(user: User) -> str:
+    declaration = user.id_declaration
+    if declaration is not None:
+        return declaration.status.value
+    return "approved" if user.status == AccountStatus.verified else "none"
 
 
 def me(user: User) -> schemas.Me:
@@ -19,6 +26,7 @@ def me(user: User) -> schemas.Me:
         language=user.language,
         has_password=user.password_hash is not None,
         providers=sorted(i.provider.value for i in user.identities),
+        id_status=id_status(user),
     )
 
 

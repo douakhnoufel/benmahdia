@@ -40,6 +40,23 @@ class Settings(BaseSettings):
 
     deletion_grace_days: int = 30
 
+    # ID declaration (PRD 4.2). Three separate secrets, only in .env: the
+    # HMAC of the ID number, the key for the encrypted name / birth date, and
+    # the key for the encrypted selfie files.
+    id_hmac_key: str = "change-me-dev-only-id-hmac-key-0000000000000"
+    id_data_key: str = "change-me-dev-only-id-data-key-0000000000000"
+    selfie_key: str = "change-me-dev-only-selfie-key-00000000000000"
+    # Where encrypted selfie files live (a private folder, never served).
+    selfie_dir: str = "./data/selfies"
+    selfie_max_bytes: int = 2_097_152
+    # First declaration plus three resubmissions after a rejection.
+    id_max_submissions: int = 4
+
+    # Front-desk check-in: wrong codes one doctor account may try within the
+    # window before it must wait (stops guessing of booking codes).
+    checkin_max_failures: int = 10
+    checkin_window_minutes: int = 10
+
     # How far ahead a patient can book (PRD 4.3).
     booking_horizon_days: int = 60
 
@@ -73,7 +90,7 @@ class Settings(BaseSettings):
                 raise ValueError("SMS_PROVIDER=console is for development only")
             if self.chargily_secret_key.startswith("test_") or "/test/" in self.chargily_api_url:
                 raise ValueError("Chargily test mode is for development only")
-            for name in ("jwt_secret", "otp_secret"):
+            for name in ("jwt_secret", "otp_secret", "id_hmac_key", "id_data_key", "selfie_key"):
                 value = getattr(self, name)
                 if value.startswith(_DEV_SECRET_PREFIX) or len(value) < 32:
                     raise ValueError(f"{name.upper()} must be a long random secret")

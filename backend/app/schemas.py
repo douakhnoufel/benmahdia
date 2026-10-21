@@ -73,6 +73,9 @@ class Me(BaseModel):
     language: str
     has_password: bool
     providers: list[str]
+    # "none" until the patient declares their ID, then the declaration's
+    # status; "approved" also for patients the clinic approved directly.
+    id_status: Literal["none", "declared", "approved", "rejected"] = "none"
 
 
 class Session(BaseModel):

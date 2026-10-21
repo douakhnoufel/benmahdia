@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .. import audit, scheduling, schemas, security, tokens
+from .. import audit, checkin, scheduling, schemas, security, selfies, tokens
 from ..clock import clock
 from ..config import Settings, get_settings
 from ..db import get_db
@@ -20,7 +20,9 @@ from ..models import (
     AccountStatus,
     Appointment,
     AppointmentStatus,
+    AuditLog,
     DoctorProfile,
+    IdStatus,
     PaymentMethod,
     Role,
     User,
@@ -45,6 +47,12 @@ class AgendaItem(BaseModel):
     method: PaymentMethod | None
     price_dzd: int
     paid: bool
+    # When the front desk accepted the patient's booking code, if it did.
+    checked_in_at: str | None = None
+
+
+class CheckinIn(BaseModel):
+    code: str = Field(min_length=1, max_length=32)
 
 
 class StatusIn(BaseModel):
@@ -67,6 +75,14 @@ class SignupOut(BaseModel):
     id: uuid.UUID
     phone: str | None
     created_at: str
+    # "none" (nothing declared yet), "declared", "approved" or "rejected".
+    id_status: str = "none"
+    # The patient tried an ID that belongs to another account.
+    duplicate_attempt: bool = False
+
+
+class RejectIn(BaseModel):
+    reason: str | None = Field(default=None, max_length=200)
 
 
 def current_doctor(user: User = Depends(current_user), db: Session = Depends(get_db)) -> DoctorProfile:
@@ -130,6 +146,7 @@ def _item(db: Session, a: Appointment) -> AgendaItem:
         method=a.method,
         price_dzd=a.price_dzd,
         paid=a.paid_at is not None,
+        checked_in_at=utc_iso(a.checked_in_at) if a.checked_in_at else None,
     )
 
 
@@ -154,6 +171,62 @@ def agenda(
         .order_by(Appointment.start_utc)
     ).all()
     return [_item(db, a) for a in rows]
+
+
+@router.post("/checkin", response_model=AgendaItem)
+def check_in(
+    body: CheckinIn,
+    request: Request,
+    doctor: DoctorProfile = Depends(current_doctor),
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> AgendaItem:
+    """The patient shows their booking code at the front desk: mark them as
+    arrived. Only this doctor's own confirmed appointments of today match; any
+    other code looks like an unknown one. Repeating a check-in changes
+    nothing. Too many wrong codes make the account wait. The desk must still
+    look at the patient's physical ID."""
+    now = clock.now()
+    window = timedelta(minutes=settings.checkin_window_minutes)
+    failures = db.scalars(
+        select(AuditLog.created_at)
+        .where(
+            AuditLog.actor_id == doctor.user_id,
+            AuditLog.action == "checkin.failed",
+            AuditLog.created_at > now - window,
+        )
+        .order_by(AuditLog.created_at)
+    ).all()
+    if len(failures) >= settings.checkin_max_failures:
+        wait = failures[0] + window - now
+        raise ApiError(429, "too_many_attempts", retry_after=max(1, int(wait.total_seconds())))
+
+    code = checkin.normalize(body.code)
+    a = (
+        db.scalar(
+            select(Appointment).where(
+                Appointment.checkin_code == code, Appointment.doctor_id == doctor.user_id
+            )
+        )
+        if code
+        else None
+    )
+    if a is None:
+        # Never log the code itself, only that a wrong one was tried.
+        audit.record(db, "checkin.failed", actor_id=doctor.user_id, request=request)
+        db.commit()
+        raise ApiError(404, "checkin_code_invalid")
+
+    if a.checked_in_at is None:
+        if a.status != AppointmentStatus.confirmed:
+            raise ApiError(409, "not_checkable")
+        # The clinic day the visit falls on (clinic_today converts any UTC instant).
+        if scheduling.clinic_today(a.start_utc) != scheduling.clinic_today(now):
+            raise ApiError(409, "not_today")
+        a.checked_in_at = now
+        audit.record(db, "appointment.checked_in", actor_id=doctor.user_id, target=str(a.id), request=request)
+        db.commit()
+    return _item(db, a)
 
 
 @router.post("/appointments/{appointment_id}/status", response_model=AgendaItem)
@@ -233,12 +306,23 @@ def patients(
     return out
 
 
+def _signup_out(u: User, duplicates: set[uuid.UUID] | None = None) -> SignupOut:
+    return SignupOut(
+        id=u.id,
+        phone=u.phone,
+        created_at=utc_iso(u.created_at),
+        id_status=tokens.id_status(u),
+        duplicate_attempt=u.id in (duplicates or set()),
+    )
+
+
 @router.get("/signups", response_model=list[SignupOut])
 def signups(
     _: DoctorProfile = Depends(current_doctor), db: Session = Depends(get_db)
 ) -> list[SignupOut]:
     """Patients waiting for the clinic to approve their identity (PRD 4.2),
-    oldest first. ID photos are not collected yet."""
+    oldest first. Someone whose declaration was rejected waits for the patient
+    to resubmit, so they are not in the queue."""
     rows = db.scalars(
         select(User)
         .where(
@@ -248,7 +332,14 @@ def signups(
         )
         .order_by(User.created_at)
     ).all()
-    return [SignupOut(id=u.id, phone=u.phone, created_at=utc_iso(u.created_at)) for u in rows]
+    duplicates = set(
+        db.scalars(select(AuditLog.actor_id).where(AuditLog.action == "identity.duplicate"))
+    )
+    return [
+        _signup_out(u, duplicates)
+        for u in rows
+        if u.id_declaration is None or u.id_declaration.status == IdStatus.declared
+    ]
 
 
 def _signup(db: Session, user_id: uuid.UUID) -> User:
@@ -267,20 +358,41 @@ def approve(
 ) -> SignupOut:
     user = _signup(db, user_id)
     user.status = AccountStatus.verified
+    declaration = user.id_declaration
+    if declaration is not None:
+        declaration.status = IdStatus.approved
+        declaration.reject_reason = None
+        declaration.decided_at = clock.now()
+        declaration.decided_by = doctor.user_id
     audit.record(db, "signup.approved", actor_id=doctor.user_id, target=str(user.id), request=request)
     db.commit()
-    return SignupOut(id=user.id, phone=user.phone, created_at=utc_iso(user.created_at))
+    return _signup_out(user)
 
 
 @router.post("/signups/{user_id}/reject", response_model=SignupOut)
 def reject(
     user_id: uuid.UUID,
     request: Request,
+    body: RejectIn | None = None,
     doctor: DoctorProfile = Depends(current_doctor),
     db: Session = Depends(get_db),
 ) -> SignupOut:
+    """Refuses a declaration. The patient may submit again (up to the limit);
+    the stored selfie is deleted. A sign-up with no declaration is rejected
+    outright."""
     user = _signup(db, user_id)
-    user.status = AccountStatus.rejected
+    declaration = user.id_declaration
+    if declaration is None:
+        user.status = AccountStatus.rejected
+    else:
+        reason = (body.reason.strip() if body and body.reason else None) or None
+        declaration.status = IdStatus.rejected
+        declaration.reject_reason = reason
+        declaration.decided_at = clock.now()
+        declaration.decided_by = doctor.user_id
+        old_file, declaration.selfie_file = declaration.selfie_file, None
     audit.record(db, "signup.rejected", actor_id=doctor.user_id, target=str(user.id), request=request)
     db.commit()
-    return SignupOut(id=user.id, phone=user.phone, created_at=utc_iso(user.created_at))
+    if declaration is not None:
+        selfies.delete(old_file)
+    return _signup_out(user)

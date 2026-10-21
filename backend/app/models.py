@@ -11,6 +11,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     String,
     UniqueConstraint,
     Uuid,
@@ -75,6 +76,9 @@ class User(Base):
     identities: Mapped[list["Identity"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    id_declaration: Mapped["IdDeclaration | None"] = relationship(
+        back_populates="user", cascade="all, delete-orphan", uselist=False
+    )
 
     @property
     def active(self) -> bool:
@@ -99,6 +103,44 @@ class Identity(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
     user: Mapped[User] = relationship(back_populates="identities")
+
+
+class IdStatus(str, enum.Enum):
+    """Where a patient's ID declaration stands (PRD 4.2). The system never
+    says "verified": the clinic only approves what the patient declared."""
+
+    declared = "declared"
+    approved = "approved"
+    rejected = "rejected"
+
+
+class IdDeclaration(Base):
+    """What the patient declared from their ID card, and a selfie for the
+    doctor. The plain ID number is never stored: only a keyed HMAC (to catch an
+    ID already linked to another account). Name, birth date and the selfie file
+    are encrypted with keys that live only in the server's .env."""
+
+    __tablename__ = "id_declarations"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    id_hmac: Mapped[str] = mapped_column(String(64), unique=True)
+    name_enc: Mapped[bytes] = mapped_column(LargeBinary)
+    birth_enc: Mapped[bytes] = mapped_column(LargeBinary)
+    # Name of the encrypted selfie file; None once it was deleted.
+    selfie_file: Mapped[str | None] = mapped_column(String(64))
+    status: Mapped[IdStatus] = mapped_column(
+        Enum(IdStatus, name="id_status"), default=IdStatus.declared
+    )
+    # How many times the patient submitted (limit: id_max_submissions).
+    attempts: Mapped[int] = mapped_column(Integer, default=1)
+    reject_reason: Mapped[str | None] = mapped_column(String(200))
+    declared_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime)
+    decided_by: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+
+    user: Mapped[User] = relationship(back_populates="id_declaration")
 
 
 class OtpCode(Base):
@@ -239,6 +281,7 @@ class Appointment(Base):
     __table_args__ = (
         CheckConstraint("end_utc > start_utc", name="ck_appointment_range"),
         Index("ix_appointments_doctor_start", "doctor_id", "start_utc"),
+        UniqueConstraint("checkin_code", name="uq_appointments_checkin_code"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
@@ -264,6 +307,11 @@ class Appointment(Base):
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime)
     # Set by Chargily's webhook for cards, or by the doctor for pay-at-clinic.
     paid_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Short code the patient shows at the front desk; set once the appointment
+    # is confirmed. It identifies the appointment and holds no personal data.
+    checkin_code: Mapped[str | None] = mapped_column(String(8))
+    # Set when the doctor's dashboard accepted the code on the day.
+    checked_in_at: Mapped[datetime | None] = mapped_column(DateTime)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 

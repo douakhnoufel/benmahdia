@@ -7,7 +7,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from .. import audit, scheduling
+from .. import audit, checkin, scheduling
 from ..clock import clock
 from ..config import get_settings
 from ..db import get_db
@@ -48,6 +48,8 @@ class AppointmentOut(BaseModel):
     price_dzd: int
     method: PaymentMethod | None
     hold_expires_at: str | None
+    # Shown to the patient to present at the front desk; only while confirmed.
+    checkin_code: str | None = None
 
 
 class FollowUpOut(BaseModel):
@@ -68,6 +70,7 @@ def _out(db: Session, a: Appointment) -> AppointmentOut:
         price_dzd=a.price_dzd,
         method=a.method,
         hold_expires_at=utc_iso(a.hold_expires_at) if a.hold_expires_at else None,
+        checkin_code=a.checkin_code if a.status == AppointmentStatus.confirmed else None,
     )
 
 
@@ -217,6 +220,7 @@ def confirm(
     a.status = AppointmentStatus.confirmed
     a.method = body.method
     a.hold_expires_at = None
+    checkin.issue(db, a)
     audit.record(db, "appointment.confirmed", actor_id=patient.id, target=str(a.id), request=request)
     db.commit()
     return _out(db, a)
