@@ -1663,6 +1663,498 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'متابعة'**
   String get profileDoneAction;
+
+  /// No description provided for @navAppointments.
+  ///
+  /// In ar, this message translates to:
+  /// **'مواعيدي'**
+  String get navAppointments;
+
+  /// No description provided for @navRecovery.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعافيّ'**
+  String get navRecovery;
+
+  /// No description provided for @navCompanion.
+  ///
+  /// In ar, this message translates to:
+  /// **'المرافق'**
+  String get navCompanion;
+
+  /// No description provided for @recoveryTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعافيّ'**
+  String get recoveryTitle;
+
+  /// No description provided for @recoveryTagline.
+  ///
+  /// In ar, this message translates to:
+  /// **'خطوة بخطوة نحو التعافي'**
+  String get recoveryTagline;
+
+  /// No description provided for @recoveryNextGoal.
+  ///
+  /// In ar, this message translates to:
+  /// **'الهدف التالي: {goal}'**
+  String recoveryNextGoal(String goal);
+
+  /// No description provided for @recoveryToGo.
+  ///
+  /// In ar, this message translates to:
+  /// **'بقي {days} على هدفك'**
+  String recoveryToGo(String days);
+
+  /// No description provided for @recoveryLongest.
+  ///
+  /// In ar, this message translates to:
+  /// **'أطول مدة'**
+  String get recoveryLongest;
+
+  /// No description provided for @recoveryTotal.
+  ///
+  /// In ar, this message translates to:
+  /// **'مجموع الأيام'**
+  String get recoveryTotal;
+
+  /// No description provided for @recoveryRelapse.
+  ///
+  /// In ar, this message translates to:
+  /// **'مررت بانتكاسة'**
+  String get recoveryRelapse;
+
+  /// No description provided for @recoveryRelapseTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا بأس، هذا جزء من الطريق'**
+  String get recoveryRelapseTitle;
+
+  /// No description provided for @recoveryRelapseBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'سيبدأ عدّادك من جديد، لكن أطول مدة ومجموع أيامك يبقيان محفوظين. سيُعلَم طبيبك ليساندك.'**
+  String get recoveryRelapseBody;
+
+  /// No description provided for @recoveryRelapseNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'ملاحظة أو سبب (اختياري)'**
+  String get recoveryRelapseNote;
+
+  /// No description provided for @recoveryRelapseConfirm.
+  ///
+  /// In ar, this message translates to:
+  /// **'أعد بدء العدّاد'**
+  String get recoveryRelapseConfirm;
+
+  /// No description provided for @recoveryRelapseCancel.
+  ///
+  /// In ar, this message translates to:
+  /// **'تراجع'**
+  String get recoveryRelapseCancel;
+
+  /// No description provided for @recoveryRelapseDone.
+  ///
+  /// In ar, this message translates to:
+  /// **'بداية جديدة. أيامك السابقة محفوظة.'**
+  String get recoveryRelapseDone;
+
+  /// No description provided for @recoveryQuoteTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'اقتباس اليوم'**
+  String get recoveryQuoteTitle;
+
+  /// No description provided for @recoveryMedsTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدويتي اليوم'**
+  String get recoveryMedsTitle;
+
+  /// No description provided for @recoveryMedsCount.
+  ///
+  /// In ar, this message translates to:
+  /// **'{taken} من {total}'**
+  String recoveryMedsCount(int taken, int total);
+
+  /// No description provided for @recoveryNoMeds.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا أدوية لليوم.'**
+  String get recoveryNoMeds;
+
+  /// No description provided for @recoveryDoseTake.
+  ///
+  /// In ar, this message translates to:
+  /// **'أخذته'**
+  String get recoveryDoseTake;
+
+  /// No description provided for @recoveryDoseSkip.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم آخذه'**
+  String get recoveryDoseSkip;
+
+  /// No description provided for @recoveryDoseTaken.
+  ///
+  /// In ar, this message translates to:
+  /// **'أُخذ'**
+  String get recoveryDoseTaken;
+
+  /// No description provided for @recoveryDoseSkipped.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُؤخذ'**
+  String get recoveryDoseSkipped;
+
+  /// No description provided for @recoveryNextAppt.
+  ///
+  /// In ar, this message translates to:
+  /// **'موعدك القادم'**
+  String get recoveryNextAppt;
+
+  /// No description provided for @clinicTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'عيادتك'**
+  String get clinicTitle;
+
+  /// No description provided for @clinicOpenToday.
+  ///
+  /// In ar, this message translates to:
+  /// **'مفتوحة اليوم'**
+  String get clinicOpenToday;
+
+  /// No description provided for @clinicClosedToday.
+  ///
+  /// In ar, this message translates to:
+  /// **'مغلقة اليوم'**
+  String get clinicClosedToday;
+
+  /// No description provided for @clinicHoursToday.
+  ///
+  /// In ar, this message translates to:
+  /// **'مواعيد العمل اليوم'**
+  String get clinicHoursToday;
+
+  /// No description provided for @clinicMaps.
+  ///
+  /// In ar, this message translates to:
+  /// **'افتح في خرائط Google'**
+  String get clinicMaps;
+
+  /// No description provided for @clinicCall.
+  ///
+  /// In ar, this message translates to:
+  /// **'اتصل بالعيادة'**
+  String get clinicCall;
+
+  /// No description provided for @clinicCallNumber.
+  ///
+  /// In ar, this message translates to:
+  /// **'اتصل بالرقم {phone}'**
+  String clinicCallNumber(String phone);
+
+  /// No description provided for @companionTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'المرافق'**
+  String get companionTitle;
+
+  /// No description provided for @companionSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مساعد ذكي، ولست طبيباً'**
+  String get companionSubtitle;
+
+  /// No description provided for @companionIntroTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'قبل أن نبدأ'**
+  String get companionIntroTitle;
+
+  /// No description provided for @companionIntroAi.
+  ///
+  /// In ar, this message translates to:
+  /// **'أنا مساعد ذكي يستمع إليك بين المواعيد، ولست طبيباً.'**
+  String get companionIntroAi;
+
+  /// No description provided for @companionIntroNoDiagnosis.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا أقدّم تشخيصاً ولا أغيّر دواءك. طبيبك هو المرجع دائماً.'**
+  String get companionIntroNoDiagnosis;
+
+  /// No description provided for @companionIntroPrivacy.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يرى طبيبك إلا الرسائل التي تُنبَّه لسلامتك، وملخّصاً قصيراً إن وافقت.'**
+  String get companionIntroPrivacy;
+
+  /// No description provided for @companionIntroAgree.
+  ///
+  /// In ar, this message translates to:
+  /// **'فهمت، لنبدأ'**
+  String get companionIntroAgree;
+
+  /// No description provided for @companionGreeting.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرحباً، أنا المرافق. أنا هنا لأستمع إليك. كيف تشعر الآن؟'**
+  String get companionGreeting;
+
+  /// No description provided for @companionHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب رسالتك…'**
+  String get companionHint;
+
+  /// No description provided for @companionSend.
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال'**
+  String get companionSend;
+
+  /// No description provided for @companionTyping.
+  ///
+  /// In ar, this message translates to:
+  /// **'المرافق يكتب…'**
+  String get companionTyping;
+
+  /// No description provided for @companionDisclaimer.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يقدّم المرافق تشخيصاً ولا يغيّر دواءك.'**
+  String get companionDisclaimer;
+
+  /// No description provided for @companionUrgent.
+  ///
+  /// In ar, this message translates to:
+  /// **'مساعدة عاجلة'**
+  String get companionUrgent;
+
+  /// No description provided for @companionQuickCraving.
+  ///
+  /// In ar, this message translates to:
+  /// **'أشعر برغبة قوية'**
+  String get companionQuickCraving;
+
+  /// No description provided for @companionQuickBreath.
+  ///
+  /// In ar, this message translates to:
+  /// **'تمرين التنفّس'**
+  String get companionQuickBreath;
+
+  /// No description provided for @companionQuickDoctor.
+  ///
+  /// In ar, this message translates to:
+  /// **'أريد التحدّث مع الطبيب'**
+  String get companionQuickDoctor;
+
+  /// No description provided for @companionBook.
+  ///
+  /// In ar, this message translates to:
+  /// **'احجز موعداً'**
+  String get companionBook;
+
+  /// No description provided for @crisisTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'أنت لست وحدك'**
+  String get crisisTitle;
+
+  /// No description provided for @crisisBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'إذا كنت في خطر أو تفكّر في إيذاء نفسك، اتصل الآن.'**
+  String get crisisBody;
+
+  /// No description provided for @crisisEmergency.
+  ///
+  /// In ar, this message translates to:
+  /// **'أرقام الطوارئ: [تؤكّدها العيادة]'**
+  String get crisisEmergency;
+
+  /// No description provided for @crisisClose.
+  ///
+  /// In ar, this message translates to:
+  /// **'إغلاق'**
+  String get crisisClose;
+
+  /// No description provided for @addictionType.
+  ///
+  /// In ar, this message translates to:
+  /// **'{type, select, opioids{المواد الأفيونية} cannabis{القنب} alcohol{الكحول} tobacco{التبغ} pills{الأقراص المهلوسة} gambling{القمار} other{أخرى}}'**
+  String addictionType(String type);
+
+  /// No description provided for @recoveryCleanSince.
+  ///
+  /// In ar, this message translates to:
+  /// **'دون تعاطٍ منذ {date}'**
+  String recoveryCleanSince(String date);
+
+  /// No description provided for @checkInTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الأسبوع'**
+  String get checkInTitle;
+
+  /// No description provided for @checkInCount.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} من 7'**
+  String checkInCount(int count);
+
+  /// No description provided for @checkInAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرّ اليوم دون تعاطٍ'**
+  String get checkInAction;
+
+  /// No description provided for @checkInDone.
+  ///
+  /// In ar, this message translates to:
+  /// **'سُجّل يومك. أحسنت.'**
+  String get checkInDone;
+
+  /// No description provided for @checkInDayDone.
+  ///
+  /// In ar, this message translates to:
+  /// **'{day}: سُجّل'**
+  String checkInDayDone(String day);
+
+  /// No description provided for @checkInDayOpen.
+  ///
+  /// In ar, this message translates to:
+  /// **'{day}: لم يُسجّل'**
+  String checkInDayOpen(String day);
+
+  /// No description provided for @checkInReminder.
+  ///
+  /// In ar, this message translates to:
+  /// **'التذكير اليومي'**
+  String get checkInReminder;
+
+  /// No description provided for @checkInReminderOff.
+  ///
+  /// In ar, this message translates to:
+  /// **'متوقف'**
+  String get checkInReminderOff;
+
+  /// No description provided for @checkInReminderPick.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر وقت التذكير'**
+  String get checkInReminderPick;
+
+  /// No description provided for @checkInReminderStop.
+  ///
+  /// In ar, this message translates to:
+  /// **'إيقاف التذكير'**
+  String get checkInReminderStop;
+
+  /// No description provided for @relapseWhen.
+  ///
+  /// In ar, this message translates to:
+  /// **'متى حدث ذلك؟'**
+  String get relapseWhen;
+
+  /// No description provided for @relapseToday.
+  ///
+  /// In ar, this message translates to:
+  /// **'اليوم'**
+  String get relapseToday;
+
+  /// No description provided for @relapseYesterday.
+  ///
+  /// In ar, this message translates to:
+  /// **'أمس'**
+  String get relapseYesterday;
+
+  /// No description provided for @relapseTime.
+  ///
+  /// In ar, this message translates to:
+  /// **'الوقت'**
+  String get relapseTime;
+
+  /// No description provided for @addictionFormTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'ممّ تتعافى؟'**
+  String get addictionFormTitle;
+
+  /// No description provided for @addictionFormBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر النوع وتاريخ آخر تعاطٍ. سيراجع طبيبك هذه المعلومات.'**
+  String get addictionFormBody;
+
+  /// No description provided for @addictionTypeLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'النوع'**
+  String get addictionTypeLabel;
+
+  /// No description provided for @addictionSubstance.
+  ///
+  /// In ar, this message translates to:
+  /// **'المادة بالتحديد (اختياري)'**
+  String get addictionSubstance;
+
+  /// No description provided for @addictionSubstanceHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثال: اسم الدواء أو المادة'**
+  String get addictionSubstanceHint;
+
+  /// No description provided for @addictionCleanSince.
+  ///
+  /// In ar, this message translates to:
+  /// **'دون تعاطٍ منذ'**
+  String get addictionCleanSince;
+
+  /// No description provided for @addictionPickDate.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر التاريخ'**
+  String get addictionPickDate;
+
+  /// No description provided for @addictionSave.
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ'**
+  String get addictionSave;
+
+  /// No description provided for @addictionAdd.
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ما تتعافى منه'**
+  String get addictionAdd;
+
+  /// No description provided for @addictionAddAnother.
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف إدماناً آخر'**
+  String get addictionAddAnother;
+
+  /// No description provided for @addictionEmpty.
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف ما تتعافى منه ليبدأ عدّادك.'**
+  String get addictionEmpty;
+
+  /// No description provided for @addictionPending.
+  ///
+  /// In ar, this message translates to:
+  /// **'في انتظار مراجعة الطبيب'**
+  String get addictionPending;
+
+  /// No description provided for @addictionSaved.
+  ///
+  /// In ar, this message translates to:
+  /// **'حُفظ. سيراجعه طبيبك.'**
+  String get addictionSaved;
 }
 
 class _AppLocalizationsDelegate

@@ -957,4 +957,283 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get profileDoneAction => 'متابعة';
+
+  @override
+  String get navAppointments => 'مواعيدي';
+
+  @override
+  String get navRecovery => 'تعافيّ';
+
+  @override
+  String get navCompanion => 'المرافق';
+
+  @override
+  String get recoveryTitle => 'تعافيّ';
+
+  @override
+  String get recoveryTagline => 'خطوة بخطوة نحو التعافي';
+
+  @override
+  String recoveryNextGoal(String goal) {
+    return 'الهدف التالي: $goal';
+  }
+
+  @override
+  String recoveryToGo(String days) {
+    return 'بقي $days على هدفك';
+  }
+
+  @override
+  String get recoveryLongest => 'أطول مدة';
+
+  @override
+  String get recoveryTotal => 'مجموع الأيام';
+
+  @override
+  String get recoveryRelapse => 'مررت بانتكاسة';
+
+  @override
+  String get recoveryRelapseTitle => 'لا بأس، هذا جزء من الطريق';
+
+  @override
+  String get recoveryRelapseBody =>
+      'سيبدأ عدّادك من جديد، لكن أطول مدة ومجموع أيامك يبقيان محفوظين. سيُعلَم طبيبك ليساندك.';
+
+  @override
+  String get recoveryRelapseNote => 'ملاحظة أو سبب (اختياري)';
+
+  @override
+  String get recoveryRelapseConfirm => 'أعد بدء العدّاد';
+
+  @override
+  String get recoveryRelapseCancel => 'تراجع';
+
+  @override
+  String get recoveryRelapseDone => 'بداية جديدة. أيامك السابقة محفوظة.';
+
+  @override
+  String get recoveryQuoteTitle => 'اقتباس اليوم';
+
+  @override
+  String get recoveryMedsTitle => 'أدويتي اليوم';
+
+  @override
+  String recoveryMedsCount(int taken, int total) {
+    return '$taken من $total';
+  }
+
+  @override
+  String get recoveryNoMeds => 'لا أدوية لليوم.';
+
+  @override
+  String get recoveryDoseTake => 'أخذته';
+
+  @override
+  String get recoveryDoseSkip => 'لم آخذه';
+
+  @override
+  String get recoveryDoseTaken => 'أُخذ';
+
+  @override
+  String get recoveryDoseSkipped => 'لم يُؤخذ';
+
+  @override
+  String get recoveryNextAppt => 'موعدك القادم';
+
+  @override
+  String get clinicTitle => 'عيادتك';
+
+  @override
+  String get clinicOpenToday => 'مفتوحة اليوم';
+
+  @override
+  String get clinicClosedToday => 'مغلقة اليوم';
+
+  @override
+  String get clinicHoursToday => 'مواعيد العمل اليوم';
+
+  @override
+  String get clinicMaps => 'افتح في خرائط Google';
+
+  @override
+  String get clinicCall => 'اتصل بالعيادة';
+
+  @override
+  String clinicCallNumber(String phone) {
+    return 'اتصل بالرقم $phone';
+  }
+
+  @override
+  String get companionTitle => 'المرافق';
+
+  @override
+  String get companionSubtitle => 'مساعد ذكي، ولست طبيباً';
+
+  @override
+  String get companionIntroTitle => 'قبل أن نبدأ';
+
+  @override
+  String get companionIntroAi =>
+      'أنا مساعد ذكي يستمع إليك بين المواعيد، ولست طبيباً.';
+
+  @override
+  String get companionIntroNoDiagnosis =>
+      'لا أقدّم تشخيصاً ولا أغيّر دواءك. طبيبك هو المرجع دائماً.';
+
+  @override
+  String get companionIntroPrivacy =>
+      'لا يرى طبيبك إلا الرسائل التي تُنبَّه لسلامتك، وملخّصاً قصيراً إن وافقت.';
+
+  @override
+  String get companionIntroAgree => 'فهمت، لنبدأ';
+
+  @override
+  String get companionGreeting =>
+      'مرحباً، أنا المرافق. أنا هنا لأستمع إليك. كيف تشعر الآن؟';
+
+  @override
+  String get companionHint => 'اكتب رسالتك…';
+
+  @override
+  String get companionSend => 'إرسال';
+
+  @override
+  String get companionTyping => 'المرافق يكتب…';
+
+  @override
+  String get companionDisclaimer => 'لا يقدّم المرافق تشخيصاً ولا يغيّر دواءك.';
+
+  @override
+  String get companionUrgent => 'مساعدة عاجلة';
+
+  @override
+  String get companionQuickCraving => 'أشعر برغبة قوية';
+
+  @override
+  String get companionQuickBreath => 'تمرين التنفّس';
+
+  @override
+  String get companionQuickDoctor => 'أريد التحدّث مع الطبيب';
+
+  @override
+  String get companionBook => 'احجز موعداً';
+
+  @override
+  String get crisisTitle => 'أنت لست وحدك';
+
+  @override
+  String get crisisBody => 'إذا كنت في خطر أو تفكّر في إيذاء نفسك، اتصل الآن.';
+
+  @override
+  String get crisisEmergency => 'أرقام الطوارئ: [تؤكّدها العيادة]';
+
+  @override
+  String get crisisClose => 'إغلاق';
+
+  @override
+  String addictionType(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'opioids': 'المواد الأفيونية',
+      'cannabis': 'القنب',
+      'alcohol': 'الكحول',
+      'tobacco': 'التبغ',
+      'pills': 'الأقراص المهلوسة',
+      'gambling': 'القمار',
+      'other': 'أخرى',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String recoveryCleanSince(String date) {
+    return 'دون تعاطٍ منذ $date';
+  }
+
+  @override
+  String get checkInTitle => 'هذا الأسبوع';
+
+  @override
+  String checkInCount(int count) {
+    return '$count من 7';
+  }
+
+  @override
+  String get checkInAction => 'مرّ اليوم دون تعاطٍ';
+
+  @override
+  String get checkInDone => 'سُجّل يومك. أحسنت.';
+
+  @override
+  String checkInDayDone(String day) {
+    return '$day: سُجّل';
+  }
+
+  @override
+  String checkInDayOpen(String day) {
+    return '$day: لم يُسجّل';
+  }
+
+  @override
+  String get checkInReminder => 'التذكير اليومي';
+
+  @override
+  String get checkInReminderOff => 'متوقف';
+
+  @override
+  String get checkInReminderPick => 'اختر وقت التذكير';
+
+  @override
+  String get checkInReminderStop => 'إيقاف التذكير';
+
+  @override
+  String get relapseWhen => 'متى حدث ذلك؟';
+
+  @override
+  String get relapseToday => 'اليوم';
+
+  @override
+  String get relapseYesterday => 'أمس';
+
+  @override
+  String get relapseTime => 'الوقت';
+
+  @override
+  String get addictionFormTitle => 'ممّ تتعافى؟';
+
+  @override
+  String get addictionFormBody =>
+      'اختر النوع وتاريخ آخر تعاطٍ. سيراجع طبيبك هذه المعلومات.';
+
+  @override
+  String get addictionTypeLabel => 'النوع';
+
+  @override
+  String get addictionSubstance => 'المادة بالتحديد (اختياري)';
+
+  @override
+  String get addictionSubstanceHint => 'مثال: اسم الدواء أو المادة';
+
+  @override
+  String get addictionCleanSince => 'دون تعاطٍ منذ';
+
+  @override
+  String get addictionPickDate => 'اختر التاريخ';
+
+  @override
+  String get addictionSave => 'حفظ';
+
+  @override
+  String get addictionAdd => 'أضف ما تتعافى منه';
+
+  @override
+  String get addictionAddAnother => 'أضف إدماناً آخر';
+
+  @override
+  String get addictionEmpty => 'أضف ما تتعافى منه ليبدأ عدّادك.';
+
+  @override
+  String get addictionPending => 'في انتظار مراجعة الطبيب';
+
+  @override
+  String get addictionSaved => 'حُفظ. سيراجعه طبيبك.';
 }

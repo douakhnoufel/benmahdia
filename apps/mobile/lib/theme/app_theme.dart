@@ -128,22 +128,32 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(AppRadius.field),
         ),
       ),
+      // Bottom nav (DESIGN.md): the active tab sits on a teal.50 pill in
+      // teal.700, inactive ones in text.body, so labels stay readable.
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        indicatorColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: AppColors.teal50,
+        indicatorShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+        ),
         elevation: 0,
+        height: 68,
         iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(
             color: states.contains(WidgetState.selected)
-                ? AppColors.teal500
-                : AppColors.textMuted,
+                ? AppColors.teal700
+                : AppColors.textBody,
           ),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => font(AppType.caption.style()).copyWith(
             color: states.contains(WidgetState.selected)
-                ? AppColors.teal500
-                : AppColors.textMuted,
+                ? AppColors.teal700
+                : AppColors.textBody,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w600
+                : FontWeight.w500,
           ),
         ),
       ),

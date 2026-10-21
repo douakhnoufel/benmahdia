@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/app_route.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_tokens.dart';
+import '../home/home_scope.dart';
 import '../profile/identity_models.dart';
 import '../profile/identity_repository.dart';
 import '../profile/profile_card.dart';
@@ -25,6 +26,8 @@ void openBooking(BuildContext context) {
   void push(Widget page) =>
       unawaited(navigator.push<void>(appRoute(page, reduced: reduced)));
   void home() => navigator.popUntil((route) => route.isFirst);
+  // Inside the home shell, its tabs show the new booking after a refresh.
+  final shell = HomeShellScope.maybeOf(context);
 
   push(
     BookDoctorScreen(
@@ -38,10 +41,16 @@ void openBooking(BuildContext context) {
               onDone: (appointment) => push(
                 BookDoneScreen(
                   appointment: appointment,
-                  onHome: home,
+                  onHome: () {
+                    home();
+                    shell?.refresh();
+                  },
                   onAppointments: () {
                     home();
-                    openAppointments(context);
+                    if (shell == null) return openAppointments(context);
+                    shell
+                      ..refresh()
+                      ..select(HomeTab.appointments);
                   },
                 ),
               ),
@@ -58,10 +67,7 @@ void openAppointments(BuildContext context) {
   final navigator = Navigator.of(context);
   unawaited(
     navigator.push<void>(
-      appRoute(
-        const _AppointmentsGate(),
-        reduced: AppMotion.reduced(context),
-      ),
+      appRoute(const AppointmentsGate(), reduced: AppMotion.reduced(context)),
     ),
   );
 }
@@ -69,8 +75,11 @@ void openAppointments(BuildContext context) {
 /// The appointments, with booking locked until the profile is approved. A
 /// patient who skipped "Complete your profile" can still look around: the
 /// card says what is missing, and "book" leads to it.
-class _AppointmentsGate extends ConsumerWidget {
-  const _AppointmentsGate();
+class AppointmentsGate extends ConsumerWidget {
+  const AppointmentsGate({super.key, this.showBack});
+
+  /// See [MyAppointmentsScreen.showBack].
+  final bool? showBack;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -83,6 +92,7 @@ class _AppointmentsGate extends ConsumerWidget {
     void refresh() => ref.invalidate(identityStateProvider);
 
     return MyAppointmentsScreen(
+      showBack: showBack,
       banner: locked == null
           ? null
           : ProfileCard(
@@ -93,9 +103,9 @@ class _AppointmentsGate extends ConsumerWidget {
       onBookNew: locked == null
           ? () => openBooking(context)
           : locked.status == IdStatus.declared
-          ? () => ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(l10n.profileCardDeclaredBody)))
+          ? () => ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(l10n.profileCardDeclaredBody)),
+            )
           : completeProfile,
     );
   }

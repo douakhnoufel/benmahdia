@@ -971,4 +971,288 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get profileDoneAction => 'Continuer';
+
+  @override
+  String get navAppointments => 'Rendez-vous';
+
+  @override
+  String get navRecovery => 'Mon parcours';
+
+  @override
+  String get navCompanion => 'Compagnon';
+
+  @override
+  String get recoveryTitle => 'Mon parcours';
+
+  @override
+  String get recoveryTagline => 'Pas à pas vers le rétablissement';
+
+  @override
+  String recoveryNextGoal(String goal) {
+    return 'Prochain objectif : $goal';
+  }
+
+  @override
+  String recoveryToGo(String days) {
+    return 'Encore $days avant votre objectif';
+  }
+
+  @override
+  String get recoveryLongest => 'Plus longue série';
+
+  @override
+  String get recoveryTotal => 'Total des jours';
+
+  @override
+  String get recoveryRelapse => 'J\'ai rechuté';
+
+  @override
+  String get recoveryRelapseTitle => 'Ce n\'est pas un échec';
+
+  @override
+  String get recoveryRelapseBody =>
+      'Votre compteur repart de zéro, mais votre plus longue série et le total de vos jours restent enregistrés. Votre médecin sera prévenu pour vous soutenir.';
+
+  @override
+  String get recoveryRelapseNote => 'Une note ou un déclencheur (facultatif)';
+
+  @override
+  String get recoveryRelapseConfirm => 'Redémarrer mon compteur';
+
+  @override
+  String get recoveryRelapseCancel => 'Annuler';
+
+  @override
+  String get recoveryRelapseDone =>
+      'Un nouveau départ. Vos jours précédents restent enregistrés.';
+
+  @override
+  String get recoveryQuoteTitle => 'Citation du jour';
+
+  @override
+  String get recoveryMedsTitle => 'Mes médicaments du jour';
+
+  @override
+  String recoveryMedsCount(int taken, int total) {
+    return '$taken sur $total';
+  }
+
+  @override
+  String get recoveryNoMeds => 'Aucun médicament aujourd\'hui.';
+
+  @override
+  String get recoveryDoseTake => 'Pris';
+
+  @override
+  String get recoveryDoseSkip => 'Pas pris';
+
+  @override
+  String get recoveryDoseTaken => 'Pris';
+
+  @override
+  String get recoveryDoseSkipped => 'Non pris';
+
+  @override
+  String get recoveryNextAppt => 'Votre prochain rendez-vous';
+
+  @override
+  String get clinicTitle => 'Votre cabinet';
+
+  @override
+  String get clinicOpenToday => 'Ouvert aujourd\'hui';
+
+  @override
+  String get clinicClosedToday => 'Fermé aujourd\'hui';
+
+  @override
+  String get clinicHoursToday => 'Horaires aujourd\'hui';
+
+  @override
+  String get clinicMaps => 'Ouvrir dans Google Maps';
+
+  @override
+  String get clinicCall => 'Appeler le cabinet';
+
+  @override
+  String clinicCallNumber(String phone) {
+    return 'Appeler le $phone';
+  }
+
+  @override
+  String get companionTitle => 'Compagnon';
+
+  @override
+  String get companionSubtitle => 'Assistant IA, pas un médecin';
+
+  @override
+  String get companionIntroTitle => 'Avant de commencer';
+
+  @override
+  String get companionIntroAi =>
+      'Je suis un assistant IA qui vous écoute entre les rendez-vous. Je ne suis pas médecin.';
+
+  @override
+  String get companionIntroNoDiagnosis =>
+      'Je ne pose pas de diagnostic et ne modifie pas votre traitement. Votre médecin reste votre référent.';
+
+  @override
+  String get companionIntroPrivacy =>
+      'Votre médecin ne voit que les messages signalés pour votre sécurité, et un court résumé si vous l\'acceptez.';
+
+  @override
+  String get companionIntroAgree => 'J\'ai compris, commencer';
+
+  @override
+  String get companionGreeting =>
+      'Bonjour, je suis le Compagnon. Je suis là pour vous écouter. Comment vous sentez-vous en ce moment ?';
+
+  @override
+  String get companionHint => 'Écrivez votre message…';
+
+  @override
+  String get companionSend => 'Envoyer';
+
+  @override
+  String get companionTyping => 'Le Compagnon écrit…';
+
+  @override
+  String get companionDisclaimer =>
+      'Le Compagnon ne pose pas de diagnostic et ne modifie pas votre traitement.';
+
+  @override
+  String get companionUrgent => 'Aide urgente';
+
+  @override
+  String get companionQuickCraving => 'J\'ai une forte envie';
+
+  @override
+  String get companionQuickBreath => 'Exercice de respiration';
+
+  @override
+  String get companionQuickDoctor => 'Je veux parler au médecin';
+
+  @override
+  String get companionBook => 'Prendre rendez-vous';
+
+  @override
+  String get crisisTitle => 'Vous n\'êtes pas seul(e)';
+
+  @override
+  String get crisisBody =>
+      'Si vous êtes en danger ou pensez à vous faire du mal, appelez maintenant.';
+
+  @override
+  String get crisisEmergency =>
+      'Numéros d\'urgence : [à confirmer par le cabinet]';
+
+  @override
+  String get crisisClose => 'Fermer';
+
+  @override
+  String addictionType(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'opioids': 'Opioïdes',
+      'cannabis': 'Cannabis',
+      'alcohol': 'Alcool',
+      'tobacco': 'Tabac',
+      'pills': 'Psychotropes (comprimés)',
+      'gambling': 'Jeux d\'argent',
+      'other': 'Autre',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String recoveryCleanSince(String date) {
+    return 'Sans consommation depuis le $date';
+  }
+
+  @override
+  String get checkInTitle => 'Cette semaine';
+
+  @override
+  String checkInCount(int count) {
+    return '$count sur 7';
+  }
+
+  @override
+  String get checkInAction => 'Journée sans consommation';
+
+  @override
+  String get checkInDone => 'Journée enregistrée. Bravo.';
+
+  @override
+  String checkInDayDone(String day) {
+    return '$day : validé';
+  }
+
+  @override
+  String checkInDayOpen(String day) {
+    return '$day : non validé';
+  }
+
+  @override
+  String get checkInReminder => 'Rappel quotidien';
+
+  @override
+  String get checkInReminderOff => 'Désactivé';
+
+  @override
+  String get checkInReminderPick => 'Choisir l\'heure du rappel';
+
+  @override
+  String get checkInReminderStop => 'Désactiver le rappel';
+
+  @override
+  String get relapseWhen => 'Quand est-ce arrivé ?';
+
+  @override
+  String get relapseToday => 'Aujourd\'hui';
+
+  @override
+  String get relapseYesterday => 'Hier';
+
+  @override
+  String get relapseTime => 'Heure';
+
+  @override
+  String get addictionFormTitle => 'De quoi vous rétablissez-vous ?';
+
+  @override
+  String get addictionFormBody =>
+      'Choisissez le type et la date de votre dernière consommation. Votre médecin vérifiera ces informations.';
+
+  @override
+  String get addictionTypeLabel => 'Type';
+
+  @override
+  String get addictionSubstance => 'Produit précis (facultatif)';
+
+  @override
+  String get addictionSubstanceHint => 'Ex. : nom du médicament ou du produit';
+
+  @override
+  String get addictionCleanSince => 'Sans consommation depuis le';
+
+  @override
+  String get addictionPickDate => 'Choisir la date';
+
+  @override
+  String get addictionSave => 'Enregistrer';
+
+  @override
+  String get addictionAdd => 'Ajouter ce dont je me rétablis';
+
+  @override
+  String get addictionAddAnother => 'Ajouter une autre addiction';
+
+  @override
+  String get addictionEmpty =>
+      'Ajoutez ce dont vous vous rétablissez pour lancer votre compteur.';
+
+  @override
+  String get addictionPending => 'En attente de validation du médecin';
+
+  @override
+  String get addictionSaved => 'Enregistré. Votre médecin va le vérifier.';
 }

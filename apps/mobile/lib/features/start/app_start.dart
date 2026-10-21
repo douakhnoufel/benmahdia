@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_tokens.dart';
 import '../auth/auth_flow.dart';
-import '../booking/booking_flow.dart';
 import '../intro/intro_screen.dart';
-import '../splash/splash_screen.dart';
+import '../home/home_shell.dart';
 import '../profile/profile_flow.dart';
+import '../splash/splash_screen.dart';
 import '../welcome/welcome_screen.dart';
 
 enum _Stage { splash, intro, welcome }
@@ -50,17 +50,13 @@ class _AppStartState extends State<AppStart> {
           // booking stays closed until the clinic approves them.
           onCreateAccount: () => openSignUp(
             context,
-            onSignedIn: (_) => openProfile(
-              context,
-              afterFinish: () => openAppointments(context),
-            ),
+            onSignedIn: (_) =>
+                openProfile(context, afterFinish: () => openHome(context)),
           ),
-          // Everyone lands on their appointments; a card there shows what is
-          // missing from the profile.
-          onLogin: () => openLogin(
-            context,
-            onSignedIn: (_) => openAppointments(context),
-          ),
+          // Everyone lands on the home shell (recovery tab); the
+          // appointments tab shows what is missing from the profile.
+          onLogin: () =>
+              openLogin(context, onSignedIn: (_) => openHome(context)),
         ),
       },
     );

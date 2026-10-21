@@ -17,12 +17,17 @@ class MyAppointmentsScreen extends ConsumerStatefulWidget {
     super.key,
     required this.onBookNew,
     this.banner,
+    this.showBack,
   });
 
   final VoidCallback onBookNew;
 
   /// Shown under the title, e.g. the "Complete your profile" card.
   final Widget? banner;
+
+  /// Whether the title row has a back button. By default, when there is a
+  /// screen to go back to; false as a tab of the home shell.
+  final bool? showBack;
 
   @override
   ConsumerState<MyAppointmentsScreen> createState() =>
@@ -202,7 +207,7 @@ class _MyAppointmentsScreenState extends ConsumerState<MyAppointmentsScreen> {
                   ),
                   child: Row(
                     children: [
-                      if (Navigator.of(context).canPop())
+                      if (widget.showBack ?? Navigator.of(context).canPop())
                         const BackButton()
                       else
                         const SizedBox(width: AppSpace.lg),
