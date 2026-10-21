@@ -99,6 +99,17 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   return parse<T>(res);
 }
 
+/** Like [request], for a binary answer (the patient's selfie). */
+async function requestBlob(path: string): Promise<Blob> {
+  let res = await raw('GET', path, undefined, session?.access_token);
+  if (res.status === 401 && (await refresh())) {
+    res = await raw('GET', path, undefined, session?.access_token);
+  }
+  if (res.status === 401) setSession(null);
+  if (!res.ok) return parse<never>(res);
+  return res.blob();
+}
+
 export type AppointmentStatus = 'awaiting_payment' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
 
 export type AgendaItem = {
@@ -111,6 +122,8 @@ export type AgendaItem = {
   method: 'edahabia' | 'cib' | 'clinic' | null;
   price_dzd: number;
   paid: boolean;
+  /** When the front desk accepted the patient's booking code, if it did. */
+  checked_in_at?: string | null;
 };
 
 export type Patient = {
@@ -121,7 +134,24 @@ export type Patient = {
   next_visit: string | null;
 };
 
-export type Signup = { id: string; phone: string | null; created_at: string };
+export type Signup = {
+  id: string;
+  phone: string | null;
+  created_at: string;
+  /** What the patient declared from their ID: never "verified". */
+  id_status?: 'none' | 'declared' | 'approved' | 'rejected';
+  /** The patient tried an ID that belongs to another account. */
+  duplicate_attempt?: boolean;
+};
+
+/** The decrypted declaration. The ID number is never available. */
+export type Identity = {
+  full_name: string;
+  birth_date: string;
+  declared_at: string;
+  submissions: number;
+  has_selfie: boolean;
+};
 
 export const api = {
   async login(email: string, password: string) {
@@ -132,8 +162,13 @@ export const api = {
   setStatus: (id: string, status: 'completed' | 'no_show') =>
     request<AgendaItem>('POST', `v1/staff/appointments/${id}/status`, { status }),
   setPaid: (id: string, paid: boolean) => request<AgendaItem>('POST', `v1/staff/appointments/${id}/paid`, { paid }),
+  checkin: (code: string) => request<AgendaItem>('POST', 'v1/staff/checkin', { code }),
   patients: () => request<Patient[]>('GET', 'v1/staff/patients'),
   signups: () => request<Signup[]>('GET', 'v1/staff/signups'),
   approve: (id: string) => request<Signup>('POST', `v1/staff/signups/${id}/approve`),
-  reject: (id: string) => request<Signup>('POST', `v1/staff/signups/${id}/reject`),
+  reject: (id: string, reason?: string) =>
+    request<Signup>('POST', `v1/staff/signups/${id}/reject`, reason ? { reason } : undefined),
+  identity: (id: string) => request<Identity>('GET', `v1/staff/signups/${id}/identity`),
+  /** A temporary browser URL for the selfie; release it with URL.revokeObjectURL. */
+  selfie: async (id: string) => URL.createObjectURL(await requestBlob(`v1/staff/signups/${id}/selfie`)),
 };

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api, type AgendaItem } from '../api';
 import { useI18n } from '../i18n';
+import { CheckinBox } from '../components/CheckinBox';
 import { Badge, Button, Card } from '../components/ui';
 import { useLoad } from '../useLoad';
 import { Failed, Loading } from './Status';
@@ -39,6 +40,7 @@ export function Today({ initialDay }: { initialDay?: string }) {
           ›
         </Button>
       </div>
+      <CheckinBox onCheckedIn={replace} />
       <Card className="overflow-x-auto p-0">
         {load.state === 'loading' && <Loading />}
         {load.state === 'error' && <Failed onRetry={reload} />}
@@ -92,7 +94,10 @@ function Row({ item, onChange, timeOf }: { item: AgendaItem; onChange: (a: Agend
         {item.patient_phone ?? '—'}
       </td>
       <td className="p-md">
-        <Badge tone={statusTone[item.status]}>{t(item.status)}</Badge>
+        <div className="flex flex-wrap items-center gap-sm">
+          <Badge tone={statusTone[item.status]}>{t(item.status)}</Badge>
+          {item.checked_in_at && <Badge tone="success">{t('arrived')}</Badge>}
+        </div>
       </td>
       <td className="p-md">
         <div className="flex flex-wrap items-center gap-sm">
