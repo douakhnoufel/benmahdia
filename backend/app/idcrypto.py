@@ -36,11 +36,14 @@ def normalize_id_number(raw: str) -> str:
     return _SEPARATORS.sub("", raw.strip()).upper()
 
 
-def id_hmac(normalized_id: str) -> str:
-    """HMAC-SHA256 of the normalized ID number: the same card always gives the
-    same value, which cannot be reversed without the server's key."""
+def id_hmac(normalized_id: str, id_type: str = "national_id") -> str:
+    """HMAC-SHA256 of the normalized ID number: the same document always gives
+    the same value, which cannot be reversed without the server's key. A
+    passport number is prefixed with its type so it can never collide with a
+    national ID number; national IDs keep the plain form of earlier versions."""
     key = _key(get_settings().id_hmac_key, "benmahdia/id-hmac")
-    return hmac.new(key, normalized_id.encode(), hashlib.sha256).hexdigest()
+    message = normalized_id if id_type == "national_id" else f"{id_type}:{normalized_id}"
+    return hmac.new(key, message.encode(), hashlib.sha256).hexdigest()
 
 
 def _aead(secret: str, label: str) -> AESGCM:

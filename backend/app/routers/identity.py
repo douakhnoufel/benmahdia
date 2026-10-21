@@ -32,6 +32,8 @@ _ID_NUMBER = re.compile(r"^[A-Z0-9]{6,30}$")
 
 class IdentityIn(BaseModel):
     # What the patient confirmed on the review screen.
+    # The document read: the national ID card (default) or a passport.
+    id_type: Literal["national_id", "passport"] = "national_id"
     id_number: str = Field(min_length=1, max_length=64)
     full_name: str = Field(min_length=1, max_length=160)
     birth_date: date
@@ -126,7 +128,7 @@ def declare(
     birth = _clean_birth(body.birth_date)
     jpeg = _selfie_bytes(body.selfie_jpeg_base64, settings)
 
-    digest = idcrypto.id_hmac(number)
+    digest = idcrypto.id_hmac(number, body.id_type)
     owner = str(user.id)
 
     def refuse_duplicate() -> ApiError:
@@ -155,6 +157,7 @@ def declare(
             IdDeclaration(
                 user_id=user.id,
                 id_hmac=digest,
+                id_type=body.id_type,
                 name_enc=name_enc,
                 birth_enc=birth_enc,
                 selfie_file=new_file,
@@ -165,6 +168,7 @@ def declare(
         )
     else:
         existing.id_hmac = digest
+        existing.id_type = body.id_type
         existing.name_enc = name_enc
         existing.birth_enc = birth_enc
         existing.selfie_file = new_file

@@ -172,6 +172,45 @@ def test_an_id_linked_to_another_account_is_refused_neutrally(client, sms):
     assert queue["+213661111111"]["id_status"] == "declared"
 
 
+# --- passports -----------------------------------------------------------------------------
+
+PASSPORT = "AB1234567"                    # made up
+
+
+def test_a_patient_can_declare_a_passport_and_the_doctor_sees_which(client, sms):
+    s = register(client, sms)
+    r = declare(client, s, id_type="passport", id_number=" ab 1234567 ")
+    assert r.status_code == 201, r.text
+    with Session(engine) as db:
+        d = db.query(IdDeclaration).one()
+        assert d.id_type == "passport"
+        assert d.id_hmac == idcrypto.id_hmac(PASSPORT, "passport")
+        assert PASSPORT.encode() not in d.name_enc + d.birth_enc
+    doctor_with_password()
+    v = client.get(f"/v1/staff/signups/{user_id()}/identity", headers=doc_headers(client))
+    assert v.json()["id_type"] == "passport"
+    assert PASSPORT not in v.text
+
+
+def test_the_same_passport_cannot_be_used_twice(client, sms):
+    first = register(client, sms, "0661111111")
+    second = register(client, sms, "0662222222")
+    assert declare(client, first, id_type="passport", id_number=PASSPORT).status_code == 201
+    r = declare(client, second, id_type="passport", id_number=PASSPORT.lower())
+    assert (r.status_code, code(r)) == (409, "id_already_linked")
+
+
+def test_a_passport_number_never_collides_with_an_id_card_number():
+    assert idcrypto.id_hmac(PASSPORT, "passport") != idcrypto.id_hmac(PASSPORT)
+    # national ID cards keep the HMAC of earlier versions
+    assert idcrypto.id_hmac(ID_NUMBER, "national_id") == idcrypto.id_hmac(ID_NUMBER)
+
+
+def test_an_unknown_document_type_is_refused(client, sms):
+    s = register(client, sms)
+    assert declare(client, s, id_type="driving_licence").status_code == 422
+
+
 # --- the clinic's review -------------------------------------------------------------------
 
 
@@ -183,8 +222,8 @@ def test_the_doctor_sees_name_birth_date_and_selfie_and_every_view_is_logged(cli
     uid = user_id()
     v = client.get(f"/v1/staff/signups/{uid}/identity", headers=h)
     assert v.status_code == 200, v.text
-    assert v.json() == {"full_name": NAME, "birth_date": BIRTH, "declared_at": "2026-10-17T18:00:00Z",
-                        "submissions": 1, "has_selfie": True}
+    assert v.json() == {"id_type": "national_id", "full_name": NAME, "birth_date": BIRTH,
+                        "declared_at": "2026-10-17T18:00:00Z", "submissions": 1, "has_selfie": True}
     assert ID_NUMBER not in v.text
     img = client.get(f"/v1/staff/signups/{uid}/selfie", headers=h)
     assert img.status_code == 200 and img.content == JPEG

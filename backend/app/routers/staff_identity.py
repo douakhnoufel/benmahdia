@@ -4,6 +4,7 @@ Every view is written to the audit log."""
 
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Request, Response
 from pydantic import BaseModel
@@ -28,6 +29,7 @@ router = APIRouter(prefix="/v1/staff/signups", tags=["staff"])
 
 
 class IdentityView(BaseModel):
+    id_type: Literal["national_id", "passport"]
     full_name: str
     birth_date: str
     declared_at: str
@@ -72,6 +74,7 @@ def view_identity(
     audit.record(db, "identity.viewed", actor_id=doctor.user_id, target=owner, request=request)
     db.commit()
     return IdentityView(
+        id_type=d.id_type,
         full_name=name,
         birth_date=birth,
         declared_at=utc_iso(d.declared_at),

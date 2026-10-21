@@ -126,6 +126,10 @@ class IdDeclaration(Base):
         ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
     )
     id_hmac: Mapped[str] = mapped_column(String(64), unique=True)
+    # Which document the patient declared: "national_id" or "passport".
+    id_type: Mapped[str] = mapped_column(
+        String(16), default="national_id", server_default="national_id"
+    )
     name_enc: Mapped[bytes] = mapped_column(LargeBinary)
     birth_enc: Mapped[bytes] = mapped_column(LargeBinary)
     # Name of the encrypted selfie file; None once it was deleted.
