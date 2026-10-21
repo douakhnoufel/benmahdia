@@ -27,6 +27,13 @@ abstract final class AppTheme {
 
     final text = _textTheme(arabic: arabic);
 
+    // Component styles (buttons, fields, chips…) take the locale's family too,
+    // otherwise they fall back to the platform font.
+    TextStyle font(TextStyle style) => style.copyWith(
+      fontFamily: arabic ? AppFonts.arabic : AppFonts.latin,
+      fontFamilyFallback: arabic ? AppFonts.arabicFallback : null,
+    );
+
     final fieldBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppRadius.field),
       borderSide: const BorderSide(color: AppColors.border),
@@ -35,7 +42,7 @@ abstract final class AppTheme {
     final buttonShape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(AppRadius.button),
     );
-    final buttonText = AppType.button.style();
+    final buttonText = font(AppType.button.style());
 
     return ThemeData(
       useMaterial3: true,
@@ -55,12 +62,14 @@ abstract final class AppTheme {
           horizontal: AppSpace.lg,
           vertical: AppSpace.lg,
         ),
-        labelStyle: AppType.label.style(),
+        labelStyle: font(AppType.label.style()),
         hintStyle: const TextStyle(color: AppColors.textMuted),
-        helperStyle: AppType.caption.style().copyWith(
-          color: AppColors.textMuted,
-        ),
-        errorStyle: AppType.caption.style().copyWith(color: AppColors.danger),
+        helperStyle: font(
+          AppType.caption.style(),
+        ).copyWith(color: AppColors.textMuted),
+        errorStyle: font(
+          AppType.caption.style(),
+        ).copyWith(color: AppColors.danger),
         border: fieldBorder,
         enabledBorder: fieldBorder,
         focusedBorder: fieldBorder.copyWith(
@@ -114,7 +123,7 @@ abstract final class AppTheme {
         selectedColor: AppColors.teal50,
         side: const BorderSide(color: AppColors.border),
         checkmarkColor: AppColors.teal500,
-        labelStyle: AppType.label.style(),
+        labelStyle: font(AppType.label.style()),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.field),
         ),
@@ -131,7 +140,7 @@ abstract final class AppTheme {
           ),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith(
-          (states) => AppType.caption.style().copyWith(
+          (states) => font(AppType.caption.style()).copyWith(
             color: states.contains(WidgetState.selected)
                 ? AppColors.teal500
                 : AppColors.textMuted,
@@ -154,9 +163,9 @@ abstract final class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.surface,
-        contentTextStyle: AppType.body.style().copyWith(
-          color: AppColors.textStrong,
-        ),
+        contentTextStyle: font(
+          AppType.body.style(),
+        ).copyWith(color: AppColors.textStrong),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.field),
         ),

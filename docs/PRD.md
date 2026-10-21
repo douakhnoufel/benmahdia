@@ -35,7 +35,7 @@ The MVP succeeds if one clinic runs its addiction patients on the app for 3 mont
 
 - The AI never gives the patient a diagnosis, never prescribes and never changes medication. It may give the doctor flags and a short, non-binding assessment (6.5).
 - No video consultations in v1.
-- No booking or AI chat before identity verification (anyone can sign up, but the clinic verifies first).
+- No booking or AI chat before the ID is declared and the clinic approves (anyone can sign up).
 - No web app for patients (doctors get a web dashboard).
 
 **Success metrics (first 3 months)**
@@ -78,30 +78,49 @@ Patients join only by doctor invitation, and every appointment slot is enforced 
 
 ### 4.1 Authentication
 
-- **Open sign-up:** any patient can create an account in the app with their phone number and a password, or with Google / Apple — no invite needed, then takes a live selfie and uploads a photo of their ID card for identity verification (4.2).
-- **Login:** phone number + password, or Sign in with Google / Apple. Social login never skips identity verification. OTP by SMS for first login and password reset (local Algerian SMS gateway).
+- **Open sign-up:** any patient can create an account in the app with their phone number and a password, or with Google / Apple — no invite needed. Right after sign-up the app offers **Complete your profile** (ID scan and selfie, 4.2) with a **Skip** button.
+- **Login:** phone number + password, or Sign in with Google / Apple. Social login follows the same rule as phone sign-up: the profile step is offered and can be skipped, but booking stays locked until the clinic approves the ID declaration. OTP by SMS for first login and password reset (local Algerian SMS gateway).
 - **App lock:** 4–6 digit PIN or Face ID / fingerprint every time the app opens — protects privacy if the phone is shared.
 - **Sessions:** short-lived JWT access token (15 min) + rotating refresh token; doctor can revoke a patient's sessions.
 - **Doctors and super admin:** email + password + mandatory 2FA (TOTP app).
 - **Account lockout** after 5 failed attempts; all logins audited.
 
-### 4.2 Identity verification at sign-up
+### 4.2 ID declaration at sign-up
 
-Every new patient proves who they are before using the app: a live face photo and a photo of their national ID card, matched by our server and approved by their doctor.
+After signing in, the patient is offered **Complete your profile**: scan the national ID card and take a selfie so the clinic knows who they are. The app reads the card, the patient confirms the details, and the card image is thrown away; the selfie is sent, encrypted, for the doctor to look at. The step is optional (**Skip**), but booking stays closed until it is done and the clinic approves. We only check that the card looks readable and is not already used by another account — we never claim the identity is verified. The status shown everywhere is **"ID declared"**, never "verified".
 
-- **Flow:** after creating the account, the patient (1) takes a live selfie in the app with a simple liveness check (blink or turn the head), (2) uploads a photo of the front and back of their national ID card (taken with the camera or picked from the gallery or files), (3) submits. The account stays **pending verification** until the clinic approves it (a doctor or the super admin).
-- **Capture rules:** the selfie must be taken live with the in-app camera (no gallery), so an old or borrowed photo can't be used. The ID can be uploaded; the app checks it for blur, glare and that the whole card is visible before allowing submission.
-- **Face match:** our server in Algeria compares the selfie with the ID photo using an open-source face model and gives a match score. The score helps the doctor decide; it never rejects anyone on its own. Check the model's license allows commercial use.
-- **Doctor approval:** a clinic doctor or the super admin sees both photos and the score, then approves or rejects with a reason. The patient can retry up to 3 times.
-- **Pending accounts:** cannot book appointments or use the AI companion until approved (to confirm with the clinic).
-- **Privacy and security:** ID and face photos are identity and biometric data. They are stored encrypted on Algerian servers, never sent to foreign verification services, never shown in notifications or logs, and visible only to the staff who review them and the patient's doctor. Every view is recorded in the audit log. The ID number is not extracted or stored unless the clinic needs it.
-- **Consent:** a dedicated screen explains why the photos are collected, who can see them and how long they are kept. This processing must be included in the ANPDP authorization file.
+- **When:** only after sign-in (account created, phone confirmed by OTP), never for a signed-out user. It is offered right after sign-up with a **Skip** button. A patient who skipped (or whose details were refused) sees a **Complete your profile** card on the appointments screen until the clinic approves.
+- **Consent:** before anything is captured, a screen says what is read, what is stored, who sees it, and asks the patient to agree. Start is disabled until they do.
+- **Scan:** the patient photographs the card with the phone camera. Text is read on the phone (on-device OCR); the photo is never uploaded and is never saved to the gallery. The system camera hands the app a temporary file in the app's private cache; it is deleted as soon as the text is read (or the scan fails). Only the text fields below leave the scan step.
+- **Selfie:** a front-camera photo taken in the app (JPEG, at most 2 MB). It is a live capture for the doctor to compare by eye: there is no automatic face matching against the card, and no liveness check in this version.
+- **Confirm or edit:** the app pre-fills three fields — ID number, full name, birth date. The OCR fills the ID number and birth date; the patient types or corrects the full name. The patient must review all three and can correct any of them before submitting. If the scan fails, the patient types the fields by hand. Nothing is sent until the patient taps send.
+- **What is sent:** the three confirmed text fields and the selfie (base64 JPEG in one JSON request), over TLS, to our server in Algeria. No card image, no OCR raw text.
+- **Server processing (never on the phone):**
+  1. Normalize the ID number (trim, remove spaces and separators, uppercase).
+  2. Compute `id_hmac = HMAC-SHA256(server_secret, normalized_id)`. The key lives only in the server `.env`, never in the app or the database.
+  3. Encrypt full name and birth date (AES-256-GCM, key from `.env`, separate from the HMAC key).
+  4. Discard the plain ID number. It is never stored, logged or returned by any endpoint.
+  5. Encrypt the selfie (AES-256-GCM, its own key from `.env`) and write it to a private folder outside the web root (file mode 0600). The file name reveals nothing about the patient.
+- **What is stored (minimum):** `id_hmac` (unique), encrypted name, encrypted birth date, the encrypted selfie file, `id_status`, `id_declared_at`, the number of submissions and the reject reason. Nothing else from the card.
+- **Duplicate detection:** `id_hmac` has a unique index. If it already belongs to another account, the submission is refused with a neutral message ("This ID is already linked to an account — contact the clinic"), the attempt is written to the audit log, and the clinic sees it on the sign-ups page. The message never reveals whose account it is.
+- **Status values (`id_status`):** `none` (not yet sent or skipped) → `declared` (fields confirmed and stored) → clinic decision: `approved` or `rejected` (with reason). `duplicate` marks a refused attempt. The label **"ID declared"** is used in the app and the dashboard for `declared` and stays visible next to `approved` ("ID declared · approved by clinic") — the system never displays "verified".
+- **Clinic approval:** the doctor sees the decrypted name, birth date and selfie (never the ID number, never a card image) and approves or rejects, with an optional reason. Opening the details and opening the selfie are each in the audit log. A doctor can open a declaration only for a patient in the sign-up queue or an approved patient who has an appointment with them. The dashboard reminds the doctor to compare with the original card at the front desk. A rejection deletes the selfie; the patient can resubmit (at most 4 submissions in all, i.e. 3 after a rejection).
+- **Gating:** booking and the AI companion unlock only when `id_status = approved`. A patient who skipped, or whose details are `declared` or `rejected`, can use the non-clinical parts of the app; the Book button leads to the profile step or explains that the clinic is reviewing.
+- **Editing later:** the patient cannot change declared fields alone; a change goes through the clinic and produces a new HMAC / encrypted values and an audit entry.
+- **Account deletion:** `id_hmac`, the encrypted fields and the selfie file are deleted with the account (retention rule in §11).
+- **Consent:** a screen before the scan explains that the card is read on the phone, the image is not kept, and only the name, birth date and a one-way fingerprint of the ID number are stored. The selfie is biometric-type data: the consent says who sees it (the treating doctor and clinic staff) and it is listed in the ANPDP file. Before real patients, the server disk must be encrypted and backups must exclude or encrypt the selfie folder.
 
 **Acceptance criteria**
 
-- [ ] The selfie cannot come from the gallery; the ID photo can be uploaded.
-- [ ] A pending patient cannot open the AI companion or book an appointment.
-- [ ] Only the reviewing staff and the patient's doctor can view the photos, and each view appears in the audit log.
+- [ ] The profile step is reachable only after sign-in, shows the consent first, and can be skipped; a skipped patient can use the app but not book.
+- [ ] No card image is uploaded or saved to the gallery, and the temporary camera file is deleted as soon as the text is read (code review; a stricter in-memory capture is a possible later hardening).
+- [ ] The selfie is stored only encrypted, is shown only to an authorised doctor with an audit entry, and is deleted on rejection and on account deletion.
+- [ ] The patient can edit every field before confirming; manual entry works when the scan fails.
+- [ ] The API accepts only the three text fields and the selfie; the plain ID number never appears in the database, logs, or any response.
+- [ ] HMAC and encryption happen on the server; the keys are only in `.env`.
+- [ ] A second account with the same ID number is refused, audited, and the message reveals nothing about the other account.
+- [ ] The words "verified" / "vérifié" / "موثق" never appear for ID status in the app or dashboard; the label is "ID declared" / "Identité déclarée" / "هوية مصرّح بها".
+- [ ] A patient with `id_status` other than `approved` cannot book or open the AI companion (enforced in the API).
 
 ### 4.3 Appointment management
 
@@ -117,6 +136,7 @@ Every new patient proves who they are before using the app: a live face photo an
 - **Pilot payment:** until Chargily is wired, the app confirms only "pay at the clinic" appointments; card payments are confirmed solely by the signed webhook, never by the app.
 - **Statuses:** requested → awaiting payment → confirmed → completed / cancelled / no-show / rescheduled. An unpaid hold is released after a short timeout (e.g. 15 min, to confirm).
 - **Reminders:** push notification 24 h and 1 h before; doctor sees a daily agenda.
+- **Booking code and check-in:** each confirmed appointment gets a short code (6 characters, no look-alike letters) shown to the patient as text and a QR. At the front desk the doctor or secretary enters it in the dashboard's **Today** page, which marks the patient **arrived** and reminds staff to check the original ID card. A code works only for the doctor's own confirmed appointments on the clinic day, a repeat check-in changes nothing, and 10 wrong codes in 10 minutes lock the box for that account for a while. The QR card on the phone is not built yet: the dashboard takes the typed code.
 - **History:** patient sees past and upcoming appointments; doctor sees attendance rate per patient.
 - **Doctor notes** after each appointment (private, never visible to the patient or the AI unless the doctor chooses).
 
@@ -262,7 +282,7 @@ Doctors work from a web dashboard (desktop browser) plus a lighter doctor view i
 - **Patient file:** addiction profile(s), streak history chart, medication adherence, appointments, mood check-ins, AI flags and short assessments and flagged conversations (no full chat history), private notes.
 - **Medications:** create and edit schedules per patient.
 - **Availability:** weekly schedule, holidays, slot length.
-- **New patients:** review sign-ups (ID photos and match score), then approve or reject.
+- **New patients:** review sign-ups (declared name, birth date and selfie, duplicate-ID flags — no card image, no ID number), then approve or reject with an optional reason.
 
 * **Payments:** paid / unpaid status per appointment, receipts.
 * **Articles:** write, edit and publish articles for patients.
@@ -346,7 +366,7 @@ Only the push relay (Apple/Google) sits outside the country, and it carries gene
 | --- | --- |
 | User | id, role (super\_admin / doctor / patient), phone, email, password hash, auth provider (password / Google / Apple), 2FA, language, deleted\_at |
 | DoctorProfile | user\_id, specialty, slot length, booking/cancel notice |
-| Patient | user\_id, primary\_doctor\_id, birth year, consent flags |
+| Patient | user\_id, primary\_doctor\_id, birth year, consent flags, id\_hmac (unique), name\_enc, birth\_date\_enc, id\_status (none / declared / approved / rejected / duplicate), id\_declared\_at |
 | Addiction | patient\_id, type, sobriety\_start, severity, triggers, active |
 | Relapse | addiction\_id, date, note |
 | Availability | doctor\_id, weekday, start, end, exceptions |
@@ -366,7 +386,7 @@ Only the push relay (Apple/Google) sits outside the country, and it carries gene
 About 16 weeks from kickoff to a 200-patient launch, with a pilot clinic gating the public release.
 
 1. **Phase 0 — Foundations (weeks 1–2):** legal status (auto-entrepreneur) and CNAS/CASNOS numbers, ANPDP file, Algerian hosting contract, Chargily merchant account, Apple and Google developer accounts, design system, CI/CD, staging environment.
-2. **Phase 1 — Core (weeks 3–7):** auth (phone, Google, Apple), ID verification, roles, doctor availability, 10–15 min appointments, Chargily payment, reminders, account deletion, doctor dashboard v1.
+2. **Phase 1 — Core (weeks 3–7):** auth (phone, Google, Apple), ID declaration, roles, doctor availability, 10–15 min appointments, Chargily payment, reminders, account deletion, doctor dashboard v1.
 3. **Phase 2 — Recovery profile (weeks 6–9):** addiction profiles, sobriety circles, relapse flow, quotes, medication reminders, articles section.
 4. **Phase 3 — AI companion (weeks 8–12):** model selection on Arabic/Darja, GPU deployment, crisis detection, escalation, red-team testing.
 5. **Phase 4 — Pilot (weeks 13–15):** 1 clinic, 3 doctors, 20–30 patients; security pen test; fix and tune.
@@ -391,7 +411,7 @@ The biggest risks are GPU hosting availability in Algeria and the AI's behaviour
 | Chargily merchant approval takes time | Paid booking blocked at pilot | Apply early; during the pilot the doctor can confirm slots paid at the clinic |
 | Google / Apple sign-in runs outside Algeria | Questions on the 100% Algeria rule | Only identity tokens pass, no health data; declare it in the ANPDP file |
 | AI assessment read as a medical diagnosis | Liability; could be treated as a medical device | Decision support only, doctor confirms, cautious wording, no diagnosis codes; check with a lawyer |
-| Fake or spam sign-ups | Staff time wasted reviewing accounts | SMS OTP and rate limits at sign-up; ID verification before any booking |
+| Fake or spam sign-ups | Staff time wasted reviewing accounts | SMS OTP and rate limits at sign-up; ID declaration, duplicate check by HMAC and clinic approval before any booking |
 
 **Open questions (details to add later)**
 
@@ -400,7 +420,7 @@ The biggest risks are GPU hosting availability in Algeria and the AI's behaviour
 - [ ] Exact Algerian crisis/emergency numbers and the clinic's on-call line.
 - [ ] Can a patient see more than one doctor (e.g. psychiatrist + psychologist)?
 - [ ] Doctor access to AI chats: flagged conversations and summaries only (decided)
-- [ ] Data retention period after a patient leaves treatment, including ID card and face photos.
+- [ ] Data retention period after a patient leaves treatment, including the ID HMAC and encrypted name / birth date (no card images are kept).
 - [ ] Final hosting provider and server specs.
 - [ ] Languages for v1: Arabic + French only, or Darja and English too?
 
@@ -416,10 +436,10 @@ The five flows below are what the backend, the patient app and the dashboard mus
 ### 12.1 Patient onboarding
 
 1. The patient downloads the app and creates an account: phone + password, or Google / Apple.
-2. No invite is needed, but nothing clinical (booking, AI chat) unlocks before verification.
+2. No invite is needed, but nothing clinical (booking, AI chat) unlocks before the ID is declared and the clinic approves.
 3. An SMS OTP confirms the phone number.
-4. The patient photographs their ID card and takes a live selfie; the server computes a match score and clinic staff approve or reject. Once approved, the patient picks a doctor and books (12.2).
-5. Consent screens (app use, AI chat, summaries to the doctor, ID photos), then PIN or biometric lock, then the home screen.
+4. Once signed in, the patient scans their ID card; the app reads it on the phone, the patient confirms or edits the fields, the image is discarded, and the server stores an HMAC and the encrypted name and birth date (status "ID declared"). Clinic staff approve or reject. Once approved, the patient picks a doctor and books (12.2).
+5. Consent screens (app use, AI chat, summaries to the doctor, ID declaration), then PIN or biometric lock, then the home screen.
 
 ### 12.2 Booking and payment
 
@@ -468,7 +488,7 @@ Paperwork first, because ANPDP, Chargily and the clinic contract all depend on y
 **Step 3 — Core (weeks 3–7)**
 
 - [ ] Open sign-up with phone / Google / Apple, OTP, PIN lock, roles.
-- [ ] ID verification and doctor approval.
+- [ ] ID declaration (scan, confirm, server HMAC + encryption, duplicate check) and clinic approval.
 - [ ] Availability, 10–15 min booking, Chargily payment and webhooks, reminders.
 - [ ] Account deletion; doctor dashboard v1.
 
