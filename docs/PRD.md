@@ -58,7 +58,7 @@ Three roles, with each patient belonging to one primary doctor and seeing only t
 | --- | --- | --- | --- |
 | Super admin | One of the 3 doctors (also holds the Doctor role) | Create and deactivate doctor accounts, approve new patient accounts, view platform stats, manage quotes library, configure AI settings | Read other doctors' patient conversations or notes through admin screens |
 | Doctor (admin) | Psychiatrist | Manage their own patients, set availability, manage appointments, prescribe medication schedules, set addiction profiles, review AI alerts and summaries | See other doctors' patients (unless shared) |
-| Patient | Person in treatment | Book, pay for and cancel appointments, track sobriety, confirm medications, read articles, chat with the AI companion, delete their account | See other patients, edit their medications |
+| Patient | Person in treatment | Book, pay for and cancel appointments, enter their addictions, track sobriety, confirm medications, read articles, chat with the AI companion, delete their account | See other patients, edit their medications, delete relapse history |
 
 **Multi-doctor rules**
 
@@ -69,8 +69,8 @@ Three roles, with each patient belonging to one primary doctor and seeing only t
 **Each patient has their own addiction profile**
 
 - One or more addictions per patient (e.g. opioids, cannabis, alcohol, tobacco, psychotropic pills, gambling, other).
-- Per addiction: type, start-of-sobriety date, relapse history, triggers noted by the doctor, severity level.
-- The doctor creates and edits the profile; the patient can log a relapse but cannot delete history.
+- Per addiction: type, the exact substance in the patient's words (optional), start-of-sobriety date, relapse history, triggers noted by the doctor, severity level.
+- The patient enters each addiction in the app (type, substance, "clean since" date); it shows "waiting for the doctor's review" until their doctor checks it. The doctor can correct it and adds triggers and severity. After that only a relapse moves the counter; the patient can log a relapse (with when it happened) but cannot delete history.
 
 ## 4. Pillar 1 — Authentication and appointments
 
@@ -190,9 +190,10 @@ The home screen shows one progress circle per addiction, a daily quote, and toda
 - Missed doses for 2+ days in a row → alert on the doctor's dashboard.
 - Notification text stays neutral ("Time for your reminder") — no drug names on the lock screen.
 
-### 5.4 Optional daily check-in (v1.1)
+### 5.4 Daily check
 
-- 10-second mood and craving rating (1–5) once a day, plotted for the doctor.
+- v1: the patient ticks "today without use" once a day; the home shows this week's seven days. A daily reminder at a time the patient picks (time picker, 24-hour), scheduled locally; the notification text stays neutral.
+- v1.1: a 10-second mood and craving rating (1–5) added to the daily check, plotted for the doctor.
 
 ### 5.5 Articles and resources
 

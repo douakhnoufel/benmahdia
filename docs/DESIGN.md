@@ -187,8 +187,11 @@ trailing chevron `text.muted`, divider `border`.
 **Chat bubble** — incoming = `surface`+`border` radius `card` (tail start);
 outgoing = `teal.500`/`on.primary` (tail end). Quick-reply = outline chips.
 
-**Bottom nav** — 5 tabs, `surface`, active icon+label `teal.500`, inactive
-`text.muted`, top hairline `border`.
+**Bottom nav** — 3 tabs, in this order: Appointments (مواعيدي / Rendez-vous),
+Recovery (تعافيّ / Mon parcours, the home tab), Companion (المرافق / Compagnon).
+`surface`, top hairline `border`; active tab = `teal.50` pill indicator with
+icon + label in `teal.700`; inactive icon + label `text.body` (so 12–13 px
+labels stay readable). Labels always shown.
 
 **Stepper (progress bar)** — top of multi-step forms, track `sand.200`, fill
 `teal.500`, `caption` "step X / N".
