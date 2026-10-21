@@ -5,7 +5,7 @@ import '../auth/auth_flow.dart';
 import '../booking/booking_flow.dart';
 import '../intro/intro_screen.dart';
 import '../splash/splash_screen.dart';
-import '../verification/verification_flow.dart';
+import '../profile/profile_flow.dart';
 import '../welcome/welcome_screen.dart';
 
 enum _Stage { splash, intro, welcome }
@@ -45,16 +45,21 @@ class _AppStartState extends State<AppStart> {
         ),
         _Stage.welcome => WelcomeScreen(
           key: const ValueKey(_Stage.welcome),
-          // Account first (PRD 12.1), then the identity check.
-          onCreateAccount: () =>
-              openSignUp(context, onSignedIn: (_) => openVerification(context)),
-          // Verified patients go to their appointments; others finish the
-          // identity check first.
+          // Account first (PRD 12.1), then "Complete your profile" with a
+          // Skip button: the ID scan and selfie are optional here, but
+          // booking stays closed until the clinic approves them.
+          onCreateAccount: () => openSignUp(
+            context,
+            onSignedIn: (_) => openProfile(
+              context,
+              afterFinish: () => openAppointments(context),
+            ),
+          ),
+          // Everyone lands on their appointments; a card there shows what is
+          // missing from the profile.
           onLogin: () => openLogin(
             context,
-            onSignedIn: (session) => session.user.verified
-                ? openAppointments(context)
-                : openVerification(context),
+            onSignedIn: (_) => openAppointments(context),
           ),
         ),
       },

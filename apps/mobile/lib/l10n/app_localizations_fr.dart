@@ -829,4 +829,146 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get authSendCode => 'Envoyer le code';
+
+  @override
+  String get profileTitle => 'Complétez votre profil';
+
+  @override
+  String get profilePromptBody =>
+      'Nous avons besoin de votre carte d\'identité et d\'un selfie pour confirmer vos rendez-vous avec le médecin. Vous pouvez le faire maintenant ou plus tard.';
+
+  @override
+  String get profileWhatId =>
+      'Votre numéro, votre nom et votre date de naissance sont lus sur votre téléphone. La photo de la carte n\'est ni conservée ni envoyée.';
+
+  @override
+  String get profileWhatSelfie =>
+      'Le selfie est envoyé chiffré à votre médecin pour vous reconnaître à l\'accueil.';
+
+  @override
+  String get profileWhatApproval =>
+      'La clinique vérifie ce que vous avez déclaré, puis la réservation s\'ouvre.';
+
+  @override
+  String get profileConsent =>
+      'J\'accepte que la clinique conserve mon selfie et mes informations pour cet usage.';
+
+  @override
+  String get profileStart => 'Commencer';
+
+  @override
+  String get profileSkip => 'Passer pour l\'instant';
+
+  @override
+  String get profileSkipNote =>
+      'Vous pouvez utiliser l\'application sans cela, mais vous ne pourrez pas réserver avant de l\'avoir fait.';
+
+  @override
+  String get profileFormTitle => 'Vos informations';
+
+  @override
+  String get profileFormBody =>
+      'Scannez votre carte d\'identité, puis vérifiez les trois champs.';
+
+  @override
+  String get profileScan => 'Scanner ma carte d\'identité';
+
+  @override
+  String get profileScanAgain => 'Scanner à nouveau';
+
+  @override
+  String get profileScanFailed =>
+      'Impossible de lire la carte. Saisissez les informations vous-même.';
+
+  @override
+  String get profileIdNumber => 'Numéro de la carte';
+
+  @override
+  String get profileFullName => 'Nom complet';
+
+  @override
+  String get profileBirthDate => 'Date de naissance (AAAA-MM-JJ)';
+
+  @override
+  String get profileSelfie => 'Prendre un selfie';
+
+  @override
+  String get profileSelfieRetake => 'Refaire le selfie';
+
+  @override
+  String get profileSelfieReady => 'Selfie prêt';
+
+  @override
+  String get profileSubmit => 'Envoyer à la clinique';
+
+  @override
+  String get profileErrIdNumber => 'Numéro de carte invalide.';
+
+  @override
+  String get profileErrName => 'Saisissez votre nom complet.';
+
+  @override
+  String get profileErrBirth =>
+      'Date de naissance invalide. Exemple : 1990-05-17.';
+
+  @override
+  String get profileErrSelfie => 'Prenez d\'abord un selfie.';
+
+  @override
+  String get profileErrLinked =>
+      'Cette carte est déjà liée à un autre compte. Contactez la clinique.';
+
+  @override
+  String get profileErrTooMany =>
+      'Nombre d\'essais dépassé. Contactez la clinique.';
+
+  @override
+  String get profileErrSelfieInvalid =>
+      'Le selfie n\'a pas pu être utilisé. Reprenez-en un.';
+
+  @override
+  String get profileErrInvalid =>
+      'La clinique n\'a pas pu accepter ces informations. Vérifiez-les et réessayez.';
+
+  @override
+  String get profileCardNoneBody =>
+      'Ajoutez votre carte d\'identité et un selfie pour pouvoir réserver.';
+
+  @override
+  String get profileCardAction => 'Compléter';
+
+  @override
+  String get profileCardDeclaredTitle => 'En attente de la clinique';
+
+  @override
+  String get profileCardDeclaredBody =>
+      'La clinique examine vos informations. La réservation s\'ouvre après son accord.';
+
+  @override
+  String get profileCardRefresh => 'Vérifier à nouveau';
+
+  @override
+  String get profileCardRejectedTitle => 'Informations refusées';
+
+  @override
+  String get profileCardRejectedBody =>
+      'Vérifiez vos informations et envoyez-les à nouveau.';
+
+  @override
+  String profileCardReason(String reason) {
+    return 'Motif : $reason';
+  }
+
+  @override
+  String get profileCardRetry => 'Renvoyer';
+
+  @override
+  String get profileDoneTitle => 'Envoyé à la clinique';
+
+  @override
+  String get profileDoneBody =>
+      'La clinique va examiner vos informations. Vous pouvez utiliser l\'application ; la réservation s\'ouvre après son accord.';
+
+  @override
+  String get profileDoneAction => 'Continuer';
 }

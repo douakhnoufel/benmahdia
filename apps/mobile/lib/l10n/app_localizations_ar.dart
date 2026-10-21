@@ -819,4 +819,142 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get authSendCode => 'إرسال الرمز';
+
+  @override
+  String get profileTitle => 'أكمل ملفك';
+
+  @override
+  String get profilePromptBody =>
+      'نحتاج بطاقة هويتك وصورة سيلفي لتأكيد حجزك مع الطبيب. يمكنك فعل ذلك الآن أو لاحقاً.';
+
+  @override
+  String get profileWhatId =>
+      'نقرأ رقم بطاقتك واسمك وتاريخ ميلادك من هاتفك. لا نحفظ صورة البطاقة ولا نرسلها.';
+
+  @override
+  String get profileWhatSelfie =>
+      'نرسل صورة السيلفي مشفّرة إلى طبيبك ليتعرّف عليك عند الاستقبال.';
+
+  @override
+  String get profileWhatApproval =>
+      'تراجع العيادة ما صرّحتَ به، ثم يُفتح لك الحجز.';
+
+  @override
+  String get profileConsent =>
+      'أوافق على أن تحفظ العيادة صورتي وبياناتي لهذا الغرض.';
+
+  @override
+  String get profileStart => 'ابدأ';
+
+  @override
+  String get profileSkip => 'تخطَّ الآن';
+
+  @override
+  String get profileSkipNote =>
+      'يمكنك استعمال التطبيق دون ذلك، لكن لا يمكنك حجز موعد قبل إكماله.';
+
+  @override
+  String get profileFormTitle => 'بياناتك';
+
+  @override
+  String get profileFormBody =>
+      'امسح بطاقة الهوية ضوئياً ثم تأكد من الحقول الثلاثة.';
+
+  @override
+  String get profileScan => 'مسح بطاقة الهوية';
+
+  @override
+  String get profileScanAgain => 'مسح من جديد';
+
+  @override
+  String get profileScanFailed => 'تعذّرت قراءة البطاقة. اكتب البيانات بنفسك.';
+
+  @override
+  String get profileIdNumber => 'رقم بطاقة الهوية';
+
+  @override
+  String get profileFullName => 'الاسم الكامل';
+
+  @override
+  String get profileBirthDate => 'تاريخ الميلاد (سنة-شهر-يوم)';
+
+  @override
+  String get profileSelfie => 'التقط صورة سيلفي';
+
+  @override
+  String get profileSelfieRetake => 'أعد الصورة';
+
+  @override
+  String get profileSelfieReady => 'الصورة جاهزة';
+
+  @override
+  String get profileSubmit => 'أرسل إلى العيادة';
+
+  @override
+  String get profileErrIdNumber => 'رقم الهوية غير صالح.';
+
+  @override
+  String get profileErrName => 'اكتب اسمك الكامل.';
+
+  @override
+  String get profileErrBirth =>
+      'تاريخ الميلاد غير صالح. اكتبه هكذا: 1990-05-17.';
+
+  @override
+  String get profileErrSelfie => 'التقط صورة سيلفي أولاً.';
+
+  @override
+  String get profileErrLinked =>
+      'هذه الهوية مرتبطة بحساب آخر. تواصل مع العيادة.';
+
+  @override
+  String get profileErrTooMany =>
+      'تجاوزت عدد المحاولات المسموح به. تواصل مع العيادة.';
+
+  @override
+  String get profileErrSelfieInvalid => 'تعذّر استعمال الصورة. التقط أخرى.';
+
+  @override
+  String get profileErrInvalid =>
+      'لم تقبل العيادة هذه البيانات. تحقق منها وحاول مجدداً.';
+
+  @override
+  String get profileCardNoneBody => 'أضف هويتك وصورة سيلفي لتتمكن من الحجز.';
+
+  @override
+  String get profileCardAction => 'أكمل';
+
+  @override
+  String get profileCardDeclaredTitle => 'في انتظار العيادة';
+
+  @override
+  String get profileCardDeclaredBody =>
+      'تراجع العيادة بياناتك. يُفتح الحجز بعد الموافقة.';
+
+  @override
+  String get profileCardRefresh => 'تحقق مجدداً';
+
+  @override
+  String get profileCardRejectedTitle => 'لم تُقبل البيانات';
+
+  @override
+  String get profileCardRejectedBody => 'تحقق من بياناتك وأرسلها من جديد.';
+
+  @override
+  String profileCardReason(String reason) {
+    return 'السبب: $reason';
+  }
+
+  @override
+  String get profileCardRetry => 'أرسل من جديد';
+
+  @override
+  String get profileDoneTitle => 'أُرسلت إلى العيادة';
+
+  @override
+  String get profileDoneBody =>
+      'ستراجع العيادة بياناتك. يمكنك استعمال التطبيق الآن، ويُفتح الحجز بعد الموافقة.';
+
+  @override
+  String get profileDoneAction => 'متابعة';
 }

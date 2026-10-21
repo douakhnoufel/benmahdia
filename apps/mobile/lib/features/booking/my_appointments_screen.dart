@@ -13,9 +13,16 @@ import 'booking_widgets.dart';
 /// be cancelled until the notice period (24 h) starts. Under the upcoming
 /// ones sits the suggested follow-up, 30 days after the latest visit.
 class MyAppointmentsScreen extends ConsumerStatefulWidget {
-  const MyAppointmentsScreen({super.key, required this.onBookNew});
+  const MyAppointmentsScreen({
+    super.key,
+    required this.onBookNew,
+    this.banner,
+  });
 
   final VoidCallback onBookNew;
+
+  /// Shown under the title, e.g. the "Complete your profile" card.
+  final Widget? banner;
 
   @override
   ConsumerState<MyAppointmentsScreen> createState() =>
@@ -216,6 +223,16 @@ class _MyAppointmentsScreenState extends ConsumerState<MyAppointmentsScreen> {
                     ],
                   ),
                 ),
+                if (widget.banner case final banner?)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpace.screenHorizontal,
+                      AppSpace.lg,
+                      AppSpace.screenHorizontal,
+                      0,
+                    ),
+                    child: banner,
+                  ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
                     AppSpace.screenHorizontal,

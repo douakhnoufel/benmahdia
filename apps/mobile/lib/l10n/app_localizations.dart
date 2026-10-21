@@ -1417,6 +1417,252 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'إرسال الرمز'**
   String get authSendCode;
+
+  /// No description provided for @profileTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'أكمل ملفك'**
+  String get profileTitle;
+
+  /// No description provided for @profilePromptBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'نحتاج بطاقة هويتك وصورة سيلفي لتأكيد حجزك مع الطبيب. يمكنك فعل ذلك الآن أو لاحقاً.'**
+  String get profilePromptBody;
+
+  /// No description provided for @profileWhatId.
+  ///
+  /// In ar, this message translates to:
+  /// **'نقرأ رقم بطاقتك واسمك وتاريخ ميلادك من هاتفك. لا نحفظ صورة البطاقة ولا نرسلها.'**
+  String get profileWhatId;
+
+  /// No description provided for @profileWhatSelfie.
+  ///
+  /// In ar, this message translates to:
+  /// **'نرسل صورة السيلفي مشفّرة إلى طبيبك ليتعرّف عليك عند الاستقبال.'**
+  String get profileWhatSelfie;
+
+  /// No description provided for @profileWhatApproval.
+  ///
+  /// In ar, this message translates to:
+  /// **'تراجع العيادة ما صرّحتَ به، ثم يُفتح لك الحجز.'**
+  String get profileWhatApproval;
+
+  /// No description provided for @profileConsent.
+  ///
+  /// In ar, this message translates to:
+  /// **'أوافق على أن تحفظ العيادة صورتي وبياناتي لهذا الغرض.'**
+  String get profileConsent;
+
+  /// No description provided for @profileStart.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ'**
+  String get profileStart;
+
+  /// No description provided for @profileSkip.
+  ///
+  /// In ar, this message translates to:
+  /// **'تخطَّ الآن'**
+  String get profileSkip;
+
+  /// No description provided for @profileSkipNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'يمكنك استعمال التطبيق دون ذلك، لكن لا يمكنك حجز موعد قبل إكماله.'**
+  String get profileSkipNote;
+
+  /// No description provided for @profileFormTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'بياناتك'**
+  String get profileFormTitle;
+
+  /// No description provided for @profileFormBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'امسح بطاقة الهوية ضوئياً ثم تأكد من الحقول الثلاثة.'**
+  String get profileFormBody;
+
+  /// No description provided for @profileScan.
+  ///
+  /// In ar, this message translates to:
+  /// **'مسح بطاقة الهوية'**
+  String get profileScan;
+
+  /// No description provided for @profileScanAgain.
+  ///
+  /// In ar, this message translates to:
+  /// **'مسح من جديد'**
+  String get profileScanAgain;
+
+  /// No description provided for @profileScanFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّرت قراءة البطاقة. اكتب البيانات بنفسك.'**
+  String get profileScanFailed;
+
+  /// No description provided for @profileIdNumber.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم بطاقة الهوية'**
+  String get profileIdNumber;
+
+  /// No description provided for @profileFullName.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاسم الكامل'**
+  String get profileFullName;
+
+  /// No description provided for @profileBirthDate.
+  ///
+  /// In ar, this message translates to:
+  /// **'تاريخ الميلاد (سنة-شهر-يوم)'**
+  String get profileBirthDate;
+
+  /// No description provided for @profileSelfie.
+  ///
+  /// In ar, this message translates to:
+  /// **'التقط صورة سيلفي'**
+  String get profileSelfie;
+
+  /// No description provided for @profileSelfieRetake.
+  ///
+  /// In ar, this message translates to:
+  /// **'أعد الصورة'**
+  String get profileSelfieRetake;
+
+  /// No description provided for @profileSelfieReady.
+  ///
+  /// In ar, this message translates to:
+  /// **'الصورة جاهزة'**
+  String get profileSelfieReady;
+
+  /// No description provided for @profileSubmit.
+  ///
+  /// In ar, this message translates to:
+  /// **'أرسل إلى العيادة'**
+  String get profileSubmit;
+
+  /// No description provided for @profileErrIdNumber.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم الهوية غير صالح.'**
+  String get profileErrIdNumber;
+
+  /// No description provided for @profileErrName.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب اسمك الكامل.'**
+  String get profileErrName;
+
+  /// No description provided for @profileErrBirth.
+  ///
+  /// In ar, this message translates to:
+  /// **'تاريخ الميلاد غير صالح. اكتبه هكذا: 1990-05-17.'**
+  String get profileErrBirth;
+
+  /// No description provided for @profileErrSelfie.
+  ///
+  /// In ar, this message translates to:
+  /// **'التقط صورة سيلفي أولاً.'**
+  String get profileErrSelfie;
+
+  /// No description provided for @profileErrLinked.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذه الهوية مرتبطة بحساب آخر. تواصل مع العيادة.'**
+  String get profileErrLinked;
+
+  /// No description provided for @profileErrTooMany.
+  ///
+  /// In ar, this message translates to:
+  /// **'تجاوزت عدد المحاولات المسموح به. تواصل مع العيادة.'**
+  String get profileErrTooMany;
+
+  /// No description provided for @profileErrSelfieInvalid.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر استعمال الصورة. التقط أخرى.'**
+  String get profileErrSelfieInvalid;
+
+  /// No description provided for @profileErrInvalid.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تقبل العيادة هذه البيانات. تحقق منها وحاول مجدداً.'**
+  String get profileErrInvalid;
+
+  /// No description provided for @profileCardNoneBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف هويتك وصورة سيلفي لتتمكن من الحجز.'**
+  String get profileCardNoneBody;
+
+  /// No description provided for @profileCardAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'أكمل'**
+  String get profileCardAction;
+
+  /// No description provided for @profileCardDeclaredTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'في انتظار العيادة'**
+  String get profileCardDeclaredTitle;
+
+  /// No description provided for @profileCardDeclaredBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'تراجع العيادة بياناتك. يُفتح الحجز بعد الموافقة.'**
+  String get profileCardDeclaredBody;
+
+  /// No description provided for @profileCardRefresh.
+  ///
+  /// In ar, this message translates to:
+  /// **'تحقق مجدداً'**
+  String get profileCardRefresh;
+
+  /// No description provided for @profileCardRejectedTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تُقبل البيانات'**
+  String get profileCardRejectedTitle;
+
+  /// No description provided for @profileCardRejectedBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'تحقق من بياناتك وأرسلها من جديد.'**
+  String get profileCardRejectedBody;
+
+  /// No description provided for @profileCardReason.
+  ///
+  /// In ar, this message translates to:
+  /// **'السبب: {reason}'**
+  String profileCardReason(String reason);
+
+  /// No description provided for @profileCardRetry.
+  ///
+  /// In ar, this message translates to:
+  /// **'أرسل من جديد'**
+  String get profileCardRetry;
+
+  /// No description provided for @profileDoneTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'أُرسلت إلى العيادة'**
+  String get profileDoneTitle;
+
+  /// No description provided for @profileDoneBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'ستراجع العيادة بياناتك. يمكنك استعمال التطبيق الآن، ويُفتح الحجز بعد الموافقة.'**
+  String get profileDoneBody;
+
+  /// No description provided for @profileDoneAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'متابعة'**
+  String get profileDoneAction;
 }
 
 class _AppLocalizationsDelegate
