@@ -3,6 +3,7 @@ import uuid
 from datetime import date, datetime
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     Date,
     DateTime,
@@ -348,6 +349,88 @@ class Payment(Base):
         Enum(PaymentStatus, name="payment_status"), default=PaymentStatus.pending
     )
     paid_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+# --- Recovery (PRD 5, 9) ----------------------------------------------------
+
+
+class AddictionType(str, enum.Enum):
+    opioids = "opioids"
+    cannabis = "cannabis"
+    alcohol = "alcohol"
+    tobacco = "tobacco"
+    pills = "pills"
+    gambling = "gambling"
+    other = "other"
+
+
+class ReviewStatus(str, enum.Enum):
+    """The patient enters their addictions; the doctor checks them (PRD 3)."""
+
+    pending = "pending"
+    confirmed = "confirmed"
+    rejected = "rejected"
+
+
+class Addiction(Base):
+    """One thing the patient tracks, with its own sobriety counter (PRD 5.1).
+    A relapse restarts [sobriety_start] but folds the finished streak into
+    [past_days] and [longest_past_days], so progress is never erased."""
+
+    __tablename__ = "addictions"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    patient_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    type: Mapped[AddictionType] = mapped_column(Enum(AddictionType, name="addiction_type"))
+    # The exact product, in the patient's words.
+    substance: Mapped[str | None] = mapped_column(String(100))
+    sobriety_start: Mapped[datetime] = mapped_column(DateTime)
+    longest_past_days: Mapped[int] = mapped_column(Integer, default=0)
+    past_days: Mapped[int] = mapped_column(Integer, default=0)
+    review_status: Mapped[ReviewStatus] = mapped_column(
+        Enum(ReviewStatus, name="review_status"), default=ReviewStatus.pending
+    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    reviewed_by: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class Relapse(Base):
+    """A logged relapse. The note is the patient's own words: it is shown to
+    their doctor only and never written to logs or alerts."""
+
+    __tablename__ = "relapses"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    addiction_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("addictions.id", ondelete="CASCADE"), index=True
+    )
+    occurred_at: Mapped[datetime] = mapped_column(DateTime)
+    note: Mapped[str | None] = mapped_column(String(500))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class Alert(Base):
+    """A heads-up for a doctor's dashboard. It names a kind of event and a
+    patient, never medical content (PRD 5, 9)."""
+
+    __tablename__ = "alerts"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    doctor_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("doctor_profiles.user_id", ondelete="CASCADE"), index=True
+    )
+    patient_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    # "relapse" for now; "missed_doses" and "milestone" come with later slices.
+    type: Mapped[str] = mapped_column(String(32))
+    priority: Mapped[str] = mapped_column(String(8), default="normal")
+    read: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
