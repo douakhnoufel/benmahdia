@@ -155,6 +155,51 @@ export type Identity = {
   has_selfie: boolean;
 };
 
+export type AddictionType = 'opioids' | 'cannabis' | 'alcohol' | 'tobacco' | 'pills' | 'gambling' | 'other';
+
+/** What the patient entered, for the doctor to confirm or refuse (PRD 3). */
+export type PatientAddiction = {
+  id: string;
+  type: AddictionType;
+  substance: string | null;
+  /** Start of the current streak, UTC ISO. */
+  clean_since: string;
+  longest_past_days: number;
+  past_days: number;
+  review_status: 'pending' | 'confirmed' | 'rejected';
+  relapses: { at: string; note: string | null }[];
+};
+
+export type Medication = {
+  id: string;
+  name: string;
+  amount: string;
+  times: string[];
+  start_date: string;
+  end_date: string | null;
+  instructions: string | null;
+};
+
+export type NewMedication = {
+  name: string;
+  amount: string;
+  times: string[];
+  start_date: string;
+  end_date: string | null;
+  instructions: string | null;
+};
+
+export type Alert = {
+  id: string;
+  patient_id: string;
+  patient_phone: string | null;
+  /** "relapse" or "missed_doses". Never carries medical content. */
+  type: string;
+  priority: string;
+  read: boolean;
+  created_at: string;
+};
+
 export const api = {
   async login(email: string, password: string) {
     const res = await raw('POST', 'v1/staff/login', { email, password });
@@ -171,6 +216,17 @@ export const api = {
   reject: (id: string, reason?: string) =>
     request<Signup>('POST', `v1/staff/signups/${id}/reject`, reason ? { reason } : undefined),
   identity: (id: string) => request<Identity>('GET', `v1/staff/signups/${id}/identity`),
+  patientAddictions: (patientId: string) =>
+    request<PatientAddiction[]>('GET', `v1/staff/patients/${patientId}/addictions`),
+  reviewAddiction: (patientId: string, addictionId: string, decision: 'confirm' | 'reject') =>
+    request<PatientAddiction>('POST', `v1/staff/patients/${patientId}/addictions/${addictionId}/${decision}`),
+  medications: (patientId: string) => request<Medication[]>('GET', `v1/staff/patients/${patientId}/medications`),
+  prescribe: (patientId: string, medication: NewMedication) =>
+    request<Medication>('POST', `v1/staff/patients/${patientId}/medications`, medication),
+  stopMedication: (patientId: string, medicationId: string) =>
+    request<null>('DELETE', `v1/staff/patients/${patientId}/medications/${medicationId}`),
+  alerts: (unread = false) => request<Alert[]>('GET', `v1/staff/alerts${unread ? '?unread=true' : ''}`),
+  markAlertRead: (id: string) => request<Alert>('POST', `v1/staff/alerts/${id}/read`),
   /** A temporary browser URL for the selfie; release it with URL.revokeObjectURL. */
   selfie: async (id: string) => URL.createObjectURL(await requestBlob(`v1/staff/signups/${id}/selfie`)),
 };
