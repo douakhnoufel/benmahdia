@@ -203,6 +203,7 @@ describe('Signups: reviewing a declared ID', () => {
     duplicate_attempt: false,
   };
   const identity = {
+    id_type: 'national_id',
     full_name: 'Karim Benali',
     birth_date: '1990-05-17',
     declared_at: '2026-10-17T10:05:00Z',
@@ -235,6 +236,7 @@ describe('Signups: reviewing a declared ID', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Examiner' }));
     expect(await screen.findByText('Karim Benali')).toBeInTheDocument();
     expect(screen.getByText('1990-05-17')).toBeInTheDocument();
+    expect(screen.getByText("Carte d'identité algérienne")).toBeInTheDocument();
     expect(await screen.findByAltText('Photo du patient')).toHaveAttribute('src', 'blob:selfie');
     expect(calls.some((c) => c.url.pathname === '/v1/staff/signups/s1/selfie')).toBe(true);
     expect((calls.find((c) => c.url.pathname.endsWith('/selfie'))!.init.headers as Record<string, string>).authorization).toBe('Bearer a1');
@@ -282,6 +284,15 @@ describe('Signups: reviewing a declared ID', () => {
     renderIn(<Signups />);
     await userEvent.click(await screen.findByRole('button', { name: 'Examiner' }));
     expect(await screen.findByText('Aucune photo.')).toBeInTheDocument();
+  });
+
+  it('says when the patient declared an Algerian passport', async () => {
+    backend((url) =>
+      url.pathname.endsWith('/identity') ? { status: 200, body: { ...identity, id_type: 'passport' } } : undefined,
+    );
+    renderIn(<Signups />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Examiner' }));
+    expect(await screen.findByText('Passeport algérien')).toBeInTheDocument();
   });
 
   it('is available in Arabic', async () => {

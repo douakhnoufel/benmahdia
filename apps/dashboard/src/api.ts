@@ -146,6 +146,8 @@ export type Signup = {
 
 /** The decrypted declaration. The ID number is never available. */
 export type Identity = {
+  /** The document declared: the Algerian national ID card or passport. */
+  id_type?: 'national_id' | 'passport';
   full_name: string;
   birth_date: string;
   declared_at: string;

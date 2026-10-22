@@ -151,6 +151,10 @@ function Review({
           </p>
         )}
         <dl className="grid grid-cols-[auto_1fr] gap-x-xl gap-y-sm">
+          <dt className="text-label text-ink-muted">{t('document')}</dt>
+          <dd className="text-body-lg text-ink-strong">
+            {d.id_type === 'passport' ? t('docPassport') : t('docNationalId')}
+          </dd>
           <dt className="text-label text-ink-muted">{t('fullName')}</dt>
           <dd className="text-body-lg text-ink-strong">{d.full_name}</dd>
           <dt className="text-label text-ink-muted">{t('birthDate')}</dt>
