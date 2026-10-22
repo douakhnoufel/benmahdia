@@ -1481,7 +1481,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileFormBody.
   ///
   /// In ar, this message translates to:
-  /// **'امسح بطاقة الهوية ضوئياً ثم تأكد من الحقول الثلاثة.'**
+  /// **'اختر بطاقة التعريف أو جواز السفر، امسحها ثم تأكد من الحقول الثلاثة.'**
   String get profileFormBody;
 
   /// No description provided for @profileScan.
@@ -1499,7 +1499,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileScanFailed.
   ///
   /// In ar, this message translates to:
-  /// **'تعذّرت قراءة البطاقة. اكتب البيانات بنفسك.'**
+  /// **'تعذّر فتح الكاميرا. اكتب البيانات بنفسك.'**
   String get profileScanFailed;
 
   /// No description provided for @profileIdNumber.
@@ -2155,6 +2155,162 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'حُفظ. سيراجعه طبيبك.'**
   String get addictionSaved;
+
+  /// No description provided for @profileDocNationalId.
+  ///
+  /// In ar, this message translates to:
+  /// **'بطاقة التعريف الجزائرية'**
+  String get profileDocNationalId;
+
+  /// No description provided for @profileDocPassport.
+  ///
+  /// In ar, this message translates to:
+  /// **'جواز السفر الجزائري'**
+  String get profileDocPassport;
+
+  /// No description provided for @profileScanPassport.
+  ///
+  /// In ar, this message translates to:
+  /// **'مسح جواز السفر'**
+  String get profileScanPassport;
+
+  /// No description provided for @profilePassportNumber.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم جواز السفر'**
+  String get profilePassportNumber;
+
+  /// No description provided for @scanPlaceCard.
+  ///
+  /// In ar, this message translates to:
+  /// **'ضع البطاقة داخل الإطار'**
+  String get scanPlaceCard;
+
+  /// No description provided for @scanPlacePassport.
+  ///
+  /// In ar, this message translates to:
+  /// **'ضع صفحة الصورة داخل الإطار مع السطرين في الأسفل'**
+  String get scanPlacePassport;
+
+  /// No description provided for @scanHold.
+  ///
+  /// In ar, this message translates to:
+  /// **'ثبّت الهاتف…'**
+  String get scanHold;
+
+  /// No description provided for @scanSlow.
+  ///
+  /// In ar, this message translates to:
+  /// **'القراءة صعبة. جرّب إضاءة أفضل، أو اكتب المعلومات بنفسك.'**
+  String get scanSlow;
+
+  /// No description provided for @scanPrivacy.
+  ///
+  /// In ar, this message translates to:
+  /// **'تُقرأ الوثيقة على هاتفك، ولا تُحفظ أي صورة.'**
+  String get scanPrivacy;
+
+  /// No description provided for @scanTorchOn.
+  ///
+  /// In ar, this message translates to:
+  /// **'تشغيل الإضاءة'**
+  String get scanTorchOn;
+
+  /// No description provided for @scanTorchOff.
+  ///
+  /// In ar, this message translates to:
+  /// **'إطفاء الإضاءة'**
+  String get scanTorchOff;
+
+  /// No description provided for @scanTypeInstead.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتبها بنفسي'**
+  String get scanTypeInstead;
+
+  /// No description provided for @cameraClose.
+  ///
+  /// In ar, this message translates to:
+  /// **'إغلاق'**
+  String get cameraClose;
+
+  /// No description provided for @cameraDenied.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يمكن استعمال الكاميرا. اسمح للتطبيق باستعمالها من إعدادات الهاتف، أو اكتب المعلومات بنفسك.'**
+  String get cameraDenied;
+
+  /// No description provided for @cameraRetry.
+  ///
+  /// In ar, this message translates to:
+  /// **'حاول مجدداً'**
+  String get cameraRetry;
+
+  /// No description provided for @selfieCamTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'صورتك الشخصية'**
+  String get selfieCamTitle;
+
+  /// No description provided for @selfieNoFace.
+  ///
+  /// In ar, this message translates to:
+  /// **'انظر إلى الكاميرا'**
+  String get selfieNoFace;
+
+  /// No description provided for @selfieOneFace.
+  ///
+  /// In ar, this message translates to:
+  /// **'وجه واحد فقط من فضلك'**
+  String get selfieOneFace;
+
+  /// No description provided for @selfieCloser.
+  ///
+  /// In ar, this message translates to:
+  /// **'اقترب قليلاً'**
+  String get selfieCloser;
+
+  /// No description provided for @selfieCenter.
+  ///
+  /// In ar, this message translates to:
+  /// **'ضع وجهك وسط الإطار'**
+  String get selfieCenter;
+
+  /// No description provided for @selfieReady.
+  ///
+  /// In ar, this message translates to:
+  /// **'ممتاز، التقط الصورة'**
+  String get selfieReady;
+
+  /// No description provided for @selfieTake.
+  ///
+  /// In ar, this message translates to:
+  /// **'التقاط الصورة'**
+  String get selfieTake;
+
+  /// No description provided for @selfieCheck.
+  ///
+  /// In ar, this message translates to:
+  /// **'هل الصورة واضحة؟'**
+  String get selfieCheck;
+
+  /// No description provided for @selfieUse.
+  ///
+  /// In ar, this message translates to:
+  /// **'استعمل هذه الصورة'**
+  String get selfieUse;
+
+  /// No description provided for @selfieCamPrivacy.
+  ///
+  /// In ar, this message translates to:
+  /// **'تُرسل الصورة مشفّرة إلى طبيبك فقط.'**
+  String get selfieCamPrivacy;
+
+  /// No description provided for @scanNotAlgerian.
+  ///
+  /// In ar, this message translates to:
+  /// **'نقبل جواز السفر الجزائري فقط.'**
+  String get scanNotAlgerian;
 }
 
 class _AppLocalizationsDelegate

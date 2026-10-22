@@ -858,7 +858,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get profileFormBody =>
-      'امسح بطاقة الهوية ضوئياً ثم تأكد من الحقول الثلاثة.';
+      'اختر بطاقة التعريف أو جواز السفر، امسحها ثم تأكد من الحقول الثلاثة.';
 
   @override
   String get profileScan => 'مسح بطاقة الهوية';
@@ -867,7 +867,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get profileScanAgain => 'مسح من جديد';
 
   @override
-  String get profileScanFailed => 'تعذّرت قراءة البطاقة. اكتب البيانات بنفسك.';
+  String get profileScanFailed => 'تعذّر فتح الكاميرا. اكتب البيانات بنفسك.';
 
   @override
   String get profileIdNumber => 'رقم بطاقة الهوية';
@@ -1236,4 +1236,85 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get addictionSaved => 'حُفظ. سيراجعه طبيبك.';
+
+  @override
+  String get profileDocNationalId => 'بطاقة التعريف الجزائرية';
+
+  @override
+  String get profileDocPassport => 'جواز السفر الجزائري';
+
+  @override
+  String get profileScanPassport => 'مسح جواز السفر';
+
+  @override
+  String get profilePassportNumber => 'رقم جواز السفر';
+
+  @override
+  String get scanPlaceCard => 'ضع البطاقة داخل الإطار';
+
+  @override
+  String get scanPlacePassport =>
+      'ضع صفحة الصورة داخل الإطار مع السطرين في الأسفل';
+
+  @override
+  String get scanHold => 'ثبّت الهاتف…';
+
+  @override
+  String get scanSlow =>
+      'القراءة صعبة. جرّب إضاءة أفضل، أو اكتب المعلومات بنفسك.';
+
+  @override
+  String get scanPrivacy => 'تُقرأ الوثيقة على هاتفك، ولا تُحفظ أي صورة.';
+
+  @override
+  String get scanTorchOn => 'تشغيل الإضاءة';
+
+  @override
+  String get scanTorchOff => 'إطفاء الإضاءة';
+
+  @override
+  String get scanTypeInstead => 'اكتبها بنفسي';
+
+  @override
+  String get cameraClose => 'إغلاق';
+
+  @override
+  String get cameraDenied =>
+      'لا يمكن استعمال الكاميرا. اسمح للتطبيق باستعمالها من إعدادات الهاتف، أو اكتب المعلومات بنفسك.';
+
+  @override
+  String get cameraRetry => 'حاول مجدداً';
+
+  @override
+  String get selfieCamTitle => 'صورتك الشخصية';
+
+  @override
+  String get selfieNoFace => 'انظر إلى الكاميرا';
+
+  @override
+  String get selfieOneFace => 'وجه واحد فقط من فضلك';
+
+  @override
+  String get selfieCloser => 'اقترب قليلاً';
+
+  @override
+  String get selfieCenter => 'ضع وجهك وسط الإطار';
+
+  @override
+  String get selfieReady => 'ممتاز، التقط الصورة';
+
+  @override
+  String get selfieTake => 'التقاط الصورة';
+
+  @override
+  String get selfieCheck => 'هل الصورة واضحة؟';
+
+  @override
+  String get selfieUse => 'استعمل هذه الصورة';
+
+  @override
+  String get selfieCamPrivacy => 'تُرسل الصورة مشفّرة إلى طبيبك فقط.';
+
+  @override
+  String get scanNotAlgerian => 'نقبل جواز السفر الجزائري فقط.';
 }

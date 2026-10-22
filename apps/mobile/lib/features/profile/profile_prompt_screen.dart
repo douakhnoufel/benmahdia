@@ -33,11 +33,11 @@ class _ProfilePromptScreenState extends State<ProfilePromptScreen> {
       body: l10n.profilePromptBody,
       children: [
         _Point(icon: Icons.badge_outlined, text: l10n.profileWhatId),
-        _Point(icon: Icons.face_retouching_natural, text: l10n.profileWhatSelfie),
         _Point(
-          icon: Icons.fact_check_outlined,
-          text: l10n.profileWhatApproval,
+          icon: Icons.face_retouching_natural,
+          text: l10n.profileWhatSelfie,
         ),
+        _Point(icon: Icons.fact_check_outlined, text: l10n.profileWhatApproval),
         CheckboxListTile(
           key: const ValueKey('profile-consent'),
           contentPadding: EdgeInsets.zero,

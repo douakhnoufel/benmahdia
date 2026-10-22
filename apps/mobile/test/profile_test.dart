@@ -24,10 +24,12 @@ class _Reader implements IdReader {
   );
   bool fails = false;
   int scans = 0;
+  final types = <IdDocType>[];
 
   @override
-  Future<ScannedId?> scan() async {
+  Future<ScannedId?> scan(BuildContext context, IdDocType type) async {
     scans++;
+    types.add(type);
     if (fails) throw const IdReadFailed();
     return result;
   }
@@ -37,7 +39,7 @@ class _Camera implements SelfieCamera {
   Uint8List? shot = Uint8List.fromList([0xff, 0xd8, 0xff, 0xe0, 7, 7]);
 
   @override
-  Future<Uint8List?> take() async => shot;
+  Future<Uint8List?> take(BuildContext context) async => shot;
 }
 
 const _second = Duration(seconds: 1);
@@ -58,7 +60,10 @@ List<Override> _with(
 Widget _launcher(void Function(BuildContext) open) => Builder(
   builder: (context) => Scaffold(
     body: Center(
-      child: TextButton(onPressed: () => open(context), child: const Text('go')),
+      child: TextButton(
+        onPressed: () => open(context),
+        child: const Text('go'),
+      ),
     ),
   ),
 );
@@ -160,11 +165,53 @@ void main() {
       expect(sent.draft.idNumber, '123456789012345678');
       expect(sent.draft.fullName, 'Karim Benali');
       expect(sent.draft.birthIso, '1990-05-17');
+      expect(sent.draft.idType, IdDocType.nationalId);
       expect(sent.selfie, camera.shot);
 
       await _tap(tester, 'profile-done');
       expect(find.text('go'), findsOneWidget);
       expect(after, 1);
+    });
+
+    testWidgets('a passport fills the name and is sent as a passport', (
+      tester,
+    ) async {
+      final identity = FakeIdentityRepository();
+      final reader = _Reader()
+        ..result = ScannedId(
+          idNumber: 'L898902C3',
+          birthDate: DateTime(1974, 8, 12),
+          fullName: 'ERIKSSON ANNA MARIA',
+          issuer: 'DZA',
+        );
+      await pumpApp(
+        tester,
+        _launcher(openProfile),
+        overrides: _with(identity, reader: reader),
+      );
+      await _openForm(tester);
+
+      await tester.tap(find.text('جواز السفر الجزائري'));
+      await tester.pumpAndSettle();
+      expect(find.text('رقم جواز السفر'), findsOneWidget);
+      expect(find.text('مسح جواز السفر'), findsOneWidget);
+
+      await _tap(tester, 'profile-scan');
+      expect(reader.types, [IdDocType.passport]);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const ValueKey('profile-name')))
+            .controller!
+            .text,
+        'ERIKSSON ANNA MARIA',
+      );
+      await _tap(tester, 'profile-selfie');
+      await _tap(tester, 'profile-submit');
+
+      final sent = identity.submitted.single.draft;
+      expect(sent.idType, IdDocType.passport);
+      expect(sent.idNumber, 'L898902C3');
+      expect(sent.birthIso, '1974-08-12');
     });
 
     testWidgets('typing the details works when the card cannot be read', (
@@ -180,7 +227,10 @@ void main() {
       await _openForm(tester);
 
       await _tap(tester, 'profile-scan');
-      expect(find.text('تعذّرت قراءة البطاقة. اكتب البيانات بنفسك.'), findsOneWidget);
+      expect(
+        find.text('تعذّر فتح الكاميرا. اكتب البيانات بنفسك.'),
+        findsOneWidget,
+      );
 
       await _type(tester, 'profile-id', '12 34 56 78 90');
       await _type(tester, 'profile-name', 'Karim Benali');
@@ -197,7 +247,11 @@ void main() {
       await pumpApp(
         tester,
         _launcher(openProfile),
-        overrides: _with(FakeIdentityRepository(), reader: reader, camera: camera),
+        overrides: _with(
+          FakeIdentityRepository(),
+          reader: reader,
+          camera: camera,
+        ),
       );
       await _openForm(tester);
       await _tap(tester, 'profile-scan');
@@ -217,18 +271,17 @@ void main() {
       tester,
     ) async {
       final identity = FakeIdentityRepository();
-      await pumpApp(
-        tester,
-        _launcher(openProfile),
-        overrides: _with(identity),
-      );
+      await pumpApp(tester, _launcher(openProfile), overrides: _with(identity));
       await _openForm(tester);
       await _tap(tester, 'profile-submit');
 
       expect(identity.submitted, isEmpty);
       expect(find.text('رقم الهوية غير صالح.'), findsOneWidget);
       expect(find.text('اكتب اسمك الكامل.'), findsOneWidget);
-      expect(find.text('تاريخ الميلاد غير صالح. اكتبه هكذا: 1990-05-17.'), findsOneWidget);
+      expect(
+        find.text('تاريخ الميلاد غير صالح. اكتبه هكذا: 1990-05-17.'),
+        findsOneWidget,
+      );
       expect(find.text('التقط صورة سيلفي أولاً.'), findsOneWidget);
     });
 
@@ -237,11 +290,7 @@ void main() {
     ) async {
       final identity = FakeIdentityRepository()
         ..failNext = const IdAlreadyLinked();
-      await pumpApp(
-        tester,
-        _launcher(openProfile),
-        overrides: _with(identity),
-      );
+      await pumpApp(tester, _launcher(openProfile), overrides: _with(identity));
       await _openForm(tester);
       await _tap(tester, 'profile-scan');
       await _type(tester, 'profile-name', 'Karim Benali');
@@ -333,7 +382,9 @@ void main() {
       expect(find.byKey(const ValueKey('profile-card-action')), findsNothing);
     });
 
-    testWidgets('an approved patient sees no card and can book', (tester) async {
+    testWidgets('an approved patient sees no card and can book', (
+      tester,
+    ) async {
       final identity = FakeIdentityRepository(
         initial: const IdentityState(status: IdStatus.approved),
       );

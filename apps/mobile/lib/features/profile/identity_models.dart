@@ -26,13 +26,26 @@ class IdentityState {
 }
 
 /// The three fields the patient confirmed. The card image is never kept.
+/// The document the patient declares (PRD 4.2).
+enum IdDocType {
+  nationalId('national_id'),
+  passport('passport');
+
+  const IdDocType(this.apiValue);
+
+  /// `id_type` in the API.
+  final String apiValue;
+}
+
 class IdentityDraft {
   const IdentityDraft({
     required this.idNumber,
     required this.fullName,
     required this.birthDate,
+    this.idType = IdDocType.nationalId,
   });
 
+  final IdDocType idType;
   final String idNumber;
   final String fullName;
   final DateTime birthDate;

@@ -868,7 +868,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get profileFormBody =>
-      'Scannez votre carte d\'identité, puis vérifiez les trois champs.';
+      'Choisissez la carte d\'identité ou le passeport, scannez-le, puis vérifiez les trois champs.';
 
   @override
   String get profileScan => 'Scanner ma carte d\'identité';
@@ -878,7 +878,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get profileScanFailed =>
-      'Impossible de lire la carte. Saisissez les informations vous-même.';
+      'Impossible d\'ouvrir la caméra. Saisissez les informations vous-même.';
 
   @override
   String get profileIdNumber => 'Numéro de la carte';
@@ -1255,4 +1255,87 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get addictionSaved => 'Enregistré. Votre médecin va le vérifier.';
+
+  @override
+  String get profileDocNationalId => 'Carte d\'identité algérienne';
+
+  @override
+  String get profileDocPassport => 'Passeport algérien';
+
+  @override
+  String get profileScanPassport => 'Scanner mon passeport';
+
+  @override
+  String get profilePassportNumber => 'Numéro de passeport';
+
+  @override
+  String get scanPlaceCard => 'Placez la carte dans le cadre';
+
+  @override
+  String get scanPlacePassport =>
+      'Placez la page photo dans le cadre, avec les deux lignes du bas';
+
+  @override
+  String get scanHold => 'Ne bougez plus…';
+
+  @override
+  String get scanSlow =>
+      'Lecture difficile. Essayez avec plus de lumière, ou saisissez les informations vous-même.';
+
+  @override
+  String get scanPrivacy =>
+      'Le document est lu sur votre téléphone ; aucune photo n\'est enregistrée.';
+
+  @override
+  String get scanTorchOn => 'Allumer la lampe';
+
+  @override
+  String get scanTorchOff => 'Éteindre la lampe';
+
+  @override
+  String get scanTypeInstead => 'Saisir moi-même';
+
+  @override
+  String get cameraClose => 'Fermer';
+
+  @override
+  String get cameraDenied =>
+      'Caméra indisponible. Autorisez-la dans les réglages du téléphone, ou saisissez les informations vous-même.';
+
+  @override
+  String get cameraRetry => 'Réessayer';
+
+  @override
+  String get selfieCamTitle => 'Votre selfie';
+
+  @override
+  String get selfieNoFace => 'Regardez la caméra';
+
+  @override
+  String get selfieOneFace => 'Un seul visage, s\'il vous plaît';
+
+  @override
+  String get selfieCloser => 'Approchez-vous un peu';
+
+  @override
+  String get selfieCenter => 'Placez votre visage au centre';
+
+  @override
+  String get selfieReady => 'Parfait, prenez la photo';
+
+  @override
+  String get selfieTake => 'Prendre la photo';
+
+  @override
+  String get selfieCheck => 'La photo est-elle nette ?';
+
+  @override
+  String get selfieUse => 'Utiliser cette photo';
+
+  @override
+  String get selfieCamPrivacy =>
+      'La photo est envoyée chiffrée, à votre médecin seulement.';
+
+  @override
+  String get scanNotAlgerian => 'Seul le passeport algérien est accepté.';
 }

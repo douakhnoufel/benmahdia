@@ -29,6 +29,7 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
   final _birth = TextEditingController();
   final _errors = <IdField, String>{};
   Uint8List? _selfie;
+  IdDocType _type = IdDocType.nationalId;
   bool _scanned = false;
   bool _scanning = false;
   bool _sending = false;
@@ -54,14 +55,19 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
       _failure = null;
     });
     try {
-      final scanned = await ref.read(idReaderProvider).scan();
+      final scanned = await ref.read(idReaderProvider).scan(context, _type);
       if (!mounted || scanned == null) return;
       setState(() {
         _scanned = true;
         final number = scanned.idNumber;
         final birth = scanned.birthDate;
+        final name = scanned.fullName;
         if (number != null) _id.text = number;
         if (birth != null) _birth.text = _iso(birth);
+        if (name != null && _name.text.trim().isEmpty) {
+          _name.text = name;
+          _errors.remove(IdField.fullName);
+        }
         _errors.remove(IdField.idNumber);
         _errors.remove(IdField.birthDate);
       });
@@ -73,7 +79,7 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
   }
 
   Future<void> _selfieShot() async {
-    final bytes = await ref.read(selfieCameraProvider).take();
+    final bytes = await ref.read(selfieCameraProvider).take(context);
     if (!mounted || bytes == null) return;
     setState(() {
       _selfie = bytes;
@@ -108,7 +114,12 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
       await ref
           .read(identityRepositoryProvider)
           .declare(
-            IdentityDraft(idNumber: number, fullName: name, birthDate: birth),
+            IdentityDraft(
+              idType: _type,
+              idNumber: number,
+              fullName: name,
+              birthDate: birth,
+            ),
             selfie,
           );
       ref.invalidate(identityStateProvider);
@@ -142,6 +153,32 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
       title: l10n.profileFormTitle,
       body: l10n.profileFormBody,
       children: [
+        SegmentedButton<IdDocType>(
+          key: const ValueKey('profile-doc-type'),
+          showSelectedIcon: false,
+          segments: [
+            ButtonSegment(
+              value: IdDocType.nationalId,
+              icon: const Icon(Icons.badge_outlined),
+              label: Text(l10n.profileDocNationalId),
+            ),
+            ButtonSegment(
+              value: IdDocType.passport,
+              icon: const Icon(Icons.menu_book_outlined),
+              label: Text(l10n.profileDocPassport),
+            ),
+          ],
+          selected: {_type},
+          onSelectionChanged: busy
+              ? null
+              : (picked) => setState(() {
+                  // A different document: its number must be read again.
+                  _type = picked.single;
+                  _id.clear();
+                  _scanned = false;
+                  _errors.remove(IdField.idNumber);
+                }),
+        ),
         OutlinedButton.icon(
           key: const ValueKey('profile-scan'),
           onPressed: busy ? null : _scan,
@@ -151,7 +188,13 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.document_scanner_outlined),
-          label: Text(_scanned ? l10n.profileScanAgain : l10n.profileScan),
+          label: Text(
+            _scanned
+                ? l10n.profileScanAgain
+                : _type == IdDocType.passport
+                ? l10n.profileScanPassport
+                : l10n.profileScan,
+          ),
         ),
         TextField(
           key: const ValueKey('profile-id'),
@@ -164,7 +207,9 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
             FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9 \-]')),
           ],
           decoration: InputDecoration(
-            labelText: l10n.profileIdNumber,
+            labelText: _type == IdDocType.passport
+                ? l10n.profilePassportNumber
+                : l10n.profileIdNumber,
             errorText: _errors[IdField.idNumber],
           ),
         ),

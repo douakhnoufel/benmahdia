@@ -39,6 +39,7 @@ class ApiIdentityRepository implements IdentityRepository {
       'POST',
       'v1/me/identity',
       body: {
+        'id_type': draft.idType.apiValue,
         'id_number': draft.idNumber,
         'full_name': draft.fullName,
         'birth_date': draft.birthIso,

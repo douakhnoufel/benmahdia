@@ -13,8 +13,9 @@ http.Response _json(int status, Object? body) => http.Response(
   headers: {'content-type': 'application/json'},
 );
 
-http.Response _error(int status, String code) =>
-    _json(status, {'detail': {'code': code}});
+http.Response _error(int status, String code) => _json(status, {
+  'detail': {'code': code},
+});
 
 final _draft = IdentityDraft(
   idNumber: '123456789012345678',
@@ -72,29 +73,34 @@ void main() {
     }
   });
 
-  test('declares the three fields and the selfie, nothing else', () async {
-    late Map<String, dynamic> body;
-    final repo = _repo(
-      MockClient((request) async {
-        expect(request.method, 'POST');
-        expect(request.url.path, '/v1/me/identity');
-        body = jsonDecode(request.body) as Map<String, dynamic>;
-        return _json(201, {'status': 'declared', 'submissions_left': 3});
-      }),
-    );
-    final state = await repo.declare(_draft, _selfie);
-    expect(state.status, IdStatus.declared);
-    expect(body.keys.toSet(), {
-      'id_number',
-      'full_name',
-      'birth_date',
-      'selfie_jpeg_base64',
-    });
-    expect(body['id_number'], '123456789012345678');
-    expect(body['full_name'], 'Karim Benali');
-    expect(body['birth_date'], '1990-05-17');
-    expect(base64Decode(body['selfie_jpeg_base64'] as String), _selfie);
-  });
+  test(
+    'declares the document type, the three fields and the selfie, nothing else',
+    () async {
+      late Map<String, dynamic> body;
+      final repo = _repo(
+        MockClient((request) async {
+          expect(request.method, 'POST');
+          expect(request.url.path, '/v1/me/identity');
+          body = jsonDecode(request.body) as Map<String, dynamic>;
+          return _json(201, {'status': 'declared', 'submissions_left': 3});
+        }),
+      );
+      final state = await repo.declare(_draft, _selfie);
+      expect(state.status, IdStatus.declared);
+      expect(body.keys.toSet(), {
+        'id_type',
+        'id_number',
+        'full_name',
+        'birth_date',
+        'selfie_jpeg_base64',
+      });
+      expect(body['id_type'], 'national_id');
+      expect(body['id_number'], '123456789012345678');
+      expect(body['full_name'], 'Karim Benali');
+      expect(body['birth_date'], '1990-05-17');
+      expect(base64Decode(body['selfie_jpeg_base64'] as String), _selfie);
+    },
+  );
 
   test('refreshes the token once after a 401', () async {
     var calls = 0;

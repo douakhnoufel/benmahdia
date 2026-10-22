@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSCameraUsageDescription</key>
-	<string>BenMahdia uses the camera to read your ID card on your phone and to take your selfie for the clinic.</string>
+	<string>BenMahdia uses the camera to read your Algerian ID card or passport on your phone and to take your selfie for the clinic.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

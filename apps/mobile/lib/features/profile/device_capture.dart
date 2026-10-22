@@ -1,76 +1,39 @@
-import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:flutter/material.dart';
 
 import 'capture.dart';
+import 'id_scan_screen.dart';
 import 'id_text_parser.dart';
+import 'identity_models.dart';
+import 'selfie_screen.dart';
 
-Future<void> _forget(String path) async {
-  try {
-    await File(path).delete();
-  } on FileSystemException {
-    // Already gone.
+/// Opens the in-app scanner (live text recognition, nothing saved).
+class LiveIdReader implements IdReader {
+  @override
+  Future<ScannedId?> scan(BuildContext context, IdDocType type) async {
+    final result = await Navigator.of(context).push<IdScanResult>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => IdScanScreen(type: type),
+      ),
+    );
+    return switch (result) {
+      IdScanRead(:final id) => id,
+      IdScanCameraUnavailable() => throw const IdReadFailed(),
+      null => null,
+    };
   }
 }
 
-/// Reads the card with the phone camera and on-device text recognition
-/// (Google ML Kit). Nothing is uploaded and the photo is deleted afterwards.
-class MlKitIdReader implements IdReader {
-  MlKitIdReader({ImagePicker? picker, DateTime Function()? clock})
-    : _picker = picker ?? ImagePicker(),
-      _clock = clock ?? DateTime.now;
-
-  final ImagePicker _picker;
-  final DateTime Function() _clock;
-
+/// Opens the in-app front camera with the face check.
+class InAppSelfieCamera implements SelfieCamera {
   @override
-  Future<ScannedId?> scan() async {
-    final shot = await _picker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 90,
-    );
-    if (shot == null) return null;
-    final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
-    try {
-      final result = await recognizer.processImage(
-        InputImage.fromFilePath(shot.path),
+  Future<Uint8List?> take(BuildContext context) =>
+      Navigator.of(context).push<Uint8List>(
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (context) => const SelfieScreen(),
+        ),
       );
-      final scanned = parseIdText(result.text, today: _clock());
-      if (scanned.isEmpty) throw const IdReadFailed();
-      return scanned;
-    } on IdReadFailed {
-      rethrow;
-    } on Exception {
-      throw const IdReadFailed();
-    } finally {
-      await recognizer.close();
-      await _forget(shot.path);
-    }
-  }
-}
-
-/// Front camera, small JPEG (the server accepts up to 2 MB).
-class PhoneSelfieCamera implements SelfieCamera {
-  PhoneSelfieCamera({ImagePicker? picker}) : _picker = picker ?? ImagePicker();
-
-  final ImagePicker _picker;
-
-  @override
-  Future<Uint8List?> take() async {
-    final shot = await _picker.pickImage(
-      source: ImageSource.camera,
-      preferredCameraDevice: CameraDevice.front,
-      maxWidth: 1024,
-      maxHeight: 1024,
-      imageQuality: 85,
-    );
-    if (shot == null) return null;
-    try {
-      return await shot.readAsBytes();
-    } finally {
-      await _forget(shot.path);
-    }
-  }
 }
