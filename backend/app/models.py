@@ -11,6 +11,7 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Index,
+    JSON,
     Integer,
     LargeBinary,
     String,
@@ -428,6 +429,65 @@ class DailyCheck(Base):
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
     day: Mapped[date] = mapped_column(Date)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class Medication(Base):
+    """One medicine a doctor prescribed to a patient (PRD 5.3). [times] are
+    clinic wall-clock "HH:MM" times, one dose each, every day from
+    [start_date] to [end_date]. The drug name never leaves the app's own
+    screens: reminders on the phone say nothing about it."""
+
+    __tablename__ = "medications"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    patient_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    prescribed_by: Mapped[uuid.UUID] = mapped_column(Uuid)
+    name: Mapped[str] = mapped_column(String(100))
+    amount: Mapped[str] = mapped_column(String(50))
+    times: Mapped[list[str]] = mapped_column(JSON)
+    start_date: Mapped[date] = mapped_column(Date)
+    end_date: Mapped[date | None] = mapped_column(Date)
+    instructions: Mapped[str | None] = mapped_column(String(300))
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class DoseStatus(str, enum.Enum):
+    """What the patient answered. "Missed" is not stored: it is a past dose
+    with no answer."""
+
+    taken = "taken"
+    skipped = "skipped"
+
+
+class DoseLog(Base):
+    __tablename__ = "dose_logs"
+    __table_args__ = (UniqueConstraint("medication_id", "day", "time"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    medication_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("medications.id", ondelete="CASCADE"), index=True
+    )
+    day: Mapped[date] = mapped_column(Date)
+    time: Mapped[str] = mapped_column(String(5))
+    status: Mapped[DoseStatus] = mapped_column(Enum(DoseStatus, name="dose_status"))
+    logged_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class Quote(Base):
+    """A motivational quote (PRD 5.2), in both app languages. [addiction_type]
+    is an AddictionType value, or None for every patient."""
+
+    __tablename__ = "quotes"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    text_ar: Mapped[str] = mapped_column(String(300))
+    text_fr: Mapped[str] = mapped_column(String(300))
+    addiction_type: Mapped[str | None] = mapped_column(String(16))
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 

@@ -11,6 +11,7 @@ from .routers import (
     doctors,
     identity,
     me,
+    medications,
     payments,
     recovery,
     staff,
@@ -40,6 +41,8 @@ def create_app() -> FastAPI:
     app.include_router(me.router)
     app.include_router(recovery.router)
     app.include_router(checkins.router)
+    app.include_router(medications.router)
+    app.include_router(medications.staff_router)
     app.include_router(identity.router)
     app.include_router(doctors.router)
     app.include_router(appointments.router)

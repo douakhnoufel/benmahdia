@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from .db import engine
 from . import security
+from .quotes_seed import seed_quotes
 from .models import Availability, DoctorProfile, Role, User
 
 # Closed on Fridays (weekday 4), 09:00-12:00 and 14:00-16:00 otherwise.
@@ -48,6 +49,7 @@ def seed(db: Session) -> DoctorProfile:
             for start, end in HOURS:
                 db.add(Availability(doctor_id=user.id, weekday=weekday, start_minute=start, end_minute=end))
     db.commit()
+    seed_quotes(db)
     return profile
 
 
