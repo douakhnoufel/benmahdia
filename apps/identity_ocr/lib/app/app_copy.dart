@@ -1,0 +1,131 @@
+class AppCopy {
+  const AppCopy(this.arabic);
+
+  final bool arabic;
+
+  String text(String key) => (arabic ? _arabic : _french)[key] ?? key;
+
+  static const _french = <String, String>{
+    'brand': 'IDENTITÉ · OCR LOCAL',
+    'title': 'Lisez vos documents en privé',
+    'subtitle': 'Les informations sont extraites sur cet appareil.',
+    'nationalId': 'Carte nationale d’identité',
+    'nationalIdBody': 'Lecture prudente des champs clairement étiquetés.',
+    'passport': 'Passeport',
+    'passportBody': 'Lecture des deux lignes MRZ et contrôle ICAO.',
+    'privacyTitle': 'Vos documents restent ici',
+    'privacyBody':
+        'Les images et le texte reconnu ne quittent pas cet appareil. Rien n’est enregistré après la fermeture. Vérifiez chaque champ avant de le copier.',
+    'arabicLimit':
+        'Le moteur OCR actuel lit les caractères latins. Il ne reconnaît pas l’écriture arabe.',
+    'captureTitle': 'Ajoutez une image',
+    'captureSubtitle': 'Choisissez une photo ou prenez-en une maintenant.',
+    'camera': 'Prendre une photo',
+    'gallery': 'Choisir dans la galerie',
+    'previewTitle': 'Vérifiez l’image',
+    'previewHint':
+        'Gardez le document entier dans le cadre, avec les lignes MRZ visibles pour un passeport.',
+    'crop': 'Recadrer ou tourner',
+    'retake': 'Reprendre',
+    'read': 'Lire sur cet appareil',
+    'reading': 'Lecture en cours…',
+    'qualityTitle': 'Conseils de lisibilité',
+    'qualityIntro': 'Contrôles indicatifs. Vérifiez l’image vous-même.',
+    'qualityGood': 'Aucun problème évident détecté.',
+    'resultsTitle': 'Vérifiez les informations',
+    'resultsSubtitle':
+        'Corrigez les champs incertains. Rien n’est copié avant votre confirmation.',
+    'surname': 'Nom',
+    'givenNames': 'Prénoms',
+    'documentNumber': 'Numéro du document',
+    'nationality': 'Nationalité',
+    'issuingState': 'État émetteur',
+    'sex': 'Sexe',
+    'dateOfBirth': 'Date de naissance',
+    'issueDate': 'Date de délivrance',
+    'expiryDate': 'Date d’expiration',
+    'dateHint': 'AAAA-MM-JJ, ou format complet non ambigu',
+    'reviewCheck': 'J’ai vérifié et corrigé les informations ci-dessus.',
+    'copy': 'Confirmer et copier',
+    'copied': 'Informations confirmées et copiées.',
+    'validation': 'Échecs de validation',
+    'warnings': 'À vérifier',
+    'rawText': 'Afficher le texte reconnu sur cet appareil',
+    'emptyOcr': 'Aucun texte exploitable n’a été lu. Saisissez les champs.',
+    'manual': 'Vous pouvez saisir les champs manuellement.',
+    'authenticity':
+        'La lecture du texte et les chiffres de contrôle ne prouvent pas l’authenticité du document ni l’identité de son titulaire.',
+    'newScan': 'Lire un autre document',
+    'cancelled': 'Action annulée.',
+    'cropError':
+        'Le recadrage a échoué. Vous pouvez continuer avec cette image.',
+    'imageError':
+        'L’image ne peut pas être lue. Reprenez-la ou choisissez une autre photo.',
+    'processingError':
+        'La reconnaissance a échoué. Vous pouvez saisir les champs manuellement.',
+    'unsupported': 'Format d’image ou contenu non pris en charge.',
+    'language': 'العربية',
+    'dialogClose': 'Fermer',
+    'sourceFooter': 'Google ML Kit · traitement local · aucun compte requis',
+  };
+
+  static const _arabic = <String, String>{
+    'brand': 'الهوية · قراءة محلية',
+    'title': 'اقرأ وثائقك بخصوصية',
+    'subtitle': 'تُستخرج المعلومات على هذا الجهاز.',
+    'nationalId': 'بطاقة التعريف الوطنية',
+    'nationalIdBody': 'قراءة حذرة للحقول ذات التسميات الواضحة.',
+    'passport': 'جواز السفر',
+    'passportBody': 'قراءة سطري MRZ والتحقق وفق ICAO.',
+    'privacyTitle': 'تبقى وثائقك هنا',
+    'privacyBody':
+        'لا تغادر الصور والنصوص المقروءة هذا الجهاز. لا تُحفظ البيانات بعد إغلاق التطبيق. راجع كل حقل قبل نسخه.',
+    'arabicLimit':
+        'يتعرف محرك القراءة الحالي على الأحرف اللاتينية، ولا يتعرف على الكتابة العربية.',
+    'captureTitle': 'أضف صورة',
+    'captureSubtitle': 'اختر صورة أو التقط صورة الآن.',
+    'camera': 'التقاط صورة',
+    'gallery': 'اختيار من المعرض',
+    'previewTitle': 'تحقق من الصورة',
+    'previewHint':
+        'أبقِ الوثيقة كاملة داخل الإطار، وأظهر سطري MRZ في جواز السفر.',
+    'crop': 'قص أو تدوير',
+    'retake': 'إعادة الالتقاط',
+    'read': 'قراءة على هذا الجهاز',
+    'reading': 'جارٍ القراءة…',
+    'qualityTitle': 'إرشادات وضوح الصورة',
+    'qualityIntro': 'فحوصات تقديرية. تحقق من الصورة بنفسك.',
+    'qualityGood': 'لم تُكتشف مشكلة واضحة.',
+    'resultsTitle': 'راجع المعلومات',
+    'resultsSubtitle': 'صحح الحقول غير المؤكدة. لن يُنسخ شيء قبل تأكيدك.',
+    'surname': 'اللقب',
+    'givenNames': 'الاسم',
+    'documentNumber': 'رقم الوثيقة',
+    'nationality': 'الجنسية',
+    'issuingState': 'جهة الإصدار',
+    'sex': 'الجنس',
+    'dateOfBirth': 'تاريخ الميلاد',
+    'issueDate': 'تاريخ الإصدار',
+    'expiryDate': 'تاريخ الانتهاء',
+    'dateHint': 'سنة-شهر-يوم، أو صيغة كاملة غير ملتبسة',
+    'reviewCheck': 'راجعت المعلومات أعلاه وصححتها.',
+    'copy': 'تأكيد ونسخ',
+    'copied': 'تم تأكيد المعلومات ونسخها.',
+    'validation': 'إخفاقات التحقق',
+    'warnings': 'للمراجعة',
+    'rawText': 'عرض النص المقروء على هذا الجهاز',
+    'emptyOcr': 'لم يُقرأ نص صالح للاستخدام. أدخل الحقول يدوياً.',
+    'manual': 'يمكنك إدخال الحقول يدوياً.',
+    'authenticity':
+        'قراءة النص وأرقام التحقق لا تثبت أصالة الوثيقة أو هوية حاملها.',
+    'newScan': 'قراءة وثيقة أخرى',
+    'cancelled': 'تم إلغاء العملية.',
+    'cropError': 'تعذر قص الصورة. يمكنك المتابعة بالصورة الحالية.',
+    'imageError': 'تعذرت قراءة الصورة. أعد التقاطها أو اختر صورة أخرى.',
+    'processingError': 'تعذرت القراءة. يمكنك إدخال الحقول يدوياً.',
+    'unsupported': 'صيغة الصورة أو المحتوى غير مدعوم.',
+    'language': 'Français',
+    'dialogClose': 'إغلاق',
+    'sourceFooter': 'Google ML Kit · معالجة محلية · لا حاجة إلى حساب',
+  };
+}
