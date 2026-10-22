@@ -168,3 +168,9 @@ class ClinicInfo {
 
   List<OpenHours> hoursOn(DateTime day) => hours[day.weekday] ?? const [];
 }
+
+/// The recovery server could not be reached or answered badly. The screens
+/// show a retry message and keep what they had.
+class RecoveryUnavailable implements Exception {
+  const RecoveryUnavailable();
+}

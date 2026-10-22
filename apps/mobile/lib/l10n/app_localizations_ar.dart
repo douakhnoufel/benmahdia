@@ -1238,6 +1238,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addictionSaved => 'حُفظ. سيراجعه طبيبك.';
 
   @override
+  String get recoverySaveError => 'تعذّر الحفظ. تحقّق من الاتصال وحاول مجدداً.';
+
+  @override
   String get profileDocNationalId => 'بطاقة التعريف الجزائرية';
 
   @override

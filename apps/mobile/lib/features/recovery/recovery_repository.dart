@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../auth/auth_models.dart';
+import '../auth/auth_repository.dart';
+import 'api_recovery_repository.dart';
 import 'fake_recovery_repository.dart';
 import 'recovery_models.dart';
 
@@ -27,7 +30,8 @@ abstract interface class RecoveryRepository {
     DateTime? at,
   });
 
-  Future<Quote> quoteOfDay();
+  /// Null when the clinic has no quote for this patient yet.
+  Future<Quote?> quoteOfDay();
 
   /// Today's doses, earliest first.
   Future<List<Dose>> todaysDoses();
@@ -48,9 +52,27 @@ abstract interface class RecoveryRepository {
   Future<void> setReminder(DayTime? time);
 }
 
-/// Sample data until the recovery API exists (PRD 9: Addiction, Relapse,
-/// Medication, DoseLog, Quote).
-// TODO(recovery-api): use the API when `API_BASE_URL` is set, like booking.
-final recoveryRepositoryProvider = Provider<RecoveryRepository>(
-  (ref) => FakeRecoveryRepository(),
-);
+/// The recovery API when `API_BASE_URL` is set, otherwise sample data.
+/// Everything but the clinic's card comes from the server; the card stays
+/// local data (PRD: one pilot practice).
+final recoveryRepositoryProvider = Provider<RecoveryRepository>((ref) {
+  final sample = FakeRecoveryRepository();
+  if (apiBaseUrl.isEmpty) return sample;
+  final auth = ref.read(authRepositoryProvider);
+  return ApiRecoveryRepository(
+    baseUrl: Uri.parse(apiBaseUrl),
+    token: () => ref.read(sessionProvider)?.accessToken,
+    refresh: () async {
+      final session = ref.read(sessionProvider);
+      if (session == null) return false;
+      try {
+        final AuthSession fresh = await auth.refresh(session);
+        ref.read(sessionProvider.notifier).set(fresh);
+        return true;
+      } on AuthFailure {
+        return false;
+      }
+    },
+    rest: sample,
+  );
+});

@@ -344,6 +344,7 @@
   "addictionEmpty": "Ajoutez ce dont vous vous rétablissez pour lancer votre compteur.",
   "addictionPending": "En attente de validation du médecin",
   "addictionSaved": "Enregistré. Votre médecin va le vérifier.",
+  "recoverySaveError": "Enregistrement impossible. Vérifiez la connexion et réessayez.",
   "profileDocNationalId": "Carte d'identité algérienne",
   "profileDocPassport": "Passeport algérien",
   "profileScanPassport": "Scanner mon passeport",

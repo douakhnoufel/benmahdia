@@ -519,6 +519,7 @@
   "addictionEmpty": "أضف ما تتعافى منه ليبدأ عدّادك.",
   "addictionPending": "في انتظار مراجعة الطبيب",
   "addictionSaved": "حُفظ. سيراجعه طبيبك.",
+  "recoverySaveError": "تعذّر الحفظ. تحقّق من الاتصال وحاول مجدداً.",
   "profileDocNationalId": "بطاقة التعريف الجزائرية",
   "profileDocPassport": "جواز السفر الجزائري",
   "profileScanPassport": "مسح جواز السفر",

@@ -802,10 +802,11 @@ class QuoteCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          Text(
-            quote.source.of(lang),
-            style: text.bodySmall?.copyWith(color: AppColors.sand300),
-          ),
+          if (quote.source.of(lang).isNotEmpty)
+            Text(
+              quote.source.of(lang),
+              style: text.bodySmall?.copyWith(color: AppColors.sand300),
+            ),
         ],
       ),
     );

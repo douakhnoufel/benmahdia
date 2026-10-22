@@ -99,9 +99,21 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     }
   }
 
+  /// Runs a save; on failure tells the patient and keeps what the screen had.
+  Future<T?> _saving<T>(Future<T> Function() save) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final message = AppLocalizations.of(context).recoverySaveError;
+    try {
+      return await save();
+    } on RecoveryUnavailable {
+      if (mounted) messenger.showSnackBar(SnackBar(content: Text(message)));
+      return null;
+    }
+  }
+
   Future<void> _mark(Dose dose, DoseStatus status) async {
-    final updated = await _repo.markDose(dose, status);
-    if (!mounted) return;
+    final updated = await _saving(() => _repo.markDose(dose, status));
+    if (updated == null || !mounted) return;
     setState(() {
       _doses = [for (final d in _doses) d.id == dose.id ? updated : d];
     });
@@ -112,11 +124,18 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final report = await showRelapseSheet(context, now: _repo.now());
     if (report == null) return;
-    final updated = await _repo.logRelapse(
-      addiction,
-      note: report.note.isEmpty ? null : report.note,
-      at: report.at,
-    );
+    final Addiction updated;
+    try {
+      updated = await _repo.logRelapse(
+        addiction,
+        note: report.note.isEmpty ? null : report.note,
+        at: report.at,
+      );
+    } on RecoveryUnavailable {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(l10n.recoverySaveError)));
+      return;
+    }
     if (!mounted) return;
     setState(() {
       _addictions = [
@@ -128,22 +147,31 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
 
   Future<void> _checkIn() async {
     final today = dayOf(_repo.now());
-    await _repo.checkIn(today);
-    if (!mounted) return;
+    final saved = await _saving(() async {
+      await _repo.checkIn(today);
+      return true;
+    });
+    if (saved == null || !mounted) return;
     setState(() => _checkIns = {..._checkIns, today});
   }
 
   Future<void> _pickReminder() async {
     final picked = await pickTime(context, _reminder ?? (hour: 21, minute: 0));
     if (picked == null) return;
-    await _repo.setReminder(picked);
-    if (!mounted) return;
+    final saved = await _saving(() async {
+      await _repo.setReminder(picked);
+      return true;
+    });
+    if (saved == null || !mounted) return;
     setState(() => _reminder = picked);
   }
 
   Future<void> _stopReminder() async {
-    await _repo.setReminder(null);
-    if (!mounted) return;
+    final saved = await _saving(() async {
+      await _repo.setReminder(null);
+      return true;
+    });
+    if (saved == null || !mounted) return;
     setState(() => _reminder = null);
   }
 
@@ -157,11 +185,20 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
           AddictionFormScreen(
             today: _repo.now(),
             onSave: (entry) async {
-              final added = await _repo.addAddiction(
-                type: entry.type,
-                substance: entry.substance,
-                cleanSince: entry.cleanSince,
-              );
+              final Addiction added;
+              try {
+                added = await _repo.addAddiction(
+                  type: entry.type,
+                  substance: entry.substance,
+                  cleanSince: entry.cleanSince,
+                );
+              } on RecoveryUnavailable {
+                if (!mounted) return;
+                messenger.showSnackBar(
+                  SnackBar(content: Text(l10n.recoverySaveError)),
+                );
+                return;
+              }
               if (!mounted) return;
               setState(() => _addictions = [..._addictions, added]);
               navigator.pop();

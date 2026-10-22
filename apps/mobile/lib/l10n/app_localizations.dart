@@ -2156,6 +2156,12 @@ abstract class AppLocalizations {
   /// **'حُفظ. سيراجعه طبيبك.'**
   String get addictionSaved;
 
+  /// No description provided for @recoverySaveError.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر الحفظ. تحقّق من الاتصال وحاول مجدداً.'**
+  String get recoverySaveError;
+
   /// No description provided for @profileDocNationalId.
   ///
   /// In ar, this message translates to:

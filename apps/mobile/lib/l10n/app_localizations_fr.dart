@@ -1257,6 +1257,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get addictionSaved => 'Enregistré. Votre médecin va le vérifier.';
 
   @override
+  String get recoverySaveError =>
+      'Enregistrement impossible. Vérifiez la connexion et réessayez.';
+
+  @override
   String get profileDocNationalId => 'Carte d\'identité algérienne';
 
   @override
