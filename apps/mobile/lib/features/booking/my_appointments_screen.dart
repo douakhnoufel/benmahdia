@@ -74,6 +74,11 @@ class _MyAppointmentsScreenState extends ConsumerState<MyAppointmentsScreen> {
       messenger.showSnackBar(SnackBar(content: Text(l10n.apptCancelled)));
     } on TooLateToCancel {
       messenger.showSnackBar(SnackBar(content: Text(l10n.apptLocked)));
+    } on BookingUnavailable {
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(content: Text(l10n.bookLoadError)));
+      }
+      return;
     }
     if (!mounted) return;
     setState(() {

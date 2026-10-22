@@ -71,6 +71,8 @@ class _BookConfirmScreenState extends ConsumerState<BookConfirmScreen> {
   }
 
   Future<void> _confirm() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
     setState(() => _paying = true);
     if (_method.online && _repo.cardsUseCheckout) {
       await _payByCard();
@@ -88,6 +90,9 @@ class _BookConfirmScreenState extends ConsumerState<BookConfirmScreen> {
       if (!mounted) return;
       _timer?.cancel();
       setState(() => _left = Duration.zero);
+    } on BookingUnavailable {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(l10n.bookLoadError)));
     } finally {
       if (mounted) setState(() => _paying = false);
     }
@@ -107,7 +112,11 @@ class _BookConfirmScreenState extends ConsumerState<BookConfirmScreen> {
     } on SlotUnavailable {
       _showExpired();
     } on BookingUnavailable {
-      if (mounted) setState(() => _paying = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).bookLoadError)),
+      );
+      setState(() => _paying = false);
     }
   }
 
@@ -196,11 +205,11 @@ class _BookConfirmScreenState extends ConsumerState<BookConfirmScreen> {
                             children: [
                               for (final m in PaymentMethod.values)
                                 if (_repo.methods.contains(m))
-                                _MethodCard(
-                                  method: m,
-                                  selected: m == _method,
-                                  onTap: () => setState(() => _method = m),
-                                ),
+                                  _MethodCard(
+                                    method: m,
+                                    selected: m == _method,
+                                    onTap: () => setState(() => _method = m),
+                                  ),
                             ],
                           ),
                           const SizedBox(height: AppSpace.lg),

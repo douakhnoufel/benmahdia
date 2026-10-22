@@ -98,6 +98,9 @@ class _BookSlotScreenState extends ConsumerState<BookSlotScreen> {
         _slot = null;
         _agenda = _load();
       });
+    } on BookingUnavailable {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(l10n.bookLoadError)));
     } finally {
       if (mounted) setState(() => _holding = false);
     }

@@ -28,6 +28,7 @@ class ApiBookingRepository implements BookingRepository {
   final Future<bool> Function() _refresh;
   final http.Client _client;
   final DateTime Function() _clock;
+  Future<bool>? _refreshing;
 
   static const _timeout = Duration(seconds: 15);
   static const _clinicOffset = Duration(hours: 1);
@@ -67,15 +68,14 @@ class ApiBookingRepository implements BookingRepository {
   static DateTime _parse(String iso) => _toClinic(DateTime.parse(iso));
 
   /// A clinic wall-clock time as the UTC instant the server expects.
-  static String _toUtcIso(DateTime clinic) =>
-      DateTime.utc(
-        clinic.year,
-        clinic.month,
-        clinic.day,
-        clinic.hour,
-        clinic.minute,
-        clinic.second,
-      ).subtract(_clinicOffset).toIso8601String();
+  static String _toUtcIso(DateTime clinic) => DateTime.utc(
+    clinic.year,
+    clinic.month,
+    clinic.day,
+    clinic.hour,
+    clinic.minute,
+    clinic.second,
+  ).subtract(_clinicOffset).toIso8601String();
 
   static DateTime _day(String iso) {
     final p = iso.split('-').map(int.parse).toList();
@@ -86,15 +86,29 @@ class ApiBookingRepository implements BookingRepository {
 
   Future<Object?> _send(String method, String path, {Object? body}) async {
     var response = await _once(method, path, body);
-    if (response.statusCode == 401 && await _refresh()) {
+    if (response.statusCode == 401 && await _refreshOnce()) {
       response = await _once(method, path, body);
     }
-    final text = utf8.decode(response.bodyBytes);
-    final decoded = text.isEmpty ? null : jsonDecode(text);
+    Object? decoded;
+    try {
+      final text = utf8.decode(response.bodyBytes);
+      decoded = text.isEmpty ? null : jsonDecode(text);
+    } on FormatException {
+      throw const BookingUnavailable();
+    }
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return decoded;
     }
     throw _failure(response.statusCode, decoded);
+  }
+
+  /// A refresh token is single-use. Several expired requests must therefore
+  /// await the same rotation instead of each spending the old token.
+  Future<bool> _refreshOnce() {
+    final active = _refreshing;
+    if (active != null) return active;
+    final refresh = _refresh();
+    return _refreshing = refresh.whenComplete(() => _refreshing = null);
   }
 
   Future<http.Response> _once(String method, String path, Object? body) async {
@@ -302,9 +316,8 @@ class ApiBookingRepository implements BookingRepository {
   }
 
   @override
-  Future<Appointment> cancel(Appointment appointment) async =>
-      _appointmentFrom(
-        await _send('POST', 'v1/appointments/${appointment.id}/cancel')
-            as Map<String, dynamic>,
-      );
+  Future<Appointment> cancel(Appointment appointment) async => _appointmentFrom(
+    await _send('POST', 'v1/appointments/${appointment.id}/cancel')
+        as Map<String, dynamic>,
+  );
 }

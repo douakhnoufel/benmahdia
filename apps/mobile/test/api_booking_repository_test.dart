@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:benmahdia_mobile/features/booking/api_booking_repository.dart';
@@ -92,11 +93,14 @@ void main() {
     expect(sent.single.headers['authorization'], 'Bearer access-1');
     expect((d.id, d.slotMinutes, d.priceDzd), ('d-1', 15, 2000));
     expect((d.initialsFr, d.initialsAr), ('BH', 'م ح'));
-    expect((r.notice, r.horizon, r.holdFor), (
-      const Duration(hours: 24),
-      const Duration(days: 60),
-      const Duration(minutes: 15),
-    ));
+    expect(
+      (r.notice, r.horizon, r.holdFor),
+      (
+        const Duration(hours: 24),
+        const Duration(days: 60),
+        const Duration(minutes: 15),
+      ),
+    );
   });
 
   test('offers cards through the Chargily checkout and the clinic', () {
@@ -134,9 +138,8 @@ void main() {
       expiresAt: DateTime(2026, 10, 17, 19, 15),
     );
     final waiting = repo(
-      (_) => _json(200, [
-        _appointment(status: 'awaiting_payment', method: null),
-      ]),
+      (_) =>
+          _json(200, [_appointment(status: 'awaiting_payment', method: null)]),
     );
     expect(await waiting.paid(hold), isNull);
     final done = repo((_) => _json(200, [_appointment(method: 'cib')]));
@@ -282,8 +285,9 @@ void main() {
   });
 
   test('cancels, and a refusal inside the notice is TooLateToCancel', () async {
-    final a = (await repo((_) => _json(200, [_appointment()])).appointments())
-        .single;
+    final a = (await repo(
+      (_) => _json(200, [_appointment()]),
+    ).appointments()).single;
     final ok = repo((_) => _json(200, _appointment(status: 'cancelled')));
     expect((await ok.cancel(a)).status, AppointmentStatus.cancelled);
     expect(sent.single.url.path, '/v1/appointments/a-1/cancel');
@@ -321,6 +325,46 @@ void main() {
       'Bearer access-1',
       'Bearer access-2',
     ]);
+  });
+
+  test('shares one refresh across concurrent expired requests', () async {
+    final refreshStarted = Completer<void>();
+    final releaseRefresh = Completer<void>();
+    final r = repo(
+      (request) {
+        if (request.headers['authorization'] == 'Bearer access-1') {
+          return _json(401, {
+            'detail': {'code': 'token_invalid'},
+          });
+        }
+        return request.url.path.endsWith('/follow-up')
+            ? _json(200, null)
+            : _json(200, [_doctor]);
+      },
+      refresh: () async {
+        refreshed++;
+        refreshStarted.complete();
+        await releaseRefresh.future;
+        token = 'access-2';
+        return true;
+      },
+    );
+
+    final doctors = r.doctors();
+    await refreshStarted.future;
+    final followUp = r.followUp();
+    await Future<void>.delayed(Duration.zero);
+    expect(refreshed, 1);
+    releaseRefresh.complete();
+
+    expect(await doctors, hasLength(1));
+    expect(await followUp, isNull);
+    expect(refreshed, 1);
+  });
+
+  test('malformed server responses become BookingUnavailable', () {
+    final r = repo((_) => http.Response('<html>bad gateway</html>', 502));
+    expect(r.doctors(), throwsA(isA<BookingUnavailable>()));
   });
 
   test('network errors become BookingUnavailable', () {
