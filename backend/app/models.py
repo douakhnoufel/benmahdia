@@ -69,6 +69,8 @@ class User(Base):
     email: Mapped[str | None] = mapped_column(String(320))
     password_hash: Mapped[str | None] = mapped_column(String(255))
     language: Mapped[str] = mapped_column(String(2), default="ar")
+    # Daily-check reminder, "HH:MM" 24 h on the patient's phone; None = off.
+    reminder_time: Mapped[str | None] = mapped_column(String(5))
     failed_logins: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[datetime | None] = mapped_column(DateTime)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
@@ -411,6 +413,21 @@ class Relapse(Base):
     )
     occurred_at: Mapped[datetime] = mapped_column(DateTime)
     note: Mapped[str | None] = mapped_column(String(500))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class DailyCheck(Base):
+    """The patient ticked "today without use" for [day] (PRD 5.4). The phone
+    decides what its own "today" is; one row per patient and day."""
+
+    __tablename__ = "daily_checks"
+    __table_args__ = (UniqueConstraint("patient_id", "day"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    patient_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    day: Mapped[date] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 

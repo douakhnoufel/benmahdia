@@ -7,6 +7,7 @@ from .config import get_settings
 from .routers import (
     appointments,
     auth,
+    checkins,
     doctors,
     identity,
     me,
@@ -38,6 +39,7 @@ def create_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(me.router)
     app.include_router(recovery.router)
+    app.include_router(checkins.router)
     app.include_router(identity.router)
     app.include_router(doctors.router)
     app.include_router(appointments.router)
