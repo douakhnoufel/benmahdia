@@ -34,6 +34,19 @@ services:
       # 0.0.0.0 so a phone on the same Wi-Fi can reach it during development.
       - "8000:8000"
 
+  # Daily jobs at 00:10 Algiers time: account purge and missed-dose alerts.
+  jobs:
+    build: ../backend
+    command: ["python", "-m", "app.jobs"]
+    env_file: ../backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # The purge also erases selfie files.
+      - selfies:/srv/data/selfies
+    restart: unless-stopped
+
 volumes:
   db-data:
   selfies:

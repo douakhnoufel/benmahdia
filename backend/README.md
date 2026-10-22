@@ -60,7 +60,7 @@ Errors look like `{"detail": {"code": "wrong_credentials"}}`; the app maps each 
 - Real SMS gateway (only the console sender exists).
 - Google / Apple client IDs and Apple keys: set them in `.env` once the developer accounts exist.
 - Doctor / super-admin login with 2FA, doctor-side session revocation, notifying the doctor on deletion.
-- Scheduled jobs (Celery/cron): `python -m app.purge` and `python -m app.alerts_job` daily, the latter after midnight in Algiers.
+- Daily jobs run by `python -m app.jobs` (the `jobs` service in `infra/docker-compose.yml`, 00:10 Algiers time): `app.purge` and `app.alerts_job`. A Celery/Redis setup is only needed if more background work appears.
 - Every patient is linked to a doctor only through booked appointments (no `primary_doctor_id` yet), so a relapse of a patient who never booked alerts nobody.
 - Migrations 0008–0010 are tested on SQLite only; apply them to PostgreSQL before the pilot.
 - Starter quotes (`app/quotes_seed.py`) are drafts for the clinic to approve.
