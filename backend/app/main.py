@@ -16,6 +16,7 @@ from .routers import (
     recovery,
     staff,
     staff_identity,
+    staff_recovery,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -48,6 +49,7 @@ def create_app() -> FastAPI:
     app.include_router(appointments.router)
     app.include_router(payments.router)
     app.include_router(staff.router)
+    app.include_router(staff_recovery.router)
     app.include_router(staff_identity.router)
 
     @app.get("/health", tags=["health"])

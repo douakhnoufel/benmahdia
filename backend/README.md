@@ -39,6 +39,19 @@ Tests use an in-memory SQLite database and a frozen clock; no Docker needed.
 | GET | `/v1/me` | The signed-in account. |
 | PUT | `/v1/me/phone` | Add a confirmed number (from an `attach_phone` proof). |
 | DELETE | `/v1/me` | Delete the account (password required if it has one). Disabled at once; erased after 30 days by `python -m app.purge`. |
+| GET, POST | `/v1/me/addictions` | The patient's addictions (pending doctor review) / add one. |
+| POST | `/v1/me/addictions/{id}/relapses` | Log a relapse: restarts the counter, keeps past streaks, alerts the doctor. |
+| GET | `/v1/me/checkins` | Days ticked "without use" (last 60 days, or `since`). |
+| PUT | `/v1/me/checkins/{day}` | Tick a day (today ± a small window). Idempotent. |
+| GET, PUT | `/v1/me/reminder` | Daily-check reminder time `HH:MM` or `null`. |
+| GET | `/v1/me/doses?day=` | The day's doses: due, taken, skipped or missed. |
+| PUT | `/v1/me/doses` | Answer a dose: taken or skipped. |
+| GET | `/v1/me/quote` | Quote of the day (ar + fr). |
+| GET, POST, DELETE | `/v1/staff/patients/{id}/medications` | Doctor: list, prescribe, stop a medicine. |
+| GET | `/v1/staff/patients/{id}/addictions` | Doctor: the patient's addictions with relapses. |
+| POST | `/v1/staff/patients/{id}/addictions/{aid}/confirm` or `/reject` | Doctor reviews what the patient entered. |
+| GET | `/v1/staff/alerts?unread=` | Doctor's alerts (relapse, missed doses). |
+| POST | `/v1/staff/alerts/{id}/read` | Mark an alert read. |
 
 Errors look like `{"detail": {"code": "wrong_credentials"}}`; the app maps each code to a message.
 
@@ -47,4 +60,7 @@ Errors look like `{"detail": {"code": "wrong_credentials"}}`; the app maps each 
 - Real SMS gateway (only the console sender exists).
 - Google / Apple client IDs and Apple keys: set them in `.env` once the developer accounts exist.
 - Doctor / super-admin login with 2FA, doctor-side session revocation, notifying the doctor on deletion.
-- A scheduled job running `app.purge` daily (Celery/cron).
+- Scheduled jobs (Celery/cron): `python -m app.purge` and `python -m app.alerts_job` daily, the latter after midnight in Algiers.
+- Every patient is linked to a doctor only through booked appointments (no `primary_doctor_id` yet), so a relapse of a patient who never booked alerts nobody.
+- Migrations 0008–0010 are tested on SQLite only; apply them to PostgreSQL before the pilot.
+- Starter quotes (`app/quotes_seed.py`) are drafts for the clinic to approve.
