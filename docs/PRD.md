@@ -35,7 +35,7 @@ The MVP succeeds if one clinic runs its addiction patients on the app for 3 mont
 
 - The AI never gives the patient a diagnosis, never prescribes and never changes medication. It may give the doctor flags and a short, non-binding assessment (6.5).
 - No video consultations in v1.
-- No booking or AI chat before the ID is declared and the clinic approves (anyone can sign up).
+- No booking before the ID is approved (automatically or by clinic staff); no recovery tracking or AI chat before the first confirmed appointment (anyone can sign up).
 - No web app for patients (doctors get a web dashboard).
 
 **Success metrics (first 3 months)**
@@ -52,11 +52,12 @@ The MVP succeeds if one clinic runs its addiction patients on the app for 3 mont
 
 ## 3. Users and roles
 
-Three roles, with each patient belonging to one primary doctor and seeing only their own data.
+Four roles, with each patient belonging to one primary doctor and seeing only their own data.
 
 | Role | Who | Can do | Cannot do |
 | --- | --- | --- | --- |
 | Super admin | One of the 3 doctors (also holds the Doctor role) | Create and deactivate doctor accounts, approve new patient accounts, view platform stats, manage quotes library, configure AI settings | Read other doctors' patient conversations or notes through admin screens |
+| Clinic staff | Reception / front desk | Review ID declarations the app could not approve automatically, approve or reject any declaration (including overturning an automatic approval) with a reason | See clinical data, conversations, notes or medications |
 | Doctor (admin) | Psychiatrist | Manage their own patients, set availability, manage appointments, prescribe medication schedules, set addiction profiles, review AI alerts and summaries | See other doctors' patients (unless shared) |
 | Patient | Person in treatment | Book, pay for and cancel appointments, enter their addictions, track sobriety, confirm medications, read articles, chat with the AI companion, delete their account | See other patients, edit their medications, delete relapse history |
 
@@ -78,8 +79,8 @@ Patients join only by doctor invitation, and every appointment slot is enforced 
 
 ### 4.1 Authentication
 
-- **Open sign-up:** any patient can create an account in the app with their phone number and a password, or with Google / Apple — no invite needed. Right after sign-up the app offers **Complete your profile** (ID scan and selfie, 4.2) with a **Skip** button.
-- **Login:** phone number + password, or Sign in with Google / Apple. Social login follows the same rule as phone sign-up: the profile step is offered and can be skipped, but booking stays locked until the clinic approves the ID declaration. OTP by SMS for first login and password reset (local Algerian SMS gateway).
+- **Open sign-up:** any patient can create an account in the app with their phone number and a password, or with Google / Apple — no invite needed. Right after sign-up the app goes to **Complete your profile** (ID scan and selfie, 4.2). This step is mandatory: there is no Skip.
+- **Login:** phone number + password, or Sign in with Google / Apple. Social login follows the same rule as phone sign-up: a patient without a declared ID is sent to the profile step, and booking stays locked until the ID is approved. OTP by SMS for first login and password reset (local Algerian SMS gateway).
 - **App lock:** 4–6 digit PIN or Face ID / fingerprint every time the app opens — protects privacy if the phone is shared.
 - **Sessions:** short-lived JWT access token (15 min) + rotating refresh token; doctor can revoke a patient's sessions.
 - **Doctors and super admin:** email + password + mandatory 2FA (TOTP app).
@@ -87,13 +88,13 @@ Patients join only by doctor invitation, and every appointment slot is enforced 
 
 ### 4.2 ID declaration at sign-up
 
-After signing in, the patient is offered **Complete your profile**: scan their **Algerian national ID card or Algerian passport** (no other document is accepted) and take a selfie so the clinic knows who they are. The app reads the card, the patient confirms the details, and the card image is thrown away; the selfie is sent, encrypted, for the doctor to look at. The step is optional (**Skip**), but booking stays closed until it is done and the clinic approves. We only check that the card looks readable and is not already used by another account — we never claim the identity is verified. The status shown everywhere is **"ID declared"**, never "verified".
+After signing in, the patient goes to **Complete your profile**: scan their **Algerian national ID card or Algerian passport** (no other document is accepted) and take a selfie so the clinic knows who they are. The app reads the card, the patient confirms the details, and the card image is thrown away; the selfie is sent, encrypted, for clinic staff to look at if needed. The step is mandatory (no Skip), and booking stays closed until the ID is approved, automatically by the app or by clinic staff (see **Approval**). The checks only show that the card looks readable and is not already used by another account — we never claim the identity is verified. The status shown everywhere is **"ID declared"**, never "verified".
 
-- **When:** only after sign-in (account created, phone confirmed by OTP), never for a signed-out user. It is offered right after sign-up with a **Skip** button. A patient who skipped (or whose details were refused) sees a **Complete your profile** card on the appointments screen until the clinic approves.
+- **When:** only after sign-in (account created, phone confirmed by OTP), never for a signed-out user. It comes right after sign-up and cannot be skipped. A patient whose details were refused is sent back to it with the reason.
 - **Consent:** before anything is captured, a screen says what is read, what is stored, who sees it, and asks the patient to agree. Start is disabled until they do.
 - **Document:** the patient first picks the Algerian national ID card or the Algerian passport; the choice is sent as `id_type` (`national_id` / `passport`).
 - **Scan:** an in-app camera screen shows a frame shaped like the card (or the passport page). Camera frames are read live, in memory, by on-device text recognition; **no picture is written to the phone** or uploaded. The screen closes by itself when the same details are read on two frames in a row. National ID: the 18-digit number and the birth date from the front. Passport: the two machine-readable lines (MRZ, ICAO 9303) give the number, birth date and name; both check digits must match, and the issuing country must be `DZA`, otherwise the screen says only the Algerian passport is accepted. "Type it instead" is always available; if the camera is refused, the screen explains how to allow it.
-- **Selfie:** an in-app front-camera screen with a face oval (JPEG, at most 2 MB). The shutter only works when exactly one face is centred and close enough — a framing check, not a liveness check. The patient sees the photo and can retake it; the camera's temporary file is deleted as soon as it is read. It is for the doctor to compare by eye: there is no automatic face matching against the card, and no liveness check in this version.
+- **Selfie:** an in-app front-camera screen with a face oval (JPEG, at most 2 MB). The shutter only works when exactly one face is centred and close enough — a framing check, not a liveness check. The patient sees the photo and can retake it; the camera's temporary file is deleted as soon as it is read. It is for clinic staff to compare by eye when needed: there is no automatic face matching against the card, and no liveness check in this version (a selfie ↔ card-photo match before automatic approval is a later project).
 - **Confirm or edit:** the app pre-fills three fields — ID or passport number, full name, birth date. The scan fills the number and birth date (and, from a passport, the name); the patient types or corrects the full name. The patient must review all three and can correct any of them before submitting. If the scan fails, the patient types the fields by hand. Nothing is sent until the patient taps send.
 - **What is sent:** the document type, the three confirmed text fields and the selfie (base64 JPEG in one JSON request), over TLS, to our server in Algeria. No card image, no OCR raw text.
 - **Server processing (never on the phone):**
@@ -104,16 +105,16 @@ After signing in, the patient is offered **Complete your profile**: scan their *
   5. Encrypt the selfie (AES-256-GCM, its own key from `.env`) and write it to a private folder outside the web root (file mode 0600). The file name reveals nothing about the patient.
 - **What is stored (minimum):** `id_hmac` (unique), encrypted name, encrypted birth date, the encrypted selfie file, `id_status`, `id_declared_at`, the number of submissions and the reject reason. Nothing else from the card.
 - **Duplicate detection:** `id_hmac` has a unique index. If it already belongs to another account, the submission is refused with a neutral message ("This ID is already linked to an account — contact the clinic"), the attempt is written to the audit log, and the clinic sees it on the sign-ups page. The message never reveals whose account it is.
-- **Status values (`id_status`):** `none` (not yet sent or skipped) → `declared` (fields confirmed and stored) → clinic decision: `approved` or `rejected` (with reason). `duplicate` marks a refused attempt. The label **"ID declared"** is used in the app and the dashboard for `declared` and stays visible next to `approved` ("ID declared · approved by clinic") — the system never displays "verified".
-- **Clinic approval:** the doctor sees the decrypted name, birth date and selfie (never the ID number, never a card image) and approves or rejects, with an optional reason. Opening the details and opening the selfie are each in the audit log. A doctor can open a declaration only for a patient in the sign-up queue or an approved patient who has an appointment with them. The dashboard reminds the doctor to compare with the original card at the front desk. A rejection deletes the selfie; the patient can resubmit (at most 4 submissions in all, i.e. 3 after a rejection).
-- **Gating:** booking and the AI companion unlock only when `id_status = approved`. A patient who skipped, or whose details are `declared` or `rejected`, can use the non-clinical parts of the app; the Book button leads to the profile step or explains that the clinic is reviewing.
+- **Status values (`id_status`):** `none` (not yet sent) → `declared` (fields confirmed and stored) → decision: `approved` or `rejected` (with reason), made automatically or by clinic staff. `duplicate` marks a refused attempt. The label **"ID declared"** is used in the app and the dashboard for `declared` and stays visible next to `approved` ("ID declared · approved") — the system never displays "verified".
+- **Approval:** the doctor does not approve IDs. The app approves automatically when every check passes: the fields were read by the scanner and not edited by hand, passport check digits are valid, the ID number is not already used (HMAC), and the selfie has exactly one clear face. Otherwise the declaration goes to the clinic staff queue. Clinic staff see the decrypted name, birth date and selfie (never the ID number, never a card image) and approve or reject with a reason; they can also overturn an automatic approval. Each decision records who made it (`auto` or the staff member). Opening the details and opening the selfie are each in the audit log. These checks prove the card is readable and unused, not that it belongs to the person holding the phone, so the front desk compares with the original card at the first visit. Because "not edited" and "one face" are signals sent by the app, the staff override is the backstop. A rejection deletes the selfie; the patient can resubmit (at most 4 submissions in all, i.e. 3 after a rejection).
+- **Gating:** booking unlocks only when `id_status = approved`. While the ID is `declared`, the appointments screen says it is being reviewed. Recovery tracking and the AI companion unlock only after the first appointment is confirmed (paid) — see 5.
 - **Editing later:** the patient cannot change declared fields alone; a change goes through the clinic and produces a new HMAC / encrypted values and an audit entry.
 - **Account deletion:** `id_hmac`, the encrypted fields and the selfie file are deleted with the account (retention rule in §11).
 - **Consent:** a screen before the scan explains that the card is read on the phone, the image is not kept, and only the name, birth date and a one-way fingerprint of the ID number are stored. The selfie is biometric-type data: the consent says who sees it (the treating doctor and clinic staff) and it is listed in the ANPDP file. Before real patients, the server disk must be encrypted and backups must exclude or encrypt the selfie folder.
 
 **Acceptance criteria**
 
-- [ ] The profile step is reachable only after sign-in, shows the consent first, and can be skipped; a skipped patient can use the app but not book.
+- [ ] The profile step is reachable only after sign-in, shows the consent first, and cannot be skipped.
 - [ ] No card or passport image is written to the phone, saved to the gallery or uploaded: frames are read in memory only (code review).
 - [ ] Only the Algerian national ID card and the Algerian passport (MRZ issuing country `DZA`, valid check digits) are read by the scanner.
 - [ ] The selfie is stored only encrypted, is shown only to an authorised doctor with an audit entry, and is deleted on rejection and on account deletion.
@@ -122,7 +123,8 @@ After signing in, the patient is offered **Complete your profile**: scan their *
 - [ ] HMAC and encryption happen on the server; the keys are only in `.env`.
 - [ ] A second account with the same ID number is refused, audited, and the message reveals nothing about the other account.
 - [ ] The words "verified" / "vérifié" / "موثق" never appear for ID status in the app or dashboard; the label is "ID declared" / "Identité déclarée" / "هوية مصرّح بها".
-- [ ] A patient with `id_status` other than `approved` cannot book or open the AI companion (enforced in the API).
+- [ ] A patient with `id_status` other than `approved` cannot book (enforced in the API).
+- [ ] A patient without a confirmed (paid) appointment cannot use recovery tracking or the AI companion (enforced in the API).
 
 ### 4.3 Appointment management
 
@@ -168,6 +170,8 @@ The patient pays for each appointment in the app through Chargily Pay; a slot is
 ## 5. Pillar 2 — Recovery profile
 
 The home screen shows one progress circle per addiction, a daily quote, and today's medications — the reason patients open the app every day.
+
+**Unlock:** this pillar and the AI companion (6) unlock after the patient's first appointment is confirmed (paid). Before that, their tabs show a locked state with a Book button. Later, a short questionnaire after booking will let the app choose each patient's tracking — patients are not all tracked the same way (to be specified).
 
 ### 5.1 Sobriety circles and day counters
 
@@ -285,7 +289,7 @@ Doctors work from a web dashboard (desktop browser) plus a lighter doctor view i
 - **Patient file:** addiction profile(s), streak history chart, medication adherence, appointments, mood check-ins, AI flags and short assessments and flagged conversations (no full chat history), private notes.
 - **Medications:** create and edit schedules per patient.
 - **Availability:** weekly schedule, holidays, slot length.
-- **New patients:** review sign-ups (declared name, birth date and selfie, duplicate-ID flags — no card image, no ID number), then approve or reject with an optional reason.
+- **New patients (clinic staff):** the queue of ID declarations the app did not approve automatically, plus automatic approvals for spot checks (declared name, birth date and selfie, duplicate-ID flags — no card image, no ID number); approve or reject with a reason. Doctors do not approve IDs.
 
 * **Payments:** paid / unpaid status per appointment, receipts.
 * **Articles:** write, edit and publish articles for patients.
@@ -438,11 +442,13 @@ The five flows below are what the backend, the patient app and the dashboard mus
 
 ### 12.1 Patient onboarding
 
-1. The patient downloads the app and creates an account: phone + password, or Google / Apple.
-2. No invite is needed, but nothing clinical (booking, AI chat) unlocks before the ID is declared and the clinic approves.
+1. First launch: intro slides (in the phone's language), then the patient picks the app language once (Arabic or French; changeable later in Profile & Settings).
+2. The patient creates an account: phone + password, or Google / Apple. No invite is needed.
 3. An SMS OTP confirms the phone number.
-4. Once signed in, the patient scans their ID card; the app reads it on the phone, the patient confirms or edits the fields, the image is discarded, and the server stores an HMAC and the encrypted name and birth date (status "ID declared"). Clinic staff approve or reject. Once approved, the patient picks a doctor and books (12.2).
-5. Consent screens (app use, AI chat, summaries to the doctor, ID declaration), then PIN or biometric lock, then the home screen.
+4. Mandatory profile: the patient scans their national ID card or passport; the app reads it on the phone, the patient confirms or edits the fields, the image is discarded, and the server stores an HMAC and the encrypted name and birth date (status "ID declared"). The app approves automatically when every check passes; otherwise clinic staff approve or reject.
+5. Once approved, the patient picks a doctor and books their first appointment (12.2). Until it is confirmed, only appointments are usable.
+6. First appointment confirmed → recovery tracking and the AI companion unlock (later: a questionnaire first, from which the app personalises the tracking).
+7. Consent screens (app use, AI chat, summaries to the doctor, ID declaration) and the PIN or biometric lock are added to this journey in later work.
 
 ### 12.2 Booking and payment
 
@@ -453,7 +459,7 @@ The five flows below are what the backend, the patient app and the dashboard mus
 
 ### 12.3 Daily recovery loop
 
-1. The patient opens the app: day counters, quote of the day, today's medications.
+1. After the first confirmed appointment, the patient opens the app on Recovery: day counters, quote of the day, today's medications.
 2. They mark each dose taken or skipped and can read an article.
 3. A logged relapse resets the counter (longest streak kept), alerts the doctor, and the AI offers a supportive check-in.
 
