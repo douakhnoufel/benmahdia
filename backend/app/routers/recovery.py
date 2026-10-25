@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Request
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -23,8 +23,10 @@ from ..models import (
     Appointment,
     Relapse,
     ReviewStatus,
+    SubstanceProfile,
     User,
 )
+from ..substances import GOAL_STEPS, PROFILES, current_goal
 from .doctors import utc_iso
 
 router = APIRouter(prefix="/v1/me/addictions", tags=["recovery"])
@@ -47,7 +49,10 @@ def _utc(value: datetime) -> datetime:
 
 
 class AddictionIn(BaseModel):
-    type: AddictionType
+    # A substance profile (PRD 5.6) sets the type; without one, the type is
+    # required and tracking is generic.
+    type: AddictionType | None = None
+    profile: SubstanceProfile | None = None
     substance: str | None = Field(default=None, max_length=100)
     clean_since: datetime
 
@@ -56,6 +61,24 @@ class AddictionIn(BaseModel):
     def _trim(cls, v: str | None) -> str | None:
         v = (v or "").strip()
         return v or None
+
+    @model_validator(mode="after")
+    def _type_from_profile(self) -> "AddictionIn":
+        self.type = type_for(self.type, self.profile)
+        return self
+
+
+def type_for(type_: AddictionType | None, profile: SubstanceProfile | None) -> AddictionType:
+    """The addiction type a profile implies; a type that contradicts it, or
+    neither given, is a mistake."""
+    if profile is None:
+        if type_ is None:
+            raise ValueError("type or profile is required")
+        return type_
+    implied = PROFILES[profile].type
+    if type_ is not None and type_ != implied:
+        raise ValueError("type does not match the profile")
+    return implied
 
 
 class RelapseIn(BaseModel):
@@ -73,22 +96,31 @@ class RelapseIn(BaseModel):
 class AddictionOut(BaseModel):
     id: uuid.UUID
     type: AddictionType
+    profile: SubstanceProfile | None
     substance: str | None
     clean_since: str
     longest_past_days: int
     past_days: int
     review_status: ReviewStatus
+    # The small goal the patient chose (None = automatic) and the one the
+    # circle fills toward now, both in days of the current streak (PRD 5.6).
+    goal_days: int | None
+    goal: int
 
 
 def out(a: Addiction) -> AddictionOut:
+    streak = max(0, (clock.now() - a.sobriety_start).days)
     return AddictionOut(
         id=a.id,
         type=a.type,
+        profile=a.profile,
         substance=a.substance,
         clean_since=utc_iso(a.sobriety_start),
         longest_past_days=a.longest_past_days,
         past_days=a.past_days,
         review_status=a.review_status,
+        goal_days=a.goal_days,
+        goal=current_goal(streak, a.goal_days),
     )
 
 
@@ -135,7 +167,11 @@ def add_addiction(
     if count >= MAX_ADDICTIONS:
         raise ApiError(409, "too_many_addictions")
     a = Addiction(
-        patient_id=user.id, type=body.type, substance=body.substance, sobriety_start=start
+        patient_id=user.id,
+        type=body.type,
+        profile=body.profile,
+        substance=body.substance,
+        sobriety_start=start,
     )
     db.add(a)
     db.flush()
@@ -167,11 +203,37 @@ def log_relapse(
     a.past_days += streak
     a.longest_past_days = max(a.longest_past_days, streak)
     a.sobriety_start = at
+    a.goal_days = None  # back to the first small goal
     db.add(Relapse(addiction_id=a.id, occurred_at=at, note=body.note))
     doctor_id = _doctor_of(db, user.id)
     if doctor_id is not None:
         db.add(Alert(doctor_id=doctor_id, patient_id=user.id, type="relapse", priority="high"))
     audit.record(db, "relapse.logged", actor_id=user.id, target=str(a.id), request=request)
+    db.commit()
+    db.refresh(a)
+    return out(a)
+
+
+class GoalIn(BaseModel):
+    # One of GOAL_STEPS, or None to let the app pick the next step.
+    days: int | None
+
+
+@router.put("/{addiction_id}/goal", response_model=AddictionOut)
+def set_goal(
+    addiction_id: uuid.UUID,
+    body: GoalIn,
+    user: User = Depends(patient),
+    db: Session = Depends(get_db),
+) -> AddictionOut:
+    """The patient picks their next small goal (PRD 5.6): a step not reached
+    yet in the current streak, higher or lower than the suggested one."""
+    a = _own(db, user, addiction_id)
+    if body.days is not None:
+        streak = max(0, (clock.now() - a.sobriety_start).days)
+        if body.days not in GOAL_STEPS or body.days <= streak:
+            raise ApiError(422, "goal_invalid")
+    a.goal_days = body.days
     db.commit()
     db.refresh(a)
     return out(a)

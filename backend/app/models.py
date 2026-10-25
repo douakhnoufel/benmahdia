@@ -364,8 +364,21 @@ class AddictionType(str, enum.Enum):
     alcohol = "alcohol"
     tobacco = "tobacco"
     pills = "pills"
+    stimulants = "stimulants"
     gambling = "gambling"
     other = "other"
+
+
+class SubstanceProfile(str, enum.Enum):
+    """How an addiction is tracked (PRD 3, 5.6); app/substances.py holds what
+    each one asks. An addiction without one gets generic tracking."""
+
+    nicotine = "nicotine"
+    thc = "thc"
+    pregabalin = "pregabalin"
+    buprenorphine = "buprenorphine"
+    cocaine = "cocaine"
+    amphetamines = "amphetamines"
 
 
 class ReviewStatus(str, enum.Enum):
@@ -388,6 +401,12 @@ class Addiction(Base):
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
     type: Mapped[AddictionType] = mapped_column(Enum(AddictionType, name="addiction_type"))
+    profile: Mapped[SubstanceProfile | None] = mapped_column(
+        Enum(SubstanceProfile, name="substance_profile")
+    )
+    # The small goal the patient chose (PRD 5.6), in days of the current
+    # streak; None lets the app pick the next step. A relapse clears it.
+    goal_days: Mapped[int | None] = mapped_column(Integer)
     # The exact product, in the patient's words.
     substance: Mapped[str | None] = mapped_column(String(100))
     sobriety_start: Mapped[datetime] = mapped_column(DateTime)
@@ -427,6 +446,71 @@ class DailyCheck(Base):
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     patient_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    day: Mapped[date] = mapped_column(Date)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class AddictionCheck(Base):
+    """The daily check for one addiction (PRD 5.6): used or not, craving and
+    the profile's two signals, each 1-5 (higher = harder). [signals] maps a
+    signal key to its rating. Shown to the patient and their doctor only;
+    never written to logs, alerts or the audit log."""
+
+    __tablename__ = "addiction_checks"
+    __table_args__ = (UniqueConstraint("addiction_id", "day"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    addiction_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("addictions.id", ondelete="CASCADE"), index=True
+    )
+    day: Mapped[date] = mapped_column(Date)
+    used: Mapped[bool] = mapped_column(Boolean)
+    craving: Mapped[int] = mapped_column(Integer)
+    signals: Mapped[dict[str, int]] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class HabitKind(str, enum.Enum):
+    """Good habits to replace using (PRD 5.6); app/habits.py has the labels.
+    "custom" carries the patient's own words."""
+
+    sport = "sport"
+    brush_teeth = "brush_teeth"
+    water = "water"
+    reading = "reading"
+    call_family = "call_family"
+    sleep = "sleep"
+    custom = "custom"
+
+
+class Habit(Base):
+    """A good habit the patient keeps, with an optional daily reminder
+    ("HH:MM", 24 h) the phone schedules itself."""
+
+    __tablename__ = "habits"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    patient_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    kind: Mapped[HabitKind] = mapped_column(Enum(HabitKind, name="habit_kind"))
+    text: Mapped[str | None] = mapped_column(String(60))
+    reminder_time: Mapped[str | None] = mapped_column(String(5))
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class HabitLog(Base):
+    """The habit was done on [day] (the phone's own day)."""
+
+    __tablename__ = "habit_logs"
+    __table_args__ = (UniqueConstraint("habit_id", "day"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    habit_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("habits.id", ondelete="CASCADE"), index=True
     )
     day: Mapped[date] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
@@ -504,7 +588,7 @@ class Alert(Base):
     patient_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
-    # "relapse" for now; "missed_doses" and "milestone" come with later slices.
+    # "relapse", "missed_doses", "craving_high", "no_checkin"; "milestone" later.
     type: Mapped[str] = mapped_column(String(32))
     priority: Mapped[str] = mapped_column(String(8), default="normal")
     read: Mapped[bool] = mapped_column(Boolean, default=False)
