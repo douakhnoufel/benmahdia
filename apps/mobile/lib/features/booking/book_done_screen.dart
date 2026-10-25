@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_tokens.dart';
 import '../../widgets/entrance.dart';
 import 'booking_format.dart';
 import 'booking_models.dart';
+import 'booking_repository.dart';
 import 'booking_widgets.dart';
 
 /// Shown once the appointment is booked: a check pops in, then the ticket,
@@ -79,7 +81,13 @@ class BookDoneScreen extends StatelessWidget {
                     const SizedBox(height: AppSpace.lg),
                     const Entrance(child: _Reminders()),
                     const SizedBox(height: AppSpace.lg),
-                    InfoLine(text: l10n.bookChangeHint),
+                    Consumer(
+                      builder: (context, ref, _) => InfoLine(
+                        text: l10n.bookChangeHint(
+                          ref.read(bookingRepositoryProvider).notice.inHours,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -299,7 +307,7 @@ class _Reminders extends StatelessWidget {
                 color: AppColors.teal600,
               ),
               const SizedBox(width: AppSpace.sm),
-              Text(l10n.bookRemind, style: text.labelMedium),
+              Expanded(child: Text(l10n.bookRemind, style: text.labelMedium)),
             ],
           ),
           Row(

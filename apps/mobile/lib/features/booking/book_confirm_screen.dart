@@ -62,8 +62,12 @@ class _BookConfirmScreenState extends ConsumerState<BookConfirmScreen> {
     _timer = Timer.periodic(_tick, (_) => _onTick());
   }
 
+  // Never more than the clock says is left: ticks stop while the phone
+  // sleeps, so counting them alone falls behind the real expiry.
   void _onTick() {
-    setState(() => _left -= _tick);
+    final byClock = widget.hold.expiresAt.difference(_repo.now());
+    final byTicks = _left - _tick;
+    setState(() => _left = byClock < byTicks ? byClock : byTicks);
     if (_expired) {
       _timer?.cancel();
       if (!_checkoutOpen) unawaited(_repo.release(widget.hold));
@@ -90,9 +94,9 @@ class _BookConfirmScreenState extends ConsumerState<BookConfirmScreen> {
       if (!mounted) return;
       _timer?.cancel();
       setState(() => _left = Duration.zero);
-    } on BookingUnavailable {
+    } on BookingUnavailable catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text(l10n.bookLoadError)));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.bookingError(e))));
     } finally {
       if (mounted) setState(() => _paying = false);
     }
@@ -111,10 +115,10 @@ class _BookConfirmScreenState extends ConsumerState<BookConfirmScreen> {
       _poll = Timer.periodic(_pollEvery, (_) => unawaited(_checkPaid()));
     } on SlotUnavailable {
       _showExpired();
-    } on BookingUnavailable {
+    } on BookingUnavailable catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).bookLoadError)),
+        SnackBar(content: Text(AppLocalizations.of(context).bookingError(e))),
       );
       setState(() => _paying = false);
     }
@@ -213,7 +217,9 @@ class _BookConfirmScreenState extends ConsumerState<BookConfirmScreen> {
                             ],
                           ),
                           const SizedBox(height: AppSpace.lg),
-                          InfoLine(text: l10n.bookCancelRule),
+                          InfoLine(
+                            text: l10n.bookCancelRule(_repo.notice.inHours),
+                          ),
                         ],
                       ),
               ),
@@ -280,7 +286,7 @@ class _HoldBanner extends StatelessWidget {
         : (left.inSeconds / total.inSeconds).clamp(0.0, 1.0);
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpace.md + 2,
+        horizontal: AppSpace.md,
         vertical: AppSpace.md,
       ),
       decoration: BoxDecoration(
@@ -503,12 +509,12 @@ class _MethodCard extends StatelessWidget {
           curve: AppMotion.curve,
           constraints: const BoxConstraints(minHeight: 64),
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpace.md + 2,
-            vertical: AppSpace.sm + 2,
+            horizontal: AppSpace.md,
+            vertical: AppSpace.sm,
           ),
           decoration: BoxDecoration(
             color: selected ? AppColors.teal50 : AppColors.surface,
-            borderRadius: BorderRadius.circular(AppRadius.card - 4),
+            borderRadius: BorderRadius.circular(AppRadius.button),
             border: Border.all(
               color: selected ? AppColors.teal500 : AppColors.border,
               width: selected ? 2 : 1,

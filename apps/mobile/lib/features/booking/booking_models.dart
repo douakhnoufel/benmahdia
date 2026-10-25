@@ -108,6 +108,7 @@ class Appointment {
     required this.status,
     required this.priceDzd,
     required this.method,
+    this.checkinCode,
   });
 
   final String id;
@@ -117,6 +118,10 @@ class Appointment {
   final AppointmentStatus status;
   final int priceDzd;
   final PaymentMethod method;
+
+  /// The 6-character booking code the patient gives at the front desk
+  /// (PRD 4.3). The server sends it only once the appointment is confirmed.
+  final String? checkinCode;
 
   /// Whether it still lies ahead and is not cancelled.
   bool isUpcoming(DateTime now) =>
@@ -132,6 +137,7 @@ class Appointment {
     status: status,
     priceDzd: priceDzd,
     method: method,
+    checkinCode: checkinCode,
   );
 }
 
@@ -168,4 +174,37 @@ class TooLateToCancel implements Exception {
 /// The booking server could not be reached or answered unexpectedly.
 class BookingUnavailable implements Exception {
   const BookingUnavailable();
+}
+
+/// Why the server refused a booking or payment action (its error `code`).
+enum BookingRefusal {
+  /// `not_verified`: the ID is not approved yet.
+  notVerified,
+
+  /// `token_invalid`, `not_authenticated`: the session ran out.
+  signedOut,
+
+  /// `forbidden`: this account may not do this.
+  forbidden,
+
+  /// `doctor_not_found`.
+  doctorNotFound,
+
+  /// `payment_method_unavailable`.
+  paymentMethodUnavailable,
+
+  /// `payments_unavailable`: Chargily could not be reached.
+  paymentsUnavailable,
+
+  /// `not_cancellable`: only a confirmed appointment can be cancelled.
+  notCancellable,
+}
+
+/// The server answered and refused, for [reason]. It is a
+/// [BookingUnavailable] so every caller still handles it, but the screens
+/// say why instead of "check your connection".
+class BookingRefused extends BookingUnavailable {
+  const BookingRefused(this.reason);
+
+  final BookingRefusal reason;
 }

@@ -93,7 +93,9 @@ class _BookDoctorScreenState extends ConsumerState<BookDoctorScreen> {
                 BottomBar(
                   children: [
                     InfoLine(
-                      text: l10n.bookNotice,
+                      text: l10n.bookNotice(
+                        ref.read(bookingRepositoryProvider).notice.inHours,
+                      ),
                       icon: Icons.schedule_rounded,
                       center: true,
                     ),
@@ -240,7 +242,12 @@ class _DoctorCardState extends ConsumerState<_DoctorCard> {
                             !loaded
                                 ? ''
                                 : next == null
-                                ? l10n.bookNoFree
+                                ? l10n.bookNoFree(
+                                    ref
+                                        .read(bookingRepositoryProvider)
+                                        .horizon
+                                        .inDays,
+                                  )
                                 : l10n.bookNextFree(
                                     '${l10n.longDate(next.start)} · '
                                     '${hhmm(next.start)}',

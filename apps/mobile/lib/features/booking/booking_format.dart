@@ -1,4 +1,5 @@
 import '../../l10n/app_localizations.dart';
+import 'booking_models.dart';
 
 // Dates and times for the booking screens. Weekday and month names come
 // from the ARB files (Algerian month names in Arabic); digits stay Latin, as
@@ -23,6 +24,24 @@ String timeRange(DateTime start, DateTime end) =>
 String mmss(Duration d) {
   final s = d.isNegative ? 0 : d.inSeconds;
   return '${_two(s ~/ 60)}:${_two(s % 60)}';
+}
+
+extension BookingErrors on AppLocalizations {
+  /// What to tell the patient when an action failed with [error]: the
+  /// server's reason when it refused, otherwise a connection problem.
+  String bookingError(BookingUnavailable error) => switch (error) {
+    BookingRefused(reason: BookingRefusal.notVerified) => bookErrNotVerified,
+    BookingRefused(reason: BookingRefusal.signedOut) => bookErrSignedOut,
+    BookingRefused(reason: BookingRefusal.forbidden) => bookErrForbidden,
+    BookingRefused(reason: BookingRefusal.doctorNotFound) => bookErrDoctorGone,
+    BookingRefused(reason: BookingRefusal.paymentMethodUnavailable) =>
+      bookErrMethod,
+    BookingRefused(reason: BookingRefusal.paymentsUnavailable) =>
+      bookErrPayments,
+    BookingRefused(reason: BookingRefusal.notCancellable) =>
+      bookErrNotCancellable,
+    _ => bookLoadError,
+  };
 }
 
 extension BookingDates on AppLocalizations {

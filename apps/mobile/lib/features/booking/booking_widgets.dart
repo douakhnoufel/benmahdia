@@ -73,7 +73,7 @@ class StatusBadge extends StatelessWidget {
     };
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpace.sm + 2,
+        horizontal: AppSpace.sm,
         vertical: AppSpace.xs,
       ),
       decoration: BoxDecoration(
@@ -110,7 +110,7 @@ class SectionLabel extends StatelessWidget {
     return Row(
       children: [
         Icon(icon, size: 18, color: AppColors.sand500),
-        const SizedBox(width: AppSpace.xs + 2),
+        const SizedBox(width: AppSpace.sm),
         Text(
           text,
           style: Theme.of(
@@ -144,7 +144,7 @@ class InfoLine extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(top: 2),
+          padding: const EdgeInsets.only(top: AppSpace.xs / 2),
           child: Icon(icon, size: 16, color: AppColors.textMuted),
         ),
         const SizedBox(width: AppSpace.sm),

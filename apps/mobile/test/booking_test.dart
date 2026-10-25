@@ -442,9 +442,7 @@ void main() {
       expect(repo.released, 0);
     });
 
-    testWidgets('a failed card payment shows the time-up view', (
-      tester,
-    ) async {
+    testWidgets('a failed card payment shows the time-up view', (tester) async {
       var expired = 0;
       final repo = _CheckoutRepo();
       await pumpApp(

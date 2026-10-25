@@ -73,8 +73,8 @@ void openAppointments(BuildContext context) {
 }
 
 /// The appointments, with booking locked until the profile is approved. A
-/// patient who skipped "Complete your profile" can still look around: the
-/// card says what is missing, and "book" leads to it.
+/// patient who has not finished "Complete your profile" can still look
+/// around: the card says what is missing, and "book" leads to it.
 class AppointmentsGate extends ConsumerWidget {
   const AppointmentsGate({super.key, this.showBack});
 

@@ -73,10 +73,15 @@ class _MyAppointmentsScreenState extends ConsumerState<MyAppointmentsScreen> {
       await repo.cancel(appointment);
       messenger.showSnackBar(SnackBar(content: Text(l10n.apptCancelled)));
     } on TooLateToCancel {
-      messenger.showSnackBar(SnackBar(content: Text(l10n.apptLocked)));
-    } on BookingUnavailable {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.apptLocked(repo.notice.inHours))),
+      );
+    } on SlotUnavailable {
+      // Already gone on the server: say so, then show the fresh list.
+      messenger.showSnackBar(SnackBar(content: Text(l10n.apptGone)));
+    } on BookingUnavailable catch (e) {
       if (mounted) {
-        messenger.showSnackBar(SnackBar(content: Text(l10n.bookLoadError)));
+        messenger.showSnackBar(SnackBar(content: Text(l10n.bookingError(e))));
       }
       return;
     }
@@ -177,6 +182,7 @@ class _MyAppointmentsScreenState extends ConsumerState<MyAppointmentsScreen> {
                                     appointment: a,
                                     canCancel:
                                         a.start.difference(now) >= repo.notice,
+                                    noticeHours: repo.notice.inHours,
                                     onCancel: () => _cancel(a),
                                   ),
                                 if (followUp != null && showFollowUp)
@@ -375,11 +381,14 @@ class _DateTile extends StatelessWidget {
       child: Column(
         children: [
           Text('${date.day}', style: text.headlineMedium?.copyWith(color: fg)),
-          Text(
-            l10n.month(date),
-            maxLines: 1,
-            softWrap: false,
-            style: text.bodySmall?.copyWith(color: fg, fontSize: 12),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              l10n.month(date),
+              maxLines: 1,
+              softWrap: false,
+              style: text.bodySmall?.copyWith(color: fg),
+            ),
           ),
         ],
       ),
@@ -391,11 +400,13 @@ class _UpcomingCard extends StatelessWidget {
   const _UpcomingCard({
     required this.appointment,
     required this.canCancel,
+    required this.noticeHours,
     required this.onCancel,
   });
 
   final Appointment appointment;
   final bool canCancel;
+  final int noticeHours;
   final VoidCallback onCancel;
 
   @override
@@ -404,6 +415,9 @@ class _UpcomingCard extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final lang = Localizations.localeOf(context).languageCode;
     final a = appointment;
+    // An unpaid hold is given back, not cancelled: the server cancels only
+    // confirmed appointments.
+    final confirmed = a.status == AppointmentStatus.confirmed;
 
     return Card(
       child: Padding(
@@ -444,7 +458,9 @@ class _UpcomingCard extends StatelessWidget {
                 text: l10n.bookToPay(a.priceDzd),
                 icon: Icons.payments_outlined,
               ),
-            if (canCancel)
+            if (a.checkinCode case final code? when confirmed)
+              _BookingCode(code: code),
+            if (confirmed && canCancel)
               OutlinedButton(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.danger,
@@ -454,7 +470,7 @@ class _UpcomingCard extends StatelessWidget {
                 onPressed: onCancel,
                 child: Text(l10n.apptCancel),
               )
-            else
+            else if (confirmed)
               Container(
                 padding: const EdgeInsets.all(AppSpace.md),
                 decoration: BoxDecoration(
@@ -462,12 +478,49 @@ class _UpcomingCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.field),
                 ),
                 child: InfoLine(
-                  text: l10n.apptLocked,
+                  text: l10n.apptLocked(noticeHours),
                   icon: Icons.lock_outline_rounded,
                 ),
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The booking code, as text: the patient gives it at the front desk, which
+/// marks them arrived (PRD 4.3). The QR card is not built yet.
+class _BookingCode extends StatelessWidget {
+  const _BookingCode({required this.code});
+
+  final String code;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final text = Theme.of(context).textTheme;
+    return Container(
+      key: const ValueKey('appt-code'),
+      padding: const EdgeInsets.all(AppSpace.md),
+      decoration: BoxDecoration(
+        color: AppColors.teal50,
+        borderRadius: BorderRadius.circular(AppRadius.field),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.confirmation_number_outlined,
+            color: AppColors.teal700,
+          ),
+          const SizedBox(width: AppSpace.sm),
+          Expanded(child: Text(l10n.apptCode, style: text.bodySmall)),
+          const SizedBox(width: AppSpace.sm),
+          LtrText(
+            code,
+            style: text.titleLarge?.copyWith(color: AppColors.teal700),
+          ),
+        ],
       ),
     );
   }
@@ -527,7 +580,7 @@ class _FollowUpCard extends StatelessWidget {
                         fontSize: AppType.body.size,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpace.xs),
                     Text(
                       overdue
                           ? l10n.bookFollowUpOverdueBody(span, since)
@@ -573,11 +626,14 @@ class _PastRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text('${a.start.day}', style: text.titleLarge),
-                Text(
-                  l10n.month(a.start),
-                  maxLines: 1,
-                  softWrap: false,
-                  style: text.bodySmall?.copyWith(fontSize: 12),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    l10n.month(a.start),
+                    maxLines: 1,
+                    softWrap: false,
+                    style: text.bodySmall,
+                  ),
                 ),
               ],
             ),

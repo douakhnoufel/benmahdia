@@ -98,9 +98,9 @@ class _BookSlotScreenState extends ConsumerState<BookSlotScreen> {
         _slot = null;
         _agenda = _load();
       });
-    } on BookingUnavailable {
+    } on BookingUnavailable catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text(l10n.bookLoadError)));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.bookingError(e))));
     } finally {
       if (mounted) setState(() => _holding = false);
     }
@@ -202,7 +202,13 @@ class _BookSlotScreenState extends ConsumerState<BookSlotScreen> {
                                 selected: _slot,
                                 onPick: (s) => setState(() => _slot = s),
                               )
-                            : _NoSlots(closure: day.closure),
+                            : _NoSlots(
+                                closure: day.closure,
+                                noticeHours: ref
+                                    .read(bookingRepositoryProvider)
+                                    .notice
+                                    .inHours,
+                              ),
                       ),
                     ),
                   ),
@@ -306,9 +312,9 @@ class _FollowUpBanner extends StatelessWidget {
     final since = l10n.longDate(followUp.after.start);
     return Container(
       padding: const EdgeInsetsDirectional.fromSTEB(
-        AppSpace.md + 2,
         AppSpace.md,
-        AppSpace.md + 2,
+        AppSpace.md,
+        AppSpace.md,
         AppSpace.md,
       ),
       decoration: BoxDecoration(
@@ -330,7 +336,7 @@ class _FollowUpBanner extends StatelessWidget {
                       : l10n.bookFollowUpTitle(l10n.longDate(followUp.day)),
                   style: text.titleLarge?.copyWith(fontSize: AppType.body.size),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpace.xs),
                 Text(
                   overdue
                       ? l10n.bookFollowUpOverdueBody(span, since)
@@ -470,7 +476,7 @@ class _DoctorStrip extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpace.md + 2,
+        horizontal: AppSpace.md,
         vertical: AppSpace.md,
       ),
       decoration: BoxDecoration(
@@ -561,7 +567,7 @@ class _DayPill extends StatelessWidget {
               child: AnimatedContainer(
                 duration: AppMotion.of(context, AppMotion.medium),
                 curve: AppMotion.curve,
-                padding: const EdgeInsets.only(top: AppSpace.sm, bottom: 6),
+                padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
                 decoration: BoxDecoration(
                   color: fill,
                   borderRadius: BorderRadius.circular(AppRadius.button),
@@ -574,13 +580,13 @@ class _DayPill extends StatelessWidget {
                       l10n.shortWeekday(day.day),
                       maxLines: 1,
                       softWrap: false,
-                      style: text.bodySmall?.copyWith(color: fg, fontSize: 12),
+                      style: text.bodySmall?.copyWith(color: fg),
                     ),
                     Text(
                       '${day.day.day}',
                       style: text.titleLarge?.copyWith(color: fg),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpace.xs),
                     Container(
                       width: 5,
                       height: 5,
@@ -779,9 +785,10 @@ class _Legend extends StatelessWidget {
 }
 
 class _NoSlots extends StatelessWidget {
-  const _NoSlots({required this.closure});
+  const _NoSlots({required this.closure, required this.noticeHours});
 
   final DayClosure closure;
+  final int noticeHours;
 
   @override
   Widget build(BuildContext context) {
@@ -815,7 +822,9 @@ class _NoSlots extends StatelessWidget {
           Text(l10n.bookNoSlots, style: text.titleLarge),
           const SizedBox(height: AppSpace.xs),
           Text(
-            closure == DayClosure.tooSoon ? l10n.bookTooSoon : l10n.bookClosed,
+            closure == DayClosure.tooSoon
+                ? l10n.bookTooSoon(noticeHours)
+                : l10n.bookClosed,
             textAlign: TextAlign.center,
             style: text.bodyMedium?.copyWith(color: AppColors.textMuted),
           ),

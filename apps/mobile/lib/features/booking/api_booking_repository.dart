@@ -136,6 +136,18 @@ class ApiBookingRepository implements BookingRepository {
       'slot_unavailable' || 'hold_expired' => const SlotUnavailable(),
       'too_late_to_cancel' => const TooLateToCancel(),
       'not_a_hold' || 'appointment_not_found' => const SlotUnavailable(),
+      'not_verified' => const BookingRefused(BookingRefusal.notVerified),
+      'token_invalid' ||
+      'not_authenticated' => const BookingRefused(BookingRefusal.signedOut),
+      'forbidden' => const BookingRefused(BookingRefusal.forbidden),
+      'doctor_not_found' => const BookingRefused(BookingRefusal.doctorNotFound),
+      'payment_method_unavailable' => const BookingRefused(
+        BookingRefusal.paymentMethodUnavailable,
+      ),
+      'payments_unavailable' => const BookingRefused(
+        BookingRefusal.paymentsUnavailable,
+      ),
+      'not_cancellable' => const BookingRefused(BookingRefusal.notCancellable),
       _ => const BookingUnavailable(),
     };
   }
@@ -194,6 +206,7 @@ class ApiBookingRepository implements BookingRepository {
     status: _status(json['status'] as String),
     priceDzd: json['price_dzd'] as int,
     method: _method(json['method'] as String?),
+    checkinCode: json['checkin_code'] as String?,
   );
 
   // --- repository -----------------------------------------------------------
