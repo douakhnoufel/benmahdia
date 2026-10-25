@@ -1,5 +1,6 @@
-"""Doctor dashboard API (PRD 7, MVP). A doctor sees only their own
-appointments and patients. No 2FA yet: to add before launch (PRD 4.1)."""
+"""Doctor dashboard API (PRD 7, MVP). Every doctor sees the clinic-wide
+agenda (booking data only, no clinical fields); patients and clinical data stay
+per doctor (PRD 3). No 2FA yet: to add before launch (PRD 4.1)."""
 
 import uuid
 from datetime import date, datetime, timedelta, timezone
@@ -86,7 +87,8 @@ class RejectIn(BaseModel):
 
 
 def current_doctor(user: User = Depends(current_user), db: Session = Depends(get_db)) -> DoctorProfile:
-    if user.role != Role.doctor:
+    # The super admin is one of the doctors and also holds the Doctor role (PRD 3).
+    if user.role not in (Role.doctor, Role.super_admin):
         raise ApiError(403, "forbidden")
     profile = db.get(DoctorProfile, user.id)
     if profile is None:
@@ -153,17 +155,17 @@ def _item(db: Session, a: Appointment) -> AgendaItem:
 @router.get("/agenda", response_model=list[AgendaItem])
 def agenda(
     day: date | None = None,
-    doctor: DoctorProfile = Depends(current_doctor),
+    _: DoctorProfile = Depends(current_doctor),
     db: Session = Depends(get_db),
 ) -> list[AgendaItem]:
-    """The doctor's booked visits of one clinic day (default: today). Open
+    """Every doctor's booked visits of one clinic day (default: today): the
+    agenda is shared clinic-wide (PRD 3) and carries no clinical fields. Open
     holds are left out: they are not appointments yet."""
     day = day or scheduling.clinic_today(clock.now())
     first, last = scheduling.to_utc(day, 0), scheduling.to_utc(day + timedelta(days=1), 0)
     rows = db.scalars(
         select(Appointment)
         .where(
-            Appointment.doctor_id == doctor.user_id,
             Appointment.start_utc >= first,
             Appointment.start_utc < last,
             Appointment.status != AppointmentStatus.awaiting_payment,
@@ -356,14 +358,17 @@ def approve(
     doctor: DoctorProfile = Depends(current_doctor),
     db: Session = Depends(get_db),
 ) -> SignupOut:
+    """Approves a declared ID, which unlocks booking (PRD 4.2). A sign-up with
+    nothing declared yet cannot be approved, only rejected."""
     user = _signup(db, user_id)
-    user.status = AccountStatus.verified
     declaration = user.id_declaration
-    if declaration is not None:
-        declaration.status = IdStatus.approved
-        declaration.reject_reason = None
-        declaration.decided_at = clock.now()
-        declaration.decided_by = doctor.user_id
+    if declaration is None or declaration.status != IdStatus.declared:
+        raise ApiError(409, "id_not_declared")
+    user.status = AccountStatus.verified
+    declaration.status = IdStatus.approved
+    declaration.reject_reason = None
+    declaration.decided_at = clock.now()
+    declaration.decided_by = doctor.user_id
     audit.record(db, "signup.approved", actor_id=doctor.user_id, target=str(user.id), request=request)
     db.commit()
     return _signup_out(user)

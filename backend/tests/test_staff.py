@@ -77,7 +77,8 @@ def test_doctor_cannot_use_patient_routes(client):
 # --- agenda -------------------------------------------------------------------
 
 
-def test_agenda_shows_only_my_booked_visits_of_the_day(client, sms):
+def test_agenda_shows_every_doctors_booked_visits_of_the_day(client, sms):
+    # PRD 3: appointments and agendas are visible to every doctor in the clinic.
     doc = doctor_with_password()
     other = other_doctor()
     verified_patient(client, sms)
@@ -88,7 +89,8 @@ def test_agenda_shows_only_my_booked_visits_of_the_day(client, sms):
     add_appointment(other, me, datetime(2026, 10, 19, 8, 30))
     r = client.get("/v1/staff/agenda?day=2026-10-19", headers=doc_headers(client))
     assert r.status_code == 200
-    [item] = r.json()
+    item, theirs = r.json()
+    assert theirs["start"] == "2026-10-19T08:30:00Z"
     assert item["start"] == "2026-10-19T08:00:00Z"
     assert item["patient_phone"] == "+213661234567"
     assert (item["status"], item["paid"]) == ("confirmed", False)
@@ -168,8 +170,9 @@ def test_patients_are_only_those_who_booked_with_me(client, sms):
 
 
 def test_signups_list_and_approve(client, sms):
+    from .test_identity import declare
     doctor_with_password()
-    register(client, sms, "0661111111")
+    declare(client, register(client, sms, "0661111111"))
     verified_patient(client, sms, "0662222222")
     h = doc_headers(client)
     [s] = client.get("/v1/staff/signups", headers=h).json()
@@ -193,8 +196,10 @@ def test_reject_signup(client, sms):
 
 
 def test_approved_patient_can_then_book(client, sms):
+    from .test_identity import declare
     doc = doctor_with_password()
     session = register(client, sms)
+    declare(client, session)
     h = doc_headers(client)
     [s] = client.get("/v1/staff/signups", headers=h).json()
     client.post(f"/v1/staff/signups/{s['id']}/approve", headers=h)
