@@ -1,7 +1,10 @@
 import os
 import tempfile
 
-os.environ["DATABASE_URL"] = "sqlite://"
+# In-memory SQLite by default. A DATABASE_URL set in the shell wins, so the
+# PostgreSQL race tests can run; every test drops and recreates its tables,
+# so point it at a throwaway database only.
+os.environ.setdefault("DATABASE_URL", "sqlite://")
 os.environ["ENVIRONMENT"] = "test"
 os.environ["SELFIE_DIR"] = tempfile.mkdtemp(prefix="benmahdia-selfies-")
 os.environ["GOOGLE_CLIENT_IDS"] = "google-client.apps.googleusercontent.com"
