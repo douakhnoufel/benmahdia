@@ -8,9 +8,10 @@ from app.db import engine
 from app.alerts_job import missed_dose_alerts
 from app.models import Alert
 
-from .booking_helpers import make_doctor, verified_patient
+from .booking_helpers import add_appointment, make_doctor, verified_patient
 from .conftest import bearer
 from .test_medications import linked_patient, prescribe, staff_session
+from .test_staff import other_doctor
 
 
 def add_addiction(client, s, **over):
@@ -65,6 +66,8 @@ def test_rejected_addiction_leaves_the_patients_list(client, sms):
 def test_doctor_only_reaches_own_patients(client, sms):
     _, doc, _ = setup(client, sms)
     stranger = verified_patient(client, sms, "0771234567")
+    # Booked with another doctor only, so their recovery is open (PRD 5).
+    add_appointment(other_doctor(), uuid.UUID(stranger["user"]["id"]), clock.now() - timedelta(days=3))
     a = add_addiction(client, stranger)
     url = f"/v1/staff/patients/{stranger['user']['id']}/addictions"
     assert client.get(url, headers=bearer(doc)).status_code == 404

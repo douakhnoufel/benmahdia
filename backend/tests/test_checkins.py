@@ -1,13 +1,29 @@
+import itertools
 import uuid
+from datetime import timedelta
 
 from sqlalchemy.orm import Session
 
+from app.clock import clock
 from app.db import engine
 from app.models import Role, User
 
+from .booking_helpers import add_appointment, make_doctor
 from .conftest import bearer, register
 
 TODAY = "2026-10-17"  # the frozen clock is 2026-10-17 18:00 UTC
+
+
+_slots = itertools.count()
+
+
+def unlocked(client, sms, phone="0661234567") -> dict:
+    """A patient past their first confirmed appointment, so recovery is open
+    (PRD 5). Each gets a slot of their own."""
+    s = register(client, sms, phone)
+    at = clock.now() - timedelta(days=3) + timedelta(minutes=15 * next(_slots))
+    add_appointment(make_doctor().user_id, uuid.UUID(s["user"]["id"]), at)
+    return s
 
 
 def tick(client, s, day=TODAY):
@@ -22,7 +38,7 @@ def test_requires_login(client):
 
 
 def test_tick_today_and_list(client, sms):
-    s = register(client, sms)
+    s = unlocked(client, sms)
     assert client.get("/v1/me/checkins", headers=bearer(s)).json() == []
     assert tick(client, s).status_code == 204
     assert tick(client, s, "2026-10-16").status_code == 204
@@ -31,14 +47,14 @@ def test_tick_today_and_list(client, sms):
 
 
 def test_tick_twice_is_fine(client, sms):
-    s = register(client, sms)
+    s = unlocked(client, sms)
     assert tick(client, s).status_code == 204
     assert tick(client, s).status_code == 204
     assert client.get("/v1/me/checkins", headers=bearer(s)).json() == [TODAY]
 
 
 def test_tick_day_must_be_recent_and_not_in_the_future(client, sms):
-    s = register(client, sms)
+    s = unlocked(client, sms)
     assert tick(client, s, "2026-10-18").status_code == 204  # phone already past midnight
     for day in ("2026-10-19", "2026-10-10"):
         r = tick(client, s, day)
@@ -48,21 +64,21 @@ def test_tick_day_must_be_recent_and_not_in_the_future(client, sms):
 
 
 def test_each_patient_has_their_own_days(client, sms):
-    a = register(client, sms, "0661234567")
-    b = register(client, sms, "0771234567")
+    a = unlocked(client, sms, "0661234567")
+    b = unlocked(client, sms, "0771234567")
     tick(client, a)
     assert client.get("/v1/me/checkins", headers=bearer(b)).json() == []
 
 
 def test_list_only_returns_the_recent_window(client, sms):
-    s = register(client, sms)
+    s = unlocked(client, sms)
     tick(client, s, "2026-10-16")
     r = client.get("/v1/me/checkins", params={"since": "2026-10-17"}, headers=bearer(s))
     assert r.json() == []
 
 
 def test_reminder_set_read_and_clear(client, sms):
-    s = register(client, sms)
+    s = unlocked(client, sms)
     assert client.get("/v1/me/reminder", headers=bearer(s)).json() == {"time": None}
     r = client.put("/v1/me/reminder", json={"time": "21:05"}, headers=bearer(s))
     assert r.status_code == 200 and r.json() == {"time": "21:05"}
@@ -73,7 +89,7 @@ def test_reminder_set_read_and_clear(client, sms):
 
 
 def test_reminder_rejects_bad_times(client, sms):
-    s = register(client, sms)
+    s = unlocked(client, sms)
     for bad in ("24:00", "9:00", "21:60", "9pm", ""):
         r = client.put("/v1/me/reminder", json={"time": bad}, headers=bearer(s))
         assert r.status_code == 422, bad

@@ -1,7 +1,7 @@
 """Patient recovery API (PRD 5): the addictions a patient tracks and their
 relapses. A patient reaches only their own rows; another patient's id looks
-like it does not exist. Tracking does not need the clinic's ID approval
-(booking does)."""
+like it does not exist. Tracking unlocks with the first confirmed (paid)
+appointment, not with the clinic's ID approval (PRD 5)."""
 
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from .. import audit
 from ..clock import clock
 from ..db import get_db
-from ..deps import current_user
+from ..deps import recovery_patient
 from ..errors import ApiError
 from ..models import (
     Addiction,
@@ -23,7 +23,6 @@ from ..models import (
     Appointment,
     Relapse,
     ReviewStatus,
-    Role,
     User,
 )
 from .doctors import utc_iso
@@ -35,10 +34,9 @@ MAX_ADDICTIONS = 10
 CLOCK_SLACK = timedelta(minutes=5)
 
 
-def patient(user: User = Depends(current_user)) -> User:
-    if user.role != Role.patient:
-        raise ApiError(403, "forbidden")
-    return user
+# Every patient recovery route (here, checkins and medications) uses this:
+# locked until the first confirmed appointment.
+patient = recovery_patient
 
 
 def _utc(value: datetime) -> datetime:

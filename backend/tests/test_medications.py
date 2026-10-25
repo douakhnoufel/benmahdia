@@ -1,3 +1,4 @@
+import itertools
 import uuid
 from datetime import timedelta
 
@@ -5,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.clock import clock
 from app.db import engine
-from app.models import Quote, Role, User
+from app.models import DoctorProfile, Quote, Role, User
 
 from .booking_helpers import add_appointment, make_doctor, verified_patient
 from .conftest import bearer, register
@@ -32,10 +33,31 @@ def staff_session(client, doctor) -> dict:
     return r.json()
 
 
+_slots = itertools.count()
+
+
 def linked_patient(client, sms, doctor, phone="0661234567") -> dict:
     s = verified_patient(client, sms, phone)
-    add_appointment(doctor.user_id, uuid.UUID(s["user"]["id"]), clock.now() - timedelta(days=3))
+    # Each patient gets a slot of their own: PostgreSQL refuses two
+    # appointments of one doctor at the same time.
+    at = clock.now() - timedelta(days=3) + timedelta(minutes=15 * next(_slots))
+    add_appointment(doctor.user_id, uuid.UUID(s["user"]["id"]), at)
     return s
+
+
+def unlocked(client, sms, phone="0661234567") -> dict:
+    """A patient past their first confirmed appointment, so recovery is open
+    (PRD 5). The doctor is made by hand: the seed would add quotes."""
+    with Session(engine) as db:
+        user = User(role=Role.doctor, email=f"dr.quotes.{phone}@example.invalid")
+        db.add(user)
+        db.flush()
+        db.add(DoctorProfile(user_id=user.id, name_ar="د. اختبار", name_fr="Dr Test",
+                             slot_minutes=15, price_dzd=2000))
+        db.commit()
+        doctor = db.get(DoctorProfile, user.id)
+        db.expunge(doctor)
+    return linked_patient(client, sms, doctor, phone)
 
 
 def prescribe(client, doc, patient, **over):
@@ -174,7 +196,7 @@ def test_doctor_lists_and_stops_a_medication(client, sms):
 
 
 def test_quote_of_the_day_is_stable_and_changes_daily(client, sms):
-    s = register(client, sms)
+    s = unlocked(client, sms)
     with Session(engine) as db:
         for i in range(3):
             db.add(Quote(text_ar=f"ع{i}", text_fr=f"fr{i}"))
@@ -187,7 +209,7 @@ def test_quote_of_the_day_is_stable_and_changes_daily(client, sms):
 
 
 def test_quote_prefers_the_patients_addiction_types(client, sms):
-    s = register(client, sms)
+    s = unlocked(client, sms)
     client.post("/v1/me/addictions", json={"type": "alcohol", "clean_since": "2026-10-01T00:00:00Z"},
                 headers=bearer(s))
     with Session(engine) as db:
@@ -204,7 +226,7 @@ def test_quote_prefers_the_patients_addiction_types(client, sms):
 
 
 def test_no_quote_is_a_404(client, sms):
-    s = register(client, sms)
+    s = unlocked(client, sms)
     r = client.get("/v1/me/quote", headers=bearer(s))
     assert r.status_code == 404 and r.json()["detail"]["code"] == "no_quote"
 

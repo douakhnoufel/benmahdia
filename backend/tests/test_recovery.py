@@ -1,3 +1,4 @@
+import itertools
 import uuid
 from datetime import timedelta
 
@@ -13,6 +14,18 @@ from .conftest import bearer, register
 CLEAN_SINCE = "2026-10-07T18:00:00Z"  # 10 days before the frozen clock
 
 
+_slots = itertools.count()
+
+
+def unlocked(client, sms, phone="0661234567") -> dict:
+    """A patient past their first confirmed appointment, so recovery is open
+    (PRD 5). Each gets a slot of their own."""
+    s = register(client, sms, phone)
+    at = clock.now() - timedelta(days=3) + timedelta(minutes=15 * next(_slots))
+    add_appointment(make_doctor().user_id, uuid.UUID(s["user"]["id"]), at)
+    return s
+
+
 def add(client, session, **over):
     body = {"type": "cannabis", "substance": "haschich", "clean_since": CLEAN_SINCE} | over
     return client.post("/v1/me/addictions", json=body, headers=bearer(session))
@@ -23,8 +36,24 @@ def test_requires_login(client):
     assert client.post("/v1/me/addictions", json={}).status_code == 401
 
 
-def test_add_and_list(client, sms):
+def test_locked_until_the_first_confirmed_appointment(client, sms):
+    from app.models import AppointmentStatus
+
     s = register(client, sms)
+    r = client.get("/v1/me/addictions", headers=bearer(s))
+    assert r.status_code == 403 and r.json()["detail"]["code"] == "recovery_locked"
+    # An unpaid hold or a cancelled appointment does not unlock it.
+    pid, doctor = uuid.UUID(s["user"]["id"]), make_doctor().user_id
+    add_appointment(doctor, pid, clock.now() + timedelta(days=3), status=AppointmentStatus.awaiting_payment,
+                    hold_expires_at=clock.now() + timedelta(minutes=10))
+    add_appointment(doctor, pid, clock.now() - timedelta(days=3), status=AppointmentStatus.cancelled)
+    assert add(client, s).json()["detail"]["code"] == "recovery_locked"
+    add_appointment(doctor, pid, clock.now() - timedelta(days=2))
+    assert add(client, s).status_code == 201
+
+
+def test_add_and_list(client, sms):
+    s = unlocked(client, sms)
     r = add(client, s)
     assert r.status_code == 201, r.text
     body = r.json()
@@ -38,27 +67,27 @@ def test_add_and_list(client, sms):
 
 
 def test_unverified_patient_can_track(client, sms):
-    # Tracking does not need the clinic's ID approval; booking does.
-    s = register(client, sms)
+    # Tracking needs a confirmed appointment, not the clinic's ID approval.
+    s = unlocked(client, sms)
     assert add(client, s).status_code == 201
 
 
 def test_substance_is_optional_and_trimmed(client, sms):
-    s = register(client, sms)
+    s = unlocked(client, sms)
     r = add(client, s, substance="  ")
     assert r.status_code == 201
     assert r.json()["substance"] is None
 
 
 def test_rejects_bad_input(client, sms):
-    s = register(client, sms)
+    s = unlocked(client, sms)
     assert add(client, s, type="coffee").status_code == 422
     assert add(client, s, clean_since="2026-10-25T00:00:00Z").status_code == 422
     assert add(client, s, substance="x" * 101).status_code == 422
 
 
 def test_limit_of_addictions(client, sms):
-    s = register(client, sms)
+    s = unlocked(client, sms)
     for _ in range(10):
         assert add(client, s).status_code == 201
     r = add(client, s)
@@ -67,8 +96,8 @@ def test_limit_of_addictions(client, sms):
 
 
 def test_patient_sees_only_own_addictions(client, sms):
-    a = register(client, sms, "0661234567")
-    b = register(client, sms, "0771234567")
+    a = unlocked(client, sms, "0661234567")
+    b = unlocked(client, sms, "0771234567")
     mine = add(client, a).json()
     assert client.get("/v1/me/addictions", headers=bearer(b)).json() == []
     # Another patient's id looks like it does not exist.
@@ -79,7 +108,7 @@ def test_patient_sees_only_own_addictions(client, sms):
 
 
 def test_relapse_restarts_counter_and_keeps_history(client, sms):
-    s = register(client, sms)
+    s = unlocked(client, sms)
     a = add(client, s, clean_since="2026-09-25T09:00:00Z").json()
     url = f"/v1/me/addictions/{a['id']}/relapses"
     at = "2026-10-03T09:30:00Z"  # 8 days after clean_since
@@ -97,7 +126,7 @@ def test_relapse_restarts_counter_and_keeps_history(client, sms):
 
 
 def test_relapse_defaults_to_now(client, sms):
-    s = register(client, sms)
+    s = unlocked(client, sms)
     a = add(client, s).json()
     r = client.post(f"/v1/me/addictions/{a['id']}/relapses", json={}, headers=bearer(s))
     assert r.status_code == 201
@@ -106,7 +135,7 @@ def test_relapse_defaults_to_now(client, sms):
 
 
 def test_relapse_time_checks(client, sms):
-    s = register(client, sms)
+    s = unlocked(client, sms)
     a = add(client, s).json()
     url = f"/v1/me/addictions/{a['id']}/relapses"
     before = client.post(url, json={"at": "2026-10-01T00:00:00Z"}, headers=bearer(s))
@@ -133,11 +162,12 @@ def test_relapse_alerts_the_patients_doctor_without_medical_content(client, sms)
         assert "secret" not in repr(vars(alert))
 
 
-def test_relapse_without_a_doctor_still_works(client, sms):
+def test_relapse_is_locked_before_the_first_confirmed_appointment(client, sms):
+    # Recovery opens with the first paid visit (PRD 5), so a patient with no
+    # doctor yet cannot reach the relapse route, and no doctor is alerted.
     s = register(client, sms)
-    a = add(client, s).json()
-    r = client.post(f"/v1/me/addictions/{a['id']}/relapses", json={}, headers=bearer(s))
-    assert r.status_code == 201
+    r = client.post(f"/v1/me/addictions/{uuid.uuid4()}/relapses", json={}, headers=bearer(s))
+    assert r.status_code == 403 and r.json()["detail"]["code"] == "recovery_locked"
     with Session(engine) as db:
         assert db.query(Alert).count() == 0
 
