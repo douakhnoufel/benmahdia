@@ -58,20 +58,21 @@ Four roles, with each patient belonging to one primary doctor and seeing only th
 | --- | --- | --- | --- |
 | Super admin | One of the 3 doctors (also holds the Doctor role) | Create and deactivate doctor accounts, approve new patient accounts, view platform stats, manage quotes library, configure AI settings | Read other doctors' patient conversations or notes through admin screens |
 | Clinic staff | Reception / front desk | Review ID declarations the app could not approve automatically, approve or reject any declaration (including overturning an automatic approval) with a reason | See clinical data, conversations, notes or medications |
-| Doctor (admin) | Psychiatrist | Manage their own patients, set availability, manage appointments, prescribe medication schedules, set addiction profiles, review AI alerts and summaries | See other doctors' patients (unless shared) |
+| Doctor (admin) | Psychiatrist | Manage their own patients, set availability, manage appointments (and see every doctor's appointments and agenda in the clinic), prescribe medication schedules, set addiction profiles, review AI alerts and summaries | See other doctors' patients' clinical data — notes, medications, addictions, AI chats and flags (unless shared) |
 | Patient | Person in treatment | Book, pay for and cancel appointments, enter their addictions, track sobriety, confirm medications, read articles, chat with the AI companion, delete their account | See other patients, edit their medications, delete relapse history |
 
 **Multi-doctor rules**
 
-- Pilot setup: BenMahdia clinic with 3 doctors, one of whom is also super admin. Doctors share one platform; data is isolated per doctor by default.
+- Pilot setup: BenMahdia clinic with 3 doctors, one of whom is also super admin. Doctors share one platform; appointments and agendas are visible to every doctor in the clinic, clinical data is isolated per doctor by default.
 - A patient has one primary doctor; a doctor can transfer a patient to another doctor.
 - Optional later: a clinic grouping so several doctors share a patient list.
 
 **Each patient has their own addiction profile**
 
-- One or more addictions per patient (e.g. opioids, cannabis, alcohol, tobacco, psychotropic pills, gambling, other).
-- Per addiction: type, the exact substance in the patient's words (optional), start-of-sobriety date, relapse history, triggers noted by the doctor, severity level.
-- The patient enters each addiction in the app (type, substance, "clean since" date); it shows "waiting for the doctor's review" until their doctor checks it. The doctor can correct it and adds triggers and severity. After that only a relapse moves the counter; the patient can log a relapse (with when it happened) but cannot delete history.
+- One or more addictions per patient (e.g. opioids, cannabis, alcohol, tobacco, psychotropic pills, stimulants, gambling, other).
+- Per addiction: type, substance profile (optional, see below), the exact substance in the patient's words (optional), start-of-sobriety date, relapse history, triggers noted by the doctor, severity level.
+- **Substance profiles** choose how an addiction is tracked (5.6): nicotine (type tobacco), THC / cannabis (cannabis), pregabalin (psychotropic pills), buprenorphine (opioids), cocaine (stimulants), amphetamines including Adderall (stimulants). An addiction without a profile uses generic tracking.
+- The patient enters each addiction in the app (substance profile or type, substance, "clean since" date); it shows "waiting for the doctor's review" until their doctor checks it. The doctor can correct it and adds triggers and severity. After that only a relapse moves the counter; the patient can log a relapse (with when it happened) but cannot delete history.
 
 ## 4. Pillar 1 — Authentication and appointments
 
@@ -171,7 +172,7 @@ The patient pays for each appointment in the app through Chargily Pay; a slot is
 
 The home screen shows one progress circle per addiction, a daily quote, and today's medications — the reason patients open the app every day.
 
-**Unlock:** this pillar and the AI companion (6) unlock after the patient's first appointment is confirmed (paid). Before that, their tabs show a locked state with a Book button. Later, a short questionnaire after booking will let the app choose each patient's tracking — patients are not all tracked the same way (to be specified).
+**Unlock:** this pillar and the AI companion (6) unlock after the patient's first appointment is confirmed (paid). Before that, their tabs show a locked state with a Book button. The API enforces it: every recovery endpoint (addictions, daily checks, substance profiles, the patient's medications) answers `403 recovery_locked` until the patient has a confirmed (paid) appointment. Each addiction is tracked according to its substance profile (5.6) — patients are not all tracked the same way.
 
 ### 5.1 Sobriety circles and day counters
 
@@ -200,6 +201,7 @@ The home screen shows one progress circle per addiction, a daily quote, and toda
 
 - v1: the patient ticks "today without use" once a day; the home shows this week's seven days. A daily reminder at a time the patient picks (time picker, 24-hour), scheduled locally; the notification text stays neutral.
 - v1.1: a 10-second mood and craving rating (1–5) added to the daily check, plotted for the doctor.
+- Once the patient has at least one addiction, the daily check becomes per addiction with craving and substance signals (5.6); the week strip marks a day done when every active addiction was checked.
 
 ### 5.5 Articles and resources
 
@@ -209,6 +211,44 @@ A library of short articles, like Ta'aafi's, that patients can read at any time.
 - Written or approved by the clinic's doctors and published from the dashboard, in Arabic and French.
 - Filtered by addiction type; patients can save favourites.
 - The AI companion can suggest a relevant article during a chat.
+
+### 5.6 Per-substance tracking
+
+Each addiction is tracked according to its substance profile (3): nicotine, THC, pregabalin, buprenorphine, cocaine or amphetamines; an addiction without a profile uses generic tracking.
+
+- **Goal:** abstinence for every profile. The counter is the time since last use. Buprenorphine or pregabalin taken as prescribed is tracked in Medications (5.3), not as use.
+- **Daily check per addiction** (about 15 seconds):
+  1. "Today without [substance]?" — answering No opens relapse logging (5.1 rules apply).
+  2. Craving, 1–5.
+  3. Two profile signals, 1–5 (higher = harder):
+
+| Profile | Signal 1 | Signal 2 |
+| --- | --- | --- |
+| Nicotine | Irritability | Restlessness |
+| THC | Sleep trouble | Irritability |
+| Pregabalin | Anxiety | Sleep trouble |
+| Buprenorphine | Body discomfort (aches, sweats) | Sleep trouble |
+| Cocaine | Low mood | Low energy |
+| Amphetamines | Sleep trouble | Low appetite |
+| Generic (no profile) | — | — (craving only) |
+
+- One answer per addiction per day, editable the same day. The daily reminder stays neutral.
+- **Milestones:** the same ladder as 5.1. Each profile adds 2–3 short "what to expect" notes on early days, in Arabic and French, written or approved by the clinic's doctors before launch (placeholders during development). Supportive wording, never a diagnosis.
+- **What the doctor sees** (patient file, own or shared patients only): per addiction — profile, counter, longest streak, total sober days, relapses with notes, a 30-day chart of craving and the two signals, and check-in days out of 30.
+- **Alerts** (kind of event and patient only, no content):
+  - `craving_high`: craving 4 or more on 3 days in a row for one addiction.
+  - `no_checkin`: 3 days in a row with no daily check.
+  - Thresholds are fixed in v1.
+- **Privacy:** answers never appear in notifications, alerts, logs or the audit log (the audit stores row ids only). A patient sees only their own answers; the AI never turns them into a diagnosis for the patient.
+- **Small goals** (per addiction):
+  - Steps: 1 day → 3 days → 1 week → 2 weeks → 4 weeks; after 4 weeks the milestone ladder (5.1) takes over (60, 90, 180, 365 days).
+  - By default the app picks the next step automatically; the patient can choose a different step, higher or lower. The circle fills toward the current goal.
+  - Goal reached → celebration, and the next step is suggested. Relapse → the goal goes back to 1 day (history kept as in 5.1).
+- **Good habits** to replace using:
+  - The patient picks from a clinic list in Arabic and French (sport or walk, brushing teeth, drinking water, reading, calling family, sleeping on time) or adds one in their own words. Up to 5 active habits.
+  - One "done" tick per habit per day, on the daily check screen.
+  - Optional daily reminder per habit at a time the patient picks (24-hour), scheduled locally. The text names a habit from the list ("Time for: Sport"); a habit in the patient's own words shows only "Time for your habit". No medical content.
+- **Doctor also sees** (own or shared patients only): each habit with the days it was done out of 30, and the current small goal per addiction. No alerts.
 
 ## 6. Pillar 3 — AI support companion
 
@@ -284,7 +324,7 @@ Doctors work from a web dashboard (desktop browser) plus a lighter doctor view i
 **Doctor screens**
 
 - **Today:** agenda, pending booking requests, unread alerts.
-- **Alerts inbox:** crisis flags (highest priority), AI risk flags, relapses, missed medications, no-shows, milestones.
+- **Alerts inbox:** crisis flags (highest priority), AI risk flags, relapses, high cravings, missed daily checks, missed medications, no-shows, milestones.
 - **Patient list:** search and filter by addiction, streak, risk level, last activity.
 - **Patient file:** addiction profile(s), streak history chart, medication adherence, appointments, mood check-ins, AI flags and short assessments and flagged conversations (no full chat history), private notes.
 - **Medications:** create and edit schedules per patient.
@@ -374,7 +414,10 @@ Only the push relay (Apple/Google) sits outside the country, and it carries gene
 | User | id, role (super\_admin / doctor / patient), phone, email, password hash, auth provider (password / Google / Apple), 2FA, language, deleted\_at |
 | DoctorProfile | user\_id, specialty, slot length, booking/cancel notice |
 | Patient | user\_id, primary\_doctor\_id, birth year, consent flags, id\_hmac (unique), name\_enc, birth\_date\_enc, id\_status (none / declared / approved / rejected / duplicate), id\_declared\_at |
-| Addiction | patient\_id, type, sobriety\_start, severity, triggers, active |
+| Addiction | patient\_id, type, profile (nicotine / thc / pregabalin / buprenorphine / cocaine / amphetamines, optional), goal\_days (null = automatic), sobriety\_start, severity, triggers, active |
+| Habit | patient\_id, kind (from the clinic list) or custom text, reminder\_time, active |
+| HabitLog | habit\_id, day; one per habit and day |
+| AddictionCheck | addiction\_id, day, used, craving (1–5), signals (profile signal → 1–5); one per addiction and day |
 | Relapse | addiction\_id, date, note |
 | Availability | doctor\_id, weekday, start, end, exceptions |
 | Appointment | doctor\_id, patient\_id, start\_utc, end\_utc, status, price, payment\_id, private note |
