@@ -8,6 +8,7 @@ import 'package:benmahdia_mobile/features/profile/fake_identity_repository.dart'
 import 'package:benmahdia_mobile/features/profile/id_text_parser.dart';
 import 'package:benmahdia_mobile/features/profile/identity_models.dart';
 import 'package:benmahdia_mobile/features/profile/identity_repository.dart';
+import 'package:benmahdia_mobile/features/profile/profile_card.dart';
 import 'package:benmahdia_mobile/features/profile/profile_flow.dart';
 import 'package:benmahdia_mobile/features/profile/profile_form_screen.dart';
 import 'package:benmahdia_mobile/features/profile/profile_prompt_screen.dart';
@@ -110,7 +111,9 @@ void main() {
       expect(find.byType(ProfileFormScreen), findsOneWidget);
     });
 
-    testWidgets('skip comes back and carries on', (tester) async {
+    testWidgets('there is no Skip: the step is mandatory (PRD 4.2)', (
+      tester,
+    ) async {
       var after = 0;
       await pumpApp(
         tester,
@@ -121,10 +124,10 @@ void main() {
       await pumpFor(tester, _second);
       expect(find.byType(ProfilePromptScreen), findsOneWidget);
 
-      await _tap(tester, 'profile-skip');
-      expect(find.byType(ProfilePromptScreen), findsNothing);
-      expect(find.text('go'), findsOneWidget);
-      expect(after, 1);
+      expect(find.byKey(const ValueKey('profile-skip')), findsNothing);
+      expect(find.text('تخطَّ الآن'), findsNothing);
+      expect(find.byType(TextButton), findsNothing);
+      expect(after, 0);
     });
 
     testWidgets('scan, selfie, send: the clinic gets exactly the declaration', (
@@ -320,16 +323,17 @@ void main() {
       await pumpFor(tester, _second);
     }
 
-    testWidgets('a patient who skipped sees the card, and book leads to it', (
-      tester,
-    ) async {
-      await openAppointmentsFrom(tester, FakeIdentityRepository());
-      expect(find.byKey(const ValueKey('profile-card')), findsOneWidget);
+    testWidgets(
+      'a patient with no ID yet sees the card, and book leads to it',
+      (tester) async {
+        await openAppointmentsFrom(tester, FakeIdentityRepository());
+        expect(find.byKey(const ValueKey('profile-card')), findsOneWidget);
 
-      await tester.tap(find.byIcon(Icons.add_rounded));
-      await pumpFor(tester, _second);
-      expect(find.byType(ProfilePromptScreen), findsOneWidget);
-    });
+        await tester.tap(find.byIcon(Icons.add_rounded));
+        await pumpFor(tester, _second);
+        expect(find.byType(ProfilePromptScreen), findsOneWidget);
+      },
+    );
 
     testWidgets('the card starts the profile too', (tester) async {
       await openAppointmentsFrom(tester, FakeIdentityRepository());
@@ -352,6 +356,37 @@ void main() {
       identity.approve();
       await _tap(tester, 'profile-card-action');
       expect(find.byKey(const ValueKey('profile-card')), findsNothing);
+    });
+
+    testWidgets('the card says "ID declared", and "· approved" once approved', (
+      tester,
+    ) async {
+      await pumpApp(
+        tester,
+        Scaffold(
+          body: ProfileCard(
+            state: const IdentityState(status: IdStatus.declared),
+            onComplete: () {},
+            onRefresh: () {},
+          ),
+        ),
+      );
+      await pumpFor(tester, _second);
+      expect(find.text('هوية مصرّح بها'), findsOneWidget);
+
+      await pumpApp(
+        tester,
+        Scaffold(
+          body: ProfileCard(
+            state: const IdentityState(status: IdStatus.approved),
+            onComplete: () {},
+            onRefresh: () {},
+          ),
+        ),
+      );
+      await pumpFor(tester, _second);
+      expect(find.text('هوية مصرّح بها · مقبولة'), findsOneWidget);
+      expect(find.text('في انتظار العيادة'), findsNothing);
     });
 
     testWidgets('a refusal shows the reason and allows sending again', (

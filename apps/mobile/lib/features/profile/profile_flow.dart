@@ -8,12 +8,12 @@ import 'profile_done_screen.dart';
 import 'profile_form_screen.dart';
 import 'profile_prompt_screen.dart';
 
-/// Opens "Complete your profile": the consent screen (with Skip), then the
-/// ID scan and selfie, then a confirmation.
+/// Opens "Complete your profile": the consent screen (no Skip, PRD 4.2), then
+/// the ID scan and selfie, then a confirmation.
 ///
-/// Skipping, or finishing, comes back to the screen that called this and then
-/// runs [afterFinish] (the first sign-in goes on to the appointments). The
-/// declaration only unlocks booking once the clinic approves it.
+/// Finishing comes back to the screen that called this and then runs
+/// [afterFinish] (the first sign-in goes on to the appointments). The
+/// declaration only unlocks booking once it is approved.
 void openProfile(BuildContext context, {VoidCallback? afterFinish}) {
   final navigator = Navigator.of(context);
   final base = ModalRoute.of(context);
@@ -27,7 +27,6 @@ void openProfile(BuildContext context, {VoidCallback? afterFinish}) {
 
   push(
     ProfilePromptScreen(
-      onSkip: finish,
       onStart: () => push(
         ProfileFormScreen(
           onSent: () => push(ProfileDoneScreen(onContinue: finish)),

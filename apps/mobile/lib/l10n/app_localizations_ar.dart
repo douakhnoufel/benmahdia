@@ -302,10 +302,14 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get bookNoFree => 'لا مواعيد متاحة خلال الشهرين القادمين';
+  String bookNoFree(int days) {
+    return 'لا مواعيد متاحة خلال $days يوماً القادمة';
+  }
 
   @override
-  String get bookNotice => 'الحجز قبل 24 ساعة على الأقل من الموعد';
+  String bookNotice(int hours) {
+    return 'الحجز قبل $hours ساعة على الأقل من الموعد';
+  }
 
   @override
   String get bookChooseTime => 'اختيار اليوم والوقت';
@@ -335,7 +339,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get bookNoSlots => 'لا مواعيد في هذا اليوم';
 
   @override
-  String get bookTooSoon => 'يكون الحجز قبل 24 ساعة على الأقل من الموعد.';
+  String bookTooSoon(int hours) {
+    return 'يكون الحجز قبل $hours ساعة على الأقل من الموعد.';
+  }
 
   @override
   String get bookClosed => 'لا يستقبل الطبيب المرضى في هذا اليوم.';
@@ -388,7 +394,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get bookClinicPaySub => 'خلال فترة التجربة، يؤكّده الطبيب';
 
   @override
-  String get bookCancelRule => 'الإلغاء ممكن حتى 24 ساعة قبل الموعد.';
+  String bookCancelRule(int hours) {
+    return 'الإلغاء ممكن حتى $hours ساعة قبل الموعد.';
+  }
 
   @override
   String bookPay(int amount) {
@@ -446,8 +454,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get bookRemind1 => 'قبل ساعة';
 
   @override
-  String get bookChangeHint =>
-      'يمكنك إلغاء الموعد من «مواعيدي» حتى 24 ساعة قبله.';
+  String bookChangeHint(int hours) {
+    return 'يمكنك إلغاء الموعد من «مواعيدي» حتى $hours ساعة قبله.';
+  }
 
   @override
   String get bookMyAppointments => 'مواعيدي';
@@ -457,6 +466,29 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get bookLoadError => 'تعذّر التحميل. تحقّق من الاتصال وحاول مجدداً.';
+
+  @override
+  String get bookErrNotVerified =>
+      'لم تتم الموافقة على هويتك بعد. يُفتح الحجز بعد الموافقة.';
+
+  @override
+  String get bookErrSignedOut => 'انتهت جلستك. سجّل الدخول من جديد.';
+
+  @override
+  String get bookErrForbidden => 'هذا الإجراء غير متاح لحسابك.';
+
+  @override
+  String get bookErrDoctorGone => 'هذا الطبيب لم يعد متاحاً. اختر طبيباً آخر.';
+
+  @override
+  String get bookErrMethod => 'طريقة الدفع هذه غير متاحة. اختر طريقة أخرى.';
+
+  @override
+  String get bookErrPayments =>
+      'الدفع بالبطاقة غير متاح حالياً. حاول لاحقاً أو ادفع في العيادة.';
+
+  @override
+  String get bookErrNotCancellable => 'لم يعد بالإمكان إلغاء هذا الموعد.';
 
   @override
   String get bookRetry => 'إعادة المحاولة';
@@ -555,8 +587,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get apptCancelled => 'تم إلغاء الموعد';
 
   @override
-  String get apptLocked =>
-      'بقي أقل من 24 ساعة، لذا لا يمكن الإلغاء من التطبيق. اتصل بالعيادة إذا تعذّر حضورك.';
+  String apptLocked(int hours) {
+    return 'بقي أقل من $hours ساعة، لذا لا يمكن الإلغاء من التطبيق. اتصل بالعيادة إذا تعذّر حضورك.';
+  }
+
+  @override
+  String get apptGone => 'هذا الموعد لم يعد موجوداً. تم تحديث القائمة.';
+
+  @override
+  String get apptCode => 'الرمز الذي تقدّمه في الاستقبال';
 
   @override
   String get apptNoUpcoming => 'لا مواعيد قادمة';
@@ -847,13 +886,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get profileStart => 'ابدأ';
 
   @override
-  String get profileSkip => 'تخطَّ الآن';
-
-  @override
-  String get profileSkipNote =>
-      'يمكنك استعمال التطبيق دون ذلك، لكن لا يمكنك حجز موعد قبل إكماله.';
-
-  @override
   String get profileFormTitle => 'بياناتك';
 
   @override
@@ -923,6 +955,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get profileCardAction => 'أكمل';
+
+  @override
+  String get profileIdDeclared => 'هوية مصرّح بها';
+
+  @override
+  String get profileIdDeclaredApproved => 'هوية مصرّح بها · مقبولة';
 
   @override
   String get profileCardDeclaredTitle => 'في انتظار العيادة';

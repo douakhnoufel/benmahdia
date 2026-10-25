@@ -611,14 +611,14 @@ abstract class AppLocalizations {
   /// No description provided for @bookNoFree.
   ///
   /// In ar, this message translates to:
-  /// **'لا مواعيد متاحة خلال الشهرين القادمين'**
-  String get bookNoFree;
+  /// **'لا مواعيد متاحة خلال {days} يوماً القادمة'**
+  String bookNoFree(int days);
 
   /// No description provided for @bookNotice.
   ///
   /// In ar, this message translates to:
-  /// **'الحجز قبل 24 ساعة على الأقل من الموعد'**
-  String get bookNotice;
+  /// **'الحجز قبل {hours} ساعة على الأقل من الموعد'**
+  String bookNotice(int hours);
 
   /// No description provided for @bookChooseTime.
   ///
@@ -677,8 +677,8 @@ abstract class AppLocalizations {
   /// No description provided for @bookTooSoon.
   ///
   /// In ar, this message translates to:
-  /// **'يكون الحجز قبل 24 ساعة على الأقل من الموعد.'**
-  String get bookTooSoon;
+  /// **'يكون الحجز قبل {hours} ساعة على الأقل من الموعد.'**
+  String bookTooSoon(int hours);
 
   /// No description provided for @bookClosed.
   ///
@@ -779,8 +779,8 @@ abstract class AppLocalizations {
   /// No description provided for @bookCancelRule.
   ///
   /// In ar, this message translates to:
-  /// **'الإلغاء ممكن حتى 24 ساعة قبل الموعد.'**
-  String get bookCancelRule;
+  /// **'الإلغاء ممكن حتى {hours} ساعة قبل الموعد.'**
+  String bookCancelRule(int hours);
 
   /// No description provided for @bookPay.
   ///
@@ -881,8 +881,8 @@ abstract class AppLocalizations {
   /// No description provided for @bookChangeHint.
   ///
   /// In ar, this message translates to:
-  /// **'يمكنك إلغاء الموعد من «مواعيدي» حتى 24 ساعة قبله.'**
-  String get bookChangeHint;
+  /// **'يمكنك إلغاء الموعد من «مواعيدي» حتى {hours} ساعة قبله.'**
+  String bookChangeHint(int hours);
 
   /// No description provided for @bookMyAppointments.
   ///
@@ -901,6 +901,48 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تعذّر التحميل. تحقّق من الاتصال وحاول مجدداً.'**
   String get bookLoadError;
+
+  /// No description provided for @bookErrNotVerified.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تتم الموافقة على هويتك بعد. يُفتح الحجز بعد الموافقة.'**
+  String get bookErrNotVerified;
+
+  /// No description provided for @bookErrSignedOut.
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهت جلستك. سجّل الدخول من جديد.'**
+  String get bookErrSignedOut;
+
+  /// No description provided for @bookErrForbidden.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الإجراء غير متاح لحسابك.'**
+  String get bookErrForbidden;
+
+  /// No description provided for @bookErrDoctorGone.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الطبيب لم يعد متاحاً. اختر طبيباً آخر.'**
+  String get bookErrDoctorGone;
+
+  /// No description provided for @bookErrMethod.
+  ///
+  /// In ar, this message translates to:
+  /// **'طريقة الدفع هذه غير متاحة. اختر طريقة أخرى.'**
+  String get bookErrMethod;
+
+  /// No description provided for @bookErrPayments.
+  ///
+  /// In ar, this message translates to:
+  /// **'الدفع بالبطاقة غير متاح حالياً. حاول لاحقاً أو ادفع في العيادة.'**
+  String get bookErrPayments;
+
+  /// No description provided for @bookErrNotCancellable.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يعد بالإمكان إلغاء هذا الموعد.'**
+  String get bookErrNotCancellable;
 
   /// No description provided for @bookRetry.
   ///
@@ -1007,8 +1049,20 @@ abstract class AppLocalizations {
   /// No description provided for @apptLocked.
   ///
   /// In ar, this message translates to:
-  /// **'بقي أقل من 24 ساعة، لذا لا يمكن الإلغاء من التطبيق. اتصل بالعيادة إذا تعذّر حضورك.'**
-  String get apptLocked;
+  /// **'بقي أقل من {hours} ساعة، لذا لا يمكن الإلغاء من التطبيق. اتصل بالعيادة إذا تعذّر حضورك.'**
+  String apptLocked(int hours);
+
+  /// No description provided for @apptGone.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الموعد لم يعد موجوداً. تم تحديث القائمة.'**
+  String get apptGone;
+
+  /// No description provided for @apptCode.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرمز الذي تقدّمه في الاستقبال'**
+  String get apptCode;
 
   /// No description provided for @apptNoUpcoming.
   ///
@@ -1460,18 +1514,6 @@ abstract class AppLocalizations {
   /// **'ابدأ'**
   String get profileStart;
 
-  /// No description provided for @profileSkip.
-  ///
-  /// In ar, this message translates to:
-  /// **'تخطَّ الآن'**
-  String get profileSkip;
-
-  /// No description provided for @profileSkipNote.
-  ///
-  /// In ar, this message translates to:
-  /// **'يمكنك استعمال التطبيق دون ذلك، لكن لا يمكنك حجز موعد قبل إكماله.'**
-  String get profileSkipNote;
-
   /// No description provided for @profileFormTitle.
   ///
   /// In ar, this message translates to:
@@ -1603,6 +1645,18 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'أكمل'**
   String get profileCardAction;
+
+  /// No description provided for @profileIdDeclared.
+  ///
+  /// In ar, this message translates to:
+  /// **'هوية مصرّح بها'**
+  String get profileIdDeclared;
+
+  /// No description provided for @profileIdDeclaredApproved.
+  ///
+  /// In ar, this message translates to:
+  /// **'هوية مصرّح بها · مقبولة'**
+  String get profileIdDeclaredApproved;
 
   /// No description provided for @profileCardDeclaredTitle.
   ///

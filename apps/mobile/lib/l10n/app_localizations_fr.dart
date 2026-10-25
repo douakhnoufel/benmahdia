@@ -309,10 +309,14 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get bookNoFree => 'Aucun créneau libre dans les deux prochains mois';
+  String bookNoFree(int days) {
+    return 'Aucun créneau libre dans les $days prochains jours';
+  }
 
   @override
-  String get bookNotice => 'Réservez au moins 24 h à l\'avance';
+  String bookNotice(int hours) {
+    return 'Réservez au moins $hours h à l\'avance';
+  }
 
   @override
   String get bookChooseTime => 'Choisir le jour et l\'heure';
@@ -342,7 +346,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get bookNoSlots => 'Aucun créneau ce jour-là';
 
   @override
-  String get bookTooSoon => 'La réservation se fait au moins 24 h à l\'avance.';
+  String bookTooSoon(int hours) {
+    return 'La réservation se fait au moins $hours h à l\'avance.';
+  }
 
   @override
   String get bookClosed => 'Le médecin ne consulte pas ce jour-là.';
@@ -397,8 +403,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Pendant la phase pilote, confirmé par le médecin';
 
   @override
-  String get bookCancelRule =>
-      'Annulation possible jusqu\'à 24 h avant le rendez-vous.';
+  String bookCancelRule(int hours) {
+    return 'Annulation possible jusqu\'à $hours h avant le rendez-vous.';
+  }
 
   @override
   String bookPay(int amount) {
@@ -459,8 +466,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get bookRemind1 => '1 h avant';
 
   @override
-  String get bookChangeHint =>
-      'Vous pouvez l\'annuler dans « Mes rendez-vous » jusqu\'à 24 h avant.';
+  String bookChangeHint(int hours) {
+    return 'Vous pouvez l\'annuler dans « Mes rendez-vous » jusqu\'à $hours h avant.';
+  }
 
   @override
   String get bookMyAppointments => 'Mes rendez-vous';
@@ -471,6 +479,33 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get bookLoadError =>
       'Chargement impossible. Vérifiez la connexion et réessayez.';
+
+  @override
+  String get bookErrNotVerified =>
+      'Votre identité n\'est pas encore approuvée. La réservation s\'ouvre après l\'accord.';
+
+  @override
+  String get bookErrSignedOut => 'Votre session a expiré. Reconnectez-vous.';
+
+  @override
+  String get bookErrForbidden =>
+      'Cette action n\'est pas possible avec votre compte.';
+
+  @override
+  String get bookErrDoctorGone =>
+      'Ce médecin n\'est plus disponible. Choisissez-en un autre.';
+
+  @override
+  String get bookErrMethod =>
+      'Ce mode de paiement n\'est pas disponible. Choisissez-en un autre.';
+
+  @override
+  String get bookErrPayments =>
+      'Le paiement par carte est indisponible pour le moment. Réessayez plus tard ou payez à la clinique.';
+
+  @override
+  String get bookErrNotCancellable =>
+      'Ce rendez-vous ne peut plus être annulé.';
 
   @override
   String get bookRetry => 'Réessayer';
@@ -569,8 +604,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get apptCancelled => 'Rendez-vous annulé';
 
   @override
-  String get apptLocked =>
-      'Moins de 24 h avant le rendez-vous : l\'annulation n\'est plus possible dans l\'application. Appelez la clinique si vous ne pouvez pas venir.';
+  String apptLocked(int hours) {
+    return 'Moins de $hours h avant le rendez-vous : l\'annulation n\'est plus possible dans l\'application. Appelez la clinique si vous ne pouvez pas venir.';
+  }
+
+  @override
+  String get apptGone =>
+      'Ce rendez-vous n\'existe plus. La liste a été mise à jour.';
+
+  @override
+  String get apptCode => 'Code à donner à l\'accueil';
 
   @override
   String get apptNoUpcoming => 'Aucun rendez-vous à venir';
@@ -857,13 +900,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profileStart => 'Commencer';
 
   @override
-  String get profileSkip => 'Passer pour l\'instant';
-
-  @override
-  String get profileSkipNote =>
-      'Vous pouvez utiliser l\'application sans cela, mais vous ne pourrez pas réserver avant de l\'avoir fait.';
-
-  @override
   String get profileFormTitle => 'Vos informations';
 
   @override
@@ -936,6 +972,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get profileCardAction => 'Compléter';
+
+  @override
+  String get profileIdDeclared => 'Identité déclarée';
+
+  @override
+  String get profileIdDeclaredApproved => 'Identité déclarée · approuvée';
 
   @override
   String get profileCardDeclaredTitle => 'En attente de la clinique';

@@ -5,18 +5,12 @@ import '../../theme/app_tokens.dart';
 import '../auth/auth_widgets.dart';
 
 /// "Complete your profile": says what is collected, who sees it and what
-/// happens next, asks for consent, and lets the patient skip. Skipping is
-/// fine: the app works, but booking stays closed until the ID is declared
-/// and the clinic approves it (PRD 4.2).
+/// happens next, and asks for consent. The step is mandatory, with no Skip:
+/// booking stays closed until the ID is declared and approved (PRD 4.1, 4.2).
 class ProfilePromptScreen extends StatefulWidget {
-  const ProfilePromptScreen({
-    super.key,
-    required this.onStart,
-    required this.onSkip,
-  });
+  const ProfilePromptScreen({super.key, required this.onStart});
 
   final VoidCallback onStart;
-  final VoidCallback onSkip;
 
   @override
   State<ProfilePromptScreen> createState() => _ProfilePromptScreenState();
@@ -50,16 +44,6 @@ class _ProfilePromptScreenState extends State<ProfilePromptScreen> {
           key: const ValueKey('profile-start'),
           onPressed: _consent ? widget.onStart : null,
           child: Text(l10n.profileStart),
-        ),
-        TextButton(
-          key: const ValueKey('profile-skip'),
-          onPressed: widget.onSkip,
-          child: Text(l10n.profileSkip),
-        ),
-        Text(
-          l10n.profileSkipNote,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
     );

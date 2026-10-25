@@ -45,9 +45,8 @@ class _AppStartState extends State<AppStart> {
         ),
         _Stage.welcome => WelcomeScreen(
           key: const ValueKey(_Stage.welcome),
-          // Account first (PRD 12.1), then "Complete your profile" with a
-          // Skip button: the ID scan and selfie are optional here, but
-          // booking stays closed until the clinic approves them.
+          // Account first (PRD 12.1), then "Complete your profile", which
+          // has no Skip (PRD 4.2): booking stays closed until it is approved.
           onCreateAccount: () => openSignUp(
             context,
             onSignedIn: (_) =>

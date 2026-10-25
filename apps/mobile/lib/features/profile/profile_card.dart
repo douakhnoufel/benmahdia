@@ -6,6 +6,9 @@ import 'identity_models.dart';
 
 /// Shown on the appointments screen until the clinic approves the profile:
 /// what is missing, what is happening, and the button for the next step.
+///
+/// The ID status label is "ID declared" for `declared`, and stays next to
+/// `approved` ("ID declared · approved"); it never says "verified" (PRD 4.2).
 class ProfileCard extends StatelessWidget {
   const ProfileCard({
     super.key,
@@ -27,13 +30,25 @@ class ProfileCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
     final reason = state.rejectReason;
+    final status = switch (state.status) {
+      IdStatus.declared => l10n.profileIdDeclared,
+      IdStatus.approved => l10n.profileIdDeclaredApproved,
+      _ => null,
+    };
     final (icon, title, body, label, action) = switch (state.status) {
-      IdStatus.declared || IdStatus.approved => (
+      IdStatus.declared => (
         Icons.hourglass_top_rounded,
         l10n.profileCardDeclaredTitle,
         l10n.profileCardDeclaredBody,
         l10n.profileCardRefresh,
         onRefresh,
+      ),
+      IdStatus.approved => (
+        Icons.check_circle_outline_rounded,
+        l10n.profileIdDeclaredApproved,
+        null,
+        l10n.profileCardRefresh,
+        null,
       ),
       IdStatus.rejected => (
         Icons.error_outline_rounded,
@@ -69,11 +84,19 @@ class ProfileCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: AppSpace.sm,
                 children: [
+                  if (status != null && status != title)
+                    Text(
+                      status,
+                      key: const ValueKey('profile-card-status'),
+                      style: text.labelMedium?.copyWith(
+                        color: AppColors.teal700,
+                      ),
+                    ),
                   Semantics(
                     header: true,
                     child: Text(title, style: text.titleMedium),
                   ),
-                  Text(body, style: text.bodyMedium),
+                  if (body != null) Text(body, style: text.bodyMedium),
                   if (action != null)
                     FilledButton.tonal(
                       key: const ValueKey('profile-card-action'),
