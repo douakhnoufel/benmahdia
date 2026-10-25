@@ -129,6 +129,9 @@ def hold_slot(
 ) -> AppointmentOut:
     """Holds a free slot while the patient pays (PRD 4.3). Exactly one of
     two simultaneous requests wins."""
+    # Locks the patient's row on PostgreSQL so one patient's holds queue up,
+    # even on two doctors: that keeps one open hold per patient.
+    db.execute(select(User.id).where(User.id == patient.id).with_for_update())
     # Locks the doctor's row on PostgreSQL so bookings for one doctor queue up.
     profile = db.scalar(
         select(DoctorProfile).where(DoctorProfile.user_id == body.doctor_id).with_for_update()
@@ -192,7 +195,16 @@ def release_hold(
     a = _mine(db, patient, appointment_id)
     if a.status != AppointmentStatus.awaiting_payment:
         raise ApiError(409, "not_a_hold")
-    db.delete(a)
+    # Deletes only while it is still a hold: a confirm or a paid webhook may
+    # have committed since it was read.
+    gone = db.execute(
+        delete(Appointment).where(
+            Appointment.id == a.id, Appointment.status == AppointmentStatus.awaiting_payment
+        )
+    )
+    if gone.rowcount != 1:
+        db.rollback()
+        raise ApiError(409, "not_a_hold")
     db.commit()
     return Response(status_code=204)
 
@@ -208,7 +220,17 @@ def confirm(
     """Books a held slot. Only the pilot's pay-at-the-clinic method can be
     confirmed from the app: a card payment is confirmed solely by Chargily's
     signed webhook (PRD 4.4)."""
-    a = _mine(db, patient, appointment_id)
+    _mine(db, patient, appointment_id)
+    # Re-reads under a row lock so a release or webhook running now either
+    # finishes first or waits for this one.
+    a = db.scalar(
+        select(Appointment)
+        .where(Appointment.id == appointment_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    if a is None:
+        raise ApiError(404, "appointment_not_found")
     if body.method != PaymentMethod.clinic:
         raise ApiError(400, "payment_method_unavailable")
     if a.status != AppointmentStatus.awaiting_payment:
