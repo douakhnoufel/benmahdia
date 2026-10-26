@@ -155,13 +155,54 @@ export type Identity = {
   has_selfie: boolean;
 };
 
-export type AddictionType = 'opioids' | 'cannabis' | 'alcohol' | 'tobacco' | 'pills' | 'gambling' | 'other';
+export type AddictionType =
+  | 'opioids'
+  | 'cannabis'
+  | 'alcohol'
+  | 'tobacco'
+  | 'pills'
+  | 'stimulants'
+  | 'gambling'
+  | 'other';
+
+/** How an addiction is tracked (PRD 5.6); null = generic. */
+export type SubstanceProfile = 'nicotine' | 'thc' | 'pregabalin' | 'buprenorphine' | 'cocaine' | 'amphetamines';
+
+export type Localized = { ar: string; fr: string };
+
+/** What a substance profile's daily check rates, from the server's catalog. */
+export type ProfileSpec = {
+  key: SubstanceProfile;
+  type: AddictionType;
+  name: Localized;
+  signals: { key: string; label: Localized }[];
+};
+
+/** One day's check for one addiction: craving and signals 1-5 (higher = harder). */
+export type AddictionCheck = {
+  addiction_id: string;
+  day: string;
+  used: boolean;
+  craving: number;
+  signals: Record<string, number>;
+};
+
+export type CheckChart = { days: number; checked_days: number; checks: AddictionCheck[] };
+
+export type HabitKind = 'sport' | 'brush_teeth' | 'water' | 'reading' | 'call_family' | 'sleep' | 'custom';
+
+/** A good habit and the days it was done over the last [days] (PRD 5.6). */
+export type HabitSummary = { id: string; kind: HabitKind; text: string | null; days: number; done_days: number };
 
 /** What the patient entered, for the doctor to confirm or refuse (PRD 3). */
 export type PatientAddiction = {
   id: string;
   type: AddictionType;
+  profile: SubstanceProfile | null;
   substance: string | null;
+  /** The small goal the patient chose (null = automatic) and the current one, in days. */
+  goal_days: number | null;
+  goal: number;
   /** Start of the current streak, UTC ISO. */
   clean_since: string;
   longest_past_days: number;
@@ -193,7 +234,7 @@ export type Alert = {
   id: string;
   patient_id: string;
   patient_phone: string | null;
-  /** "relapse" or "missed_doses". Never carries medical content. */
+  /** "relapse", "missed_doses", "craving_high", "no_checkin", booking events. Never carries medical content. */
   type: string;
   priority: string;
   read: boolean;
@@ -220,6 +261,12 @@ export const api = {
     request<PatientAddiction[]>('GET', `v1/staff/patients/${patientId}/addictions`),
   reviewAddiction: (patientId: string, addictionId: string, decision: 'confirm' | 'reject') =>
     request<PatientAddiction>('POST', `v1/staff/patients/${patientId}/addictions/${addictionId}/${decision}`),
+  profiles: () => request<ProfileSpec[]>('GET', 'v1/staff/recovery/profiles'),
+  setProfile: (patientId: string, addictionId: string, profile: SubstanceProfile | null) =>
+    request<PatientAddiction>('PUT', `v1/staff/patients/${patientId}/addictions/${addictionId}/profile`, { profile }),
+  addictionChecks: (patientId: string, addictionId: string, days = 30) =>
+    request<CheckChart>('GET', `v1/staff/patients/${patientId}/addictions/${addictionId}/checks?days=${days}`),
+  habits: (patientId: string) => request<HabitSummary[]>('GET', `v1/staff/patients/${patientId}/habits`),
   medications: (patientId: string) => request<Medication[]>('GET', `v1/staff/patients/${patientId}/medications`),
   prescribe: (patientId: string, medication: NewMedication) =>
     request<Medication>('POST', `v1/staff/patients/${patientId}/medications`, medication),

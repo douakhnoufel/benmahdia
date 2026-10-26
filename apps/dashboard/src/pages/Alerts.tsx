@@ -8,6 +8,8 @@ import { Failed, Loading } from './Status';
 const KIND: Record<string, StringKey> = {
   relapse: 'alertRelapse',
   missed_doses: 'alertMissedDoses',
+  craving_high: 'alertCravingHigh',
+  no_checkin: 'alertNoCheckin',
   booking_confirmed: 'alertBookingConfirmed',
   booking_cancelled: 'alertBookingCancelled',
 };

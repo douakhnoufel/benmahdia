@@ -27,6 +27,9 @@ function backend(handler: (url: URL, init: RequestInit) => Reply = () => undefin
 const addiction = {
   id: 'ad1',
   type: 'cannabis',
+  profile: null,
+  goal_days: null,
+  goal: 14,
   substance: 'haschich',
   clean_since: '2026-10-15T09:30:00Z',
   longest_past_days: 8,
@@ -57,6 +60,9 @@ function defaults(url: URL, init: RequestInit): { status: number; body?: unknown
   const p = url.pathname;
   const method = init.method ?? 'GET';
   if (p.endsWith('/addictions') && method === 'GET') return { status: 200, body: [addiction] };
+  if (p === '/v1/staff/recovery/profiles') return { status: 200, body: [] };
+  if (p.endsWith('/checks')) return { status: 200, body: { days: 30, checked_days: 0, checks: [] } };
+  if (p.endsWith('/habits')) return { status: 200, body: [] };
   if (p.endsWith('/confirm')) return { status: 200, body: { ...addiction, review_status: 'confirmed' } };
   if (p.endsWith('/reject')) return { status: 200, body: { ...addiction, review_status: 'rejected' } };
   if (p.endsWith('/medications') && method === 'GET') return { status: 200, body: [medication] };

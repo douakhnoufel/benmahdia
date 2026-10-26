@@ -1,10 +1,19 @@
 import { useState, type FormEvent } from 'react';
-import { api, type AddictionType, type Medication, type Patient, type PatientAddiction } from '../api';
+import {
+  api,
+  type AddictionType,
+  type Medication,
+  type Patient,
+  type PatientAddiction,
+  type ProfileSpec,
+  type SubstanceProfile,
+} from '../api';
 import { useI18n, type StringKey } from '../i18n';
 import { Badge, Button, Card, Input, Notice } from '../components/ui';
 import { useLoad } from '../useLoad';
 import { Failed, Loading } from './Status';
 import { clinicToday } from './Today';
+import { CheckChart, Habits, PROFILE_KEY, fill } from './Tracking';
 
 const TYPE_KEY: Record<AddictionType, StringKey> = {
   opioids: 'typeOpioids',
@@ -12,6 +21,7 @@ const TYPE_KEY: Record<AddictionType, StringKey> = {
   alcohol: 'typeAlcohol',
   tobacco: 'typeTobacco',
   pills: 'typePills',
+  stimulants: 'typeStimulants',
   gambling: 'typeGambling',
   other: 'typeOther',
 };
@@ -22,8 +32,9 @@ const REVIEW_KEY = {
   rejected: 'reviewRejected',
 } as const satisfies Record<PatientAddiction['review_status'], StringKey>;
 
-/** One patient's recovery file: what they entered (to confirm or refuse) and
- * the medicines the doctor prescribed. Reached from the patient list or an alert. */
+/** One patient's recovery file: what they entered (to confirm or refuse), how
+ * each addiction is tracked and its last 30 days of checks, their good habits,
+ * and the medicines the doctor prescribed. Reached from the patient list or an alert. */
 export function PatientDetail({ patient, onBack }: { patient: Pick<Patient, 'id' | 'phone'>; onBack: () => void }) {
   const { t } = useI18n();
   return (
@@ -33,6 +44,7 @@ export function PatientDetail({ patient, onBack }: { patient: Pick<Patient, 'id'
         <h2 className="text-h3 text-ink-strong" dir="ltr">{patient.phone ?? '—'}</h2>
       </div>
       <Addictions patientId={patient.id} />
+      <Habits patientId={patient.id} />
       <Medications patientId={patient.id} />
     </section>
   );
@@ -41,15 +53,33 @@ export function PatientDetail({ patient, onBack }: { patient: Pick<Patient, 'id'
 function Addictions({ patientId }: { patientId: string }) {
   const { t, date } = useI18n();
   const { load, reload, setLoad } = useLoad(() => api.patientAddictions(patientId), [patientId]);
+  const profiles = useLoad(() => api.profiles(), []);
+  const specs = profiles.load.state === 'ready' ? profiles.load.data : [];
   const [busy, setBusy] = useState<string | null>(null);
+  const [profileFailed, setProfileFailed] = useState(false);
+
+  function replace(updated: PatientAddiction) {
+    if (load.state === 'ready') {
+      setLoad({ state: 'ready', data: load.data.map((x) => (x.id === updated.id ? updated : x)) });
+    }
+  }
+
+  async function changeProfile(a: PatientAddiction, profile: SubstanceProfile | null) {
+    setBusy(a.id);
+    setProfileFailed(false);
+    try {
+      replace(await api.setProfile(patientId, a.id, profile));
+    } catch {
+      setProfileFailed(true);
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function review(a: PatientAddiction, decision: 'confirm' | 'reject') {
     setBusy(a.id);
     try {
-      const updated = await api.reviewAddiction(patientId, a.id, decision);
-      if (load.state === 'ready') {
-        setLoad({ state: 'ready', data: load.data.map((x) => (x.id === a.id ? updated : x)) });
-      }
+      replace(await api.reviewAddiction(patientId, a.id, decision));
     } catch {
       reload();
     } finally {
@@ -63,16 +93,49 @@ function Addictions({ patientId }: { patientId: string }) {
       {load.state === 'loading' && <Loading />}
       {load.state === 'error' && <Failed onRetry={reload} />}
       {load.state === 'ready' && load.data.length === 0 && <p className="text-ink-muted">{t('noAddictions')}</p>}
+      {profileFailed && (
+        <p role="alert" className="text-danger">
+          {t('profileFailed')}
+        </p>
+      )}
       {load.state === 'ready' &&
         load.data.map((a) => (
           <article key={a.id} className="flex flex-col gap-sm border-b border-border pb-md last:border-0 last:pb-0">
             <div className="flex flex-wrap items-center gap-sm">
-              <span className="text-body-lg text-ink-strong">{t(TYPE_KEY[a.type])}</span>
+              <h4 className="text-body-lg text-ink-strong">
+                {a.profile ? t(PROFILE_KEY[a.profile]) : t(TYPE_KEY[a.type])}
+              </h4>
               <Badge tone={a.review_status === 'confirmed' ? 'success' : a.review_status === 'rejected' ? 'danger' : 'warning'}>
                 {t(REVIEW_KEY[a.review_status])}
               </Badge>
             </div>
+            <Streak a={a} />
             <dl className="grid grid-cols-[auto_1fr] gap-x-xl gap-y-xs">
+              <dt className="text-label text-ink-muted">
+                <label htmlFor={`profile-${a.id}`}>{t('profileLabel')}</label>
+              </dt>
+              <dd>
+                <select
+                  id={`profile-${a.id}`}
+                  className="rounded-field border border-border bg-surface px-sm py-xs text-ink-strong"
+                  disabled={busy === a.id}
+                  value={a.profile ?? ''}
+                  onChange={(e) => changeProfile(a, (e.target.value || null) as SubstanceProfile | null)}
+                >
+                  <option value="">{t('profileGeneric')}</option>
+                  {(Object.keys(PROFILE_KEY) as SubstanceProfile[]).map((p) => (
+                    <option key={p} value={p}>
+                      {t(PROFILE_KEY[p])}
+                    </option>
+                  ))}
+                </select>
+              </dd>
+              {a.profile && (
+                <>
+                  <dt className="text-label text-ink-muted">{t('typeLabel')}</dt>
+                  <dd className="text-ink-strong">{t(TYPE_KEY[a.type])}</dd>
+                </>
+              )}
               {a.substance && (
                 <>
                   <dt className="text-label text-ink-muted">{t('substance')}</dt>
@@ -97,6 +160,7 @@ function Addictions({ patientId }: { patientId: string }) {
                 )}
               </dd>
             </dl>
+            <CheckChart patientId={patientId} addictionId={a.id} spec={specOf(specs, a.profile)} />
             <div className="flex gap-sm">
               {a.review_status !== 'confirmed' && (
                 <Button disabled={busy === a.id} onClick={() => review(a, 'confirm')}>{t('confirm')}</Button>
@@ -108,6 +172,36 @@ function Addictions({ patientId }: { patientId: string }) {
           </article>
         ))}
     </Card>
+  );
+}
+
+function specOf(specs: ProfileSpec[], profile: SubstanceProfile | null): ProfileSpec | undefined {
+  return specs.find((s) => s.key === profile);
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** The counter as the patient sees it (PRD 5.1, 5.6): current, longest and
+ * total days without use, and the small goal. */
+function Streak({ a }: { a: PatientAddiction }) {
+  const { t } = useI18n();
+  const current = Math.max(0, Math.floor((Date.now() - new Date(a.clean_since).getTime()) / DAY_MS));
+  const days = (n: number) => fill(t('daysCount'), { n });
+  const stats: [StringKey, string][] = [
+    ['currentStreak', days(current)],
+    ['longestStreak', days(Math.max(a.longest_past_days, current))],
+    ['totalSober', days(a.past_days + current)],
+    ['smallGoal', `${days(a.goal)} · ${t(a.goal_days === null ? 'goalAuto' : 'goalChosen')}`],
+  ];
+  return (
+    <div className="grid grid-cols-2 gap-sm sm:grid-cols-4">
+      {stats.map(([key, value]) => (
+        <div key={key} className="flex flex-col rounded-field bg-sand-50 px-md py-sm">
+          <span className="text-h3 text-teal-700">{value}</span>
+          <span className="text-caption text-ink-muted">{t(key)}</span>
+        </div>
+      ))}
+    </div>
   );
 }
 
