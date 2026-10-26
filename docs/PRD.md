@@ -547,7 +547,7 @@ Paperwork first, because ANPDP, Chargily and the clinic contract all depend on y
 **Step 4 — Recovery profile (weeks 6–9)**
 
 - [ ] Counters, milestones, relapse flow, quotes, medication reminders.
-- [ ] Articles section and its editor in the dashboard.
+- [x] Articles section and its editor in the dashboard.
 
 **Step 5 — AI companion (weeks 8–12)**
 
