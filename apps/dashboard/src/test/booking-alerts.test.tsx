@@ -20,6 +20,7 @@ function backend() {
         JSON.stringify([
           { ...base, id: 'b1', type: 'booking_confirmed' },
           { ...base, id: 'b2', type: 'booking_cancelled' },
+          { ...base, id: 'm1', type: 'milestone' },
         ]),
         { status: 200 },
       ),
@@ -46,6 +47,7 @@ describe('Booking alerts (PRD 4.4: both sides are notified)', () => {
     renderIn('fr');
     expect(await screen.findByText('Rendez-vous confirmé')).toBeInTheDocument();
     expect(screen.getByText('Rendez-vous annulé')).toBeInTheDocument();
+    expect(screen.getByText('Nouvelle étape sans consommation')).toBeInTheDocument();
     expect(screen.queryByText('Alerte')).toBeNull();
   });
 
@@ -54,5 +56,6 @@ describe('Booking alerts (PRD 4.4: both sides are notified)', () => {
     renderIn('ar');
     expect(await screen.findByText('موعد مؤكَّد')).toBeInTheDocument();
     expect(screen.getByText('موعد ملغى')).toBeInTheDocument();
+    expect(screen.getByText('بلغ مرحلة جديدة دون تعاطٍ')).toBeInTheDocument();
   });
 });
