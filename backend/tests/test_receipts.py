@@ -33,11 +33,13 @@ def test_clinic_payment_has_a_receipt_only_once_marked_paid(client, sms):
     a = booked(client, s, doctor)
     r = receipt(client, s, a["id"])
     assert r.status_code == 409 and code(r) == "not_paid"
+    assert client.get("/v1/appointments", headers=headers(s)).json()[0]["paid"] is False
     dh = doc_headers(client)
     assert client.post(f"/v1/staff/appointments/{a['id']}/paid", json={"paid": True}, headers=dh).status_code == 200
     r = receipt(client, s, a["id"])
     assert r.status_code == 200
     assert (r.json()["method"], r.json()["payment_ref"]) == ("clinic", None)
+    assert client.get("/v1/appointments", headers=headers(s)).json()[0]["paid"] is True
 
 
 def test_hold_has_no_receipt(client, sms):

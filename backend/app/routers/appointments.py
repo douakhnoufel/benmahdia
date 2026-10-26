@@ -52,6 +52,9 @@ class AppointmentOut(BaseModel):
     hold_expires_at: str | None
     # Shown to the patient to present at the front desk; only while confirmed.
     checkin_code: str | None = None
+    # Paid by card, or marked paid by the doctor for pay-at-clinic: a receipt
+    # is available.
+    paid: bool = False
 
 
 class ReceiptOut(BaseModel):
@@ -88,6 +91,7 @@ def _out(db: Session, a: Appointment) -> AppointmentOut:
         method=a.method,
         hold_expires_at=utc_iso(a.hold_expires_at) if a.hold_expires_at else None,
         checkin_code=a.checkin_code if a.status == AppointmentStatus.confirmed else None,
+        paid=a.paid_at is not None,
     )
 
 
