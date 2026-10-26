@@ -47,6 +47,11 @@ Tests use an in-memory SQLite database and a frozen clock; no Docker needed.
 | GET | `/v1/me/doses?day=` | The day's doses: due, taken, skipped or missed. |
 | PUT | `/v1/me/doses` | Answer a dose: taken or skipped. |
 | GET | `/v1/me/quote` | Quote of the day (ar + fr). |
+| GET | `/v1/me/articles?language=&topic=&addiction_type=&favourites=` | Published articles (any signed-in patient), newest first. |
+| GET | `/v1/me/articles/{id}` | Read one published article. |
+| PUT, DELETE | `/v1/me/articles/{id}/favourite` | Save / unsave an article. |
+| GET, POST | `/v1/staff/articles` | Doctor: every article with drafts / write one. |
+| GET, PUT | `/v1/staff/articles/{id}` | Doctor: read / edit, publish or unpublish. Plain text only, no HTML. |
 | GET, POST, DELETE | `/v1/staff/patients/{id}/medications` | Doctor: list, prescribe, stop a medicine. |
 | GET | `/v1/staff/patients/{id}/addictions` | Doctor: the patient's addictions with relapses. |
 | POST | `/v1/staff/patients/{id}/addictions/{aid}/confirm` or `/reject` | Doctor reviews what the patient entered. |

@@ -15,6 +15,7 @@ from sqlalchemy import (
     Integer,
     LargeBinary,
     String,
+    Text,
     UniqueConstraint,
     Uuid,
     event,
@@ -572,6 +573,55 @@ class Quote(Base):
     text_fr: Mapped[str] = mapped_column(String(300))
     addiction_type: Mapped[str | None] = mapped_column(String(16))
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class ArticleTopic(str, enum.Enum):
+    """The library's sections (PRD 5.5)."""
+
+    addiction = "addiction"
+    cravings = "cravings"
+    relapse = "relapse"
+    medication = "medication"
+    family = "family"
+    motivation = "motivation"
+
+
+class Article(Base):
+    """A short article the clinic's doctors write and publish from the
+    dashboard (PRD 5.5, 7), in one language. [body] is plain text with blank
+    lines between paragraphs: no HTML, so nothing in it can run in the app or
+    the dashboard. [addiction_type] is an AddictionType value, or None for
+    every patient."""
+
+    __tablename__ = "articles"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    author_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    title: Mapped[str] = mapped_column(String(160))
+    body: Mapped[str] = mapped_column(Text)
+    language: Mapped[str] = mapped_column(String(2))
+    topic: Mapped[ArticleTopic] = mapped_column(Enum(ArticleTopic, name="article_topic"))
+    addiction_type: Mapped[str | None] = mapped_column(String(16))
+    published: Mapped[bool] = mapped_column(Boolean, default=False)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class ArticleFavourite(Base):
+    """A patient saved [article_id] to read again."""
+
+    __tablename__ = "article_favourites"
+    __table_args__ = (UniqueConstraint("patient_id", "article_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    patient_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    article_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("articles.id", ondelete="CASCADE"), index=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
