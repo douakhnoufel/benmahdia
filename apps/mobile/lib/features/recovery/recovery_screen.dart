@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/app_route.dart';
+import '../../core/notifications/local_notifications.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_tokens.dart';
 import '../../widgets/app_mark.dart';
@@ -13,13 +14,18 @@ import '../booking/booking_repository.dart';
 import '../booking/booking_widgets.dart';
 import '../home/home_scope.dart';
 import 'addiction_form_screen.dart';
+import 'daily_check_screen.dart';
 import 'recovery_models.dart';
+import 'recovery_reminders.dart';
 import 'recovery_repository.dart';
 import 'recovery_widgets.dart';
+import 'tracking_widgets.dart';
 
-/// The recovery home (PRD 5, 12.3): one day counter per addiction, this
-/// week's daily check, today's doses, the next appointment, the quote of the
-/// day and the practice.
+/// The recovery home (PRD 5, 12.3): one day counter per addiction toward
+/// its small goal, this week's daily check (per substance once there is an
+/// addiction, PRD 5.6), good habits, today's doses, the next appointment,
+/// the quote of the day and the practice. Locked until the first confirmed
+/// appointment.
 class RecoveryScreen extends ConsumerStatefulWidget {
   const RecoveryScreen({super.key});
 
@@ -29,6 +35,11 @@ class RecoveryScreen extends ConsumerStatefulWidget {
 
 class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
   List<Addiction> _addictions = const [];
+  List<ProfileSpec> _profiles = const [];
+  List<AddictionCheck> _checks = const [];
+  Set<DateTime> _doneDays = const {};
+  List<Habit> _habits = const [];
+  Map<HabitKind, LocalizedText> _catalog = const {};
   Set<DateTime> _checkIns = const {};
   DayTime? _reminder;
   Quote? _quote;
@@ -37,6 +48,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
   Appointment? _next;
   bool _loading = true;
   bool _failed = false;
+  bool _locked = false;
 
   RecoveryRepository get _repo => ref.read(recoveryRepositoryProvider);
 
@@ -48,18 +60,30 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
 
   Future<void> _load() async {
     try {
-      final (addictions, checkIns, reminder, quote, doses, clinic) = await (
-        _repo.addictions(),
+      // Alone first: a locked tab answers here, before the calls below.
+      final addictions = await _repo.addictions();
+      final (checkIns, reminder, quote, doses, clinic) = await (
         _repo.checkIns(),
         _repo.reminder(),
         _repo.quoteOfDay(),
         _repo.todaysDoses(),
         _repo.clinic(),
       ).wait;
+      final (profiles, history, habits, catalog) = await (
+        _repo.profiles(),
+        _repo.addictionChecks(),
+        _repo.habits(),
+        _repo.habitCatalog(),
+      ).wait;
       final next = await _nextAppointment();
       if (!mounted) return;
       setState(() {
         _addictions = addictions;
+        _profiles = profiles;
+        _checks = history.checks;
+        _doneDays = history.doneDays;
+        _habits = habits;
+        _catalog = catalog;
         _checkIns = checkIns;
         _reminder = reminder;
         _quote = quote;
@@ -68,13 +92,39 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
         _next = next;
         _loading = false;
         _failed = false;
+        _locked = false;
       });
-    } catch (_) {
+      unawaited(_syncReminders());
+    } catch (e) {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _failed = true;
+        _failed = e is! RecoveryLocked;
+        _locked = e is RecoveryLocked;
       });
+    }
+  }
+
+  /// Rebuilds the daily-check and habit reminders on the phone from what is
+  /// on screen. With [ask], first asks for notification permission (when the
+  /// patient sets a reminder). Never throws: reminders are rebuilt on the
+  /// next load.
+  Future<void> _syncReminders({bool ask = false}) async {
+    final l10n = AppLocalizations.of(context);
+    final now = _repo.now();
+    try {
+      if (ask) await ref.read(localNotificationsProvider).requestPermission();
+      await ref
+          .read(recoveryRemindersProvider)
+          .sync(
+            checkReminder: _reminder,
+            habits: _habits,
+            catalog: _catalog,
+            now: now,
+            l10n: l10n,
+          );
+    } catch (_) {
+      // Rebuilt on the next load.
     }
   }
 
@@ -155,6 +205,148 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     setState(() => _checkIns = {..._checkIns, today});
   }
 
+  /// Today's per-substance check (PRD 5.6); an addiction answered "used"
+  /// then opens relapse logging, one after the other.
+  Future<void> _openDailyCheck() async {
+    final today = dayOf(_repo.now());
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    final used = await Navigator.of(context).push<List<Addiction>>(
+      appRoute(
+        DailyCheckScreen(
+          today: today,
+          addictions: _addictions,
+          profiles: _profiles,
+          previous: _checks,
+          habits: _habits,
+          catalog: _catalog,
+          onSave: (checks, habitsDone) async {
+            try {
+              for (final c in checks) {
+                await _repo.saveCheck(c);
+              }
+              for (final MapEntry(key: habit, value: done)
+                  in habitsDone.entries) {
+                if (habit.days.contains(today) != done) {
+                  await _repo.markHabit(habit, today, done: done);
+                }
+              }
+              final (history, habits) = await (
+                _repo.addictionChecks(),
+                _repo.habits(),
+              ).wait;
+              if (!mounted) return;
+              setState(() {
+                _checks = history.checks;
+                _doneDays = history.doneDays;
+                _habits = habits;
+              });
+            } catch (_) {
+              messenger.showSnackBar(
+                SnackBar(content: Text(l10n.recoverySaveError)),
+              );
+              rethrow;
+            }
+          },
+        ),
+        reduced: AppMotion.reduced(context),
+      ),
+    );
+    if (used == null || !mounted) return;
+    if (used.isEmpty) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.checkInDone)));
+      return;
+    }
+    for (final a in used) {
+      final current = _addictions.firstWhere((x) => x.id == a.id);
+      await _relapse(current);
+      if (!mounted) return;
+    }
+  }
+
+  Future<void> _changeGoal(Addiction addiction) async {
+    final now = _repo.now();
+    final picked = await showGoalSheet(
+      context,
+      days: addiction.days(now),
+      chosen: addiction.goalDays,
+    );
+    if (picked == null) return;
+    final updated = await _saving(
+      () => _repo.setGoal(addiction, picked == 0 ? null : picked),
+    );
+    if (updated == null || !mounted) return;
+    setState(() {
+      _addictions = [
+        for (final a in _addictions) a.id == addiction.id ? updated : a,
+      ];
+    });
+  }
+
+  void _replaceHabit(Habit updated) => setState(() {
+    _habits = [for (final h in _habits) h.id == updated.id ? updated : h];
+  });
+
+  Future<void> _toggleHabit(Habit habit, bool done) async {
+    final today = dayOf(_repo.now());
+    final saved = await _saving(() async {
+      await _repo.markHabit(habit, today, done: done);
+      return true;
+    });
+    if (saved == null || !mounted) return;
+    _replaceHabit(
+      habit.copyWith(
+        days: done ? {...habit.days, today} : ({...habit.days}..remove(today)),
+      ),
+    );
+  }
+
+  Future<void> _habitReminder(Habit habit) async {
+    final picked = await pickTime(
+      context,
+      habit.reminder ?? (hour: 18, minute: 0),
+    );
+    if (picked == null) return;
+    final updated = await _saving(() => _repo.setHabitReminder(habit, picked));
+    if (updated == null || !mounted) return;
+    _replaceHabit(updated);
+    unawaited(_syncReminders(ask: true));
+  }
+
+  Future<void> _removeHabit(Habit habit) async {
+    final saved = await _saving(() async {
+      await _repo.removeHabit(habit);
+      return true;
+    });
+    if (saved == null || !mounted) return;
+    setState(
+      () => _habits = [
+        for (final h in _habits)
+          if (h.id != habit.id) h,
+      ],
+    );
+    unawaited(_syncReminders());
+  }
+
+  Future<void> _addHabit() async {
+    final picked = await showAddHabitSheet(
+      context,
+      catalog: _catalog,
+      kept: {for (final h in _habits) h.kind},
+    );
+    if (picked == null) return;
+    final added = await _saving(
+      () => _repo.addHabit(
+        picked.kind,
+        text: picked.text,
+        reminder: picked.reminder,
+      ),
+    );
+    if (added == null || !mounted) return;
+    setState(() => _habits = [..._habits, added]);
+    unawaited(_syncReminders(ask: added.reminder != null));
+  }
+
   Future<void> _pickReminder() async {
     final picked = await pickTime(context, _reminder ?? (hour: 21, minute: 0));
     if (picked == null) return;
@@ -164,6 +356,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     });
     if (saved == null || !mounted) return;
     setState(() => _reminder = picked);
+    unawaited(_syncReminders(ask: true));
   }
 
   Future<void> _stopReminder() async {
@@ -173,6 +366,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     });
     if (saved == null || !mounted) return;
     setState(() => _reminder = null);
+    unawaited(_syncReminders());
   }
 
   void _addAddiction() {
@@ -184,11 +378,13 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
         appRoute(
           AddictionFormScreen(
             today: _repo.now(),
+            profiles: _profiles,
             onSave: (entry) async {
               final Addiction added;
               try {
                 added = await _repo.addAddiction(
                   type: entry.type,
+                  profile: entry.profile,
                   substance: entry.substance,
                   cleanSince: entry.cleanSince,
                 );
@@ -222,6 +418,11 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     final Widget body;
     if (_loading) {
       body = const Center(child: CircularProgressIndicator());
+    } else if (_locked) {
+      body = RecoveryLockedView(
+        onBook: () =>
+            HomeShellScope.maybeOf(context)?.select(HomeTab.appointments),
+      );
     } else if (_failed) {
       body = LoadError(onRetry: _retry);
     } else {
@@ -241,8 +442,11 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
                 for (final a in _addictions)
                   CounterCard(
                     addiction: a,
+                    name: addictionName(context, a, _profiles),
+                    note: profileOf(a, _profiles)?.noteFor(a.days(now)),
                     now: now,
                     onRelapse: () => _relapse(a),
+                    onChangeGoal: () => _changeGoal(a),
                   ),
                 TextButton.icon(
                   onPressed: _addAddiction,
@@ -250,13 +454,25 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
                   label: Text(l10n.addictionAddAnother),
                 ),
               ],
+              // With an addiction, the day is done once each one was checked
+              // (PRD 5.6); without, the simple "day without use" tick.
               WeekCheckCard(
-                checkIns: _checkIns,
+                checkIns: _addictions.isEmpty ? _checkIns : _doneDays,
                 now: now,
                 reminder: _reminder,
-                onCheckIn: _checkIn,
+                actionLabel: _addictions.isEmpty ? null : l10n.dailyCheckAction,
+                onCheckIn: _addictions.isEmpty ? _checkIn : _openDailyCheck,
                 onPickReminder: _pickReminder,
                 onStopReminder: _stopReminder,
+              ),
+              HabitsCard(
+                habits: _habits,
+                catalog: _catalog,
+                now: now,
+                onToggle: _toggleHabit,
+                onPickReminder: _habitReminder,
+                onRemove: _removeHabit,
+                onAdd: _addHabit,
               ),
               if (_next case final next?)
                 NextAppointmentCard(

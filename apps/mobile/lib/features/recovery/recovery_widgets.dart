@@ -11,6 +11,7 @@ import '../booking/booking_models.dart';
 import '../booking/booking_widgets.dart';
 import '../booking/payment_launcher.dart';
 import 'recovery_models.dart';
+import 'tracking_widgets.dart';
 
 String _lang(BuildContext context) =>
     Localizations.localeOf(context).languageCode;
@@ -29,26 +30,35 @@ String openHoursText(List<OpenHours> hours) => hours
     )
     .join(' · ');
 
-/// One addiction's counter: the ring toward the next milestone, the longest
-/// streak and total days (never erased), and a calm way to log a relapse.
+/// One addiction's counter: the ring toward the current small goal (PRD
+/// 5.6), the clinic's note for this early stage, the longest streak and
+/// total days (never erased), and a calm way to log a relapse.
 class CounterCard extends StatelessWidget {
   const CounterCard({
     super.key,
     required this.addiction,
+    required this.name,
     required this.now,
     required this.onRelapse,
+    this.note,
+    this.onChangeGoal,
   });
 
   final Addiction addiction;
+
+  /// The substance profile's name, or the type for generic tracking.
+  final String name;
   final DateTime now;
   final VoidCallback onRelapse;
+  final EarlyNote? note;
+  final VoidCallback? onChangeGoal;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
     final days = addiction.days(now);
-    final goal = nextMilestone(days);
+    final goal = addiction.goal(now);
 
     return Card(
       child: Padding(
@@ -60,10 +70,7 @@ class CounterCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  l10n.addictionType(addiction.type.name),
-                  style: text.titleLarge,
-                ),
+                Text(name, style: text.titleLarge),
                 if (addiction.substance case final substance?)
                   Text(substance, style: text.bodyMedium),
                 Text(
@@ -101,8 +108,14 @@ class CounterCard extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: text.bodyMedium,
                 ),
+                if (onChangeGoal != null)
+                  TextButton(
+                    onPressed: onChangeGoal,
+                    child: Text(l10n.goalChange),
+                  ),
               ],
             ),
+            if (note case final note?) EarlyNoteBox(note: note),
             Row(
               spacing: AppSpace.md,
               children: [
@@ -367,8 +380,11 @@ class WeekCheckCard extends StatelessWidget {
     required this.onCheckIn,
     required this.onPickReminder,
     required this.onStopReminder,
+    this.actionLabel,
   });
 
+  /// The button's text; the simple "day without use" tick by default.
+  final String? actionLabel;
   final Set<DateTime> checkIns;
   final DateTime now;
   final DayTime? reminder;
@@ -440,7 +456,7 @@ class WeekCheckCard extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onCheckIn,
                 icon: const Icon(Icons.check_rounded),
-                label: Text(l10n.checkInAction),
+                label: Text(actionLabel ?? l10n.checkInAction),
               ),
             const Divider(),
             Row(

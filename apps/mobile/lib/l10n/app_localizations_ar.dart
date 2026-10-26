@@ -1176,6 +1176,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'alcohol': 'الكحول',
       'tobacco': 'التبغ',
       'pills': 'الأقراص المهلوسة',
+      'stimulants': 'المنشطات',
       'gambling': 'القمار',
       'other': 'أخرى',
     });
@@ -1360,6 +1361,101 @@ class AppLocalizationsAr extends AppLocalizations {
   String get scanNotAlgerian => 'نقبل جواز السفر الجزائري فقط.';
 
   @override
+  String get substanceLabel => 'المادة';
+
+  @override
+  String get substanceOther => 'مادة أخرى';
+
+  @override
+  String get recoveryLockedTitle => 'يُفتح بعد موعدك الأول';
+
+  @override
+  String get recoveryLockedBody =>
+      'متابعة التعافي تُفتح بعد تأكيد موعدك الأول مع الطبيب ودفعه.';
+
+  @override
+  String get recoveryLockedBook => 'احجز موعداً';
+
+  @override
+  String get dailyCheckAction => 'سجّل يومك';
+
+  @override
+  String get dailyCheckTitle => 'كيف كان يومك؟';
+
+  @override
+  String dailyCheckWithout(String substance) {
+    return 'اليوم دون $substance؟';
+  }
+
+  @override
+  String get dailyCheckYes => 'نعم';
+
+  @override
+  String get dailyCheckNo => 'لا';
+
+  @override
+  String get dailyCheckCraving => 'الرغبة في التعاطي';
+
+  @override
+  String get ratingLow => 'خفيف';
+
+  @override
+  String get ratingHigh => 'قوي';
+
+  @override
+  String ratingValue(String label, int value) {
+    return '$label: $value من 5';
+  }
+
+  @override
+  String get dailyCheckNeedAnswers => 'أجب عن كل الأسئلة للحفظ.';
+
+  @override
+  String get habitsTitle => 'عاداتي الجيدة';
+
+  @override
+  String get habitsEmpty => 'اختر عادة جيدة تحلّ محلّ التعاطي.';
+
+  @override
+  String get habitsAdd => 'أضف عادة';
+
+  @override
+  String get habitsOwn => 'بكلماتي';
+
+  @override
+  String get habitsOwnHint => 'مثال: البستنة';
+
+  @override
+  String get habitsReminder => 'تذكير يومي';
+
+  @override
+  String habitsRemove(String habit) {
+    return 'إزالة $habit';
+  }
+
+  @override
+  String habitsDone(String habit) {
+    return '$habit: تمّ اليوم';
+  }
+
+  @override
+  String habitsOpen(String habit) {
+    return '$habit: لم يتمّ بعد';
+  }
+
+  @override
+  String get habitsMax => 'يمكنك اختيار 5 عادات كحد أقصى.';
+
+  @override
+  String get goalTitle => 'هدفك الصغير التالي';
+
+  @override
+  String get goalChange => 'غيّر الهدف';
+
+  @override
+  String get goalAuto => 'تلقائي';
+
+  @override
   String get reminderTitle => 'تذكير';
 
   @override
@@ -1404,4 +1500,15 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get receiptNotPaid => 'هذا الموعد لم يُدفع بعد.';
+
+  @override
+  String get reminderDailyCheck => 'حان وقت تذكيرك اليومي.';
+
+  @override
+  String reminderHabit(String habit) {
+    return 'حان وقت: $habit';
+  }
+
+  @override
+  String get reminderHabitOwn => 'حان وقت عادتك.';
 }

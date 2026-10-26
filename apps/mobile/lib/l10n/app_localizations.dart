@@ -2039,7 +2039,7 @@ abstract class AppLocalizations {
   /// No description provided for @addictionType.
   ///
   /// In ar, this message translates to:
-  /// **'{type, select, opioids{المواد الأفيونية} cannabis{القنب} alcohol{الكحول} tobacco{التبغ} pills{الأقراص المهلوسة} gambling{القمار} other{أخرى}}'**
+  /// **'{type, select, opioids{المواد الأفيونية} cannabis{القنب} alcohol{الكحول} tobacco{التبغ} pills{الأقراص المهلوسة} stimulants{المنشطات} gambling{القمار} other{أخرى}}'**
   String addictionType(String type);
 
   /// No description provided for @recoveryCleanSince.
@@ -2372,6 +2372,174 @@ abstract class AppLocalizations {
   /// **'نقبل جواز السفر الجزائري فقط.'**
   String get scanNotAlgerian;
 
+  /// No description provided for @substanceLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'المادة'**
+  String get substanceLabel;
+
+  /// No description provided for @substanceOther.
+  ///
+  /// In ar, this message translates to:
+  /// **'مادة أخرى'**
+  String get substanceOther;
+
+  /// No description provided for @recoveryLockedTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'يُفتح بعد موعدك الأول'**
+  String get recoveryLockedTitle;
+
+  /// No description provided for @recoveryLockedBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'متابعة التعافي تُفتح بعد تأكيد موعدك الأول مع الطبيب ودفعه.'**
+  String get recoveryLockedBody;
+
+  /// No description provided for @recoveryLockedBook.
+  ///
+  /// In ar, this message translates to:
+  /// **'احجز موعداً'**
+  String get recoveryLockedBook;
+
+  /// No description provided for @dailyCheckAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل يومك'**
+  String get dailyCheckAction;
+
+  /// No description provided for @dailyCheckTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'كيف كان يومك؟'**
+  String get dailyCheckTitle;
+
+  /// No description provided for @dailyCheckWithout.
+  ///
+  /// In ar, this message translates to:
+  /// **'اليوم دون {substance}؟'**
+  String dailyCheckWithout(String substance);
+
+  /// No description provided for @dailyCheckYes.
+  ///
+  /// In ar, this message translates to:
+  /// **'نعم'**
+  String get dailyCheckYes;
+
+  /// No description provided for @dailyCheckNo.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا'**
+  String get dailyCheckNo;
+
+  /// No description provided for @dailyCheckCraving.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرغبة في التعاطي'**
+  String get dailyCheckCraving;
+
+  /// No description provided for @ratingLow.
+  ///
+  /// In ar, this message translates to:
+  /// **'خفيف'**
+  String get ratingLow;
+
+  /// No description provided for @ratingHigh.
+  ///
+  /// In ar, this message translates to:
+  /// **'قوي'**
+  String get ratingHigh;
+
+  /// No description provided for @ratingValue.
+  ///
+  /// In ar, this message translates to:
+  /// **'{label}: {value} من 5'**
+  String ratingValue(String label, int value);
+
+  /// No description provided for @dailyCheckNeedAnswers.
+  ///
+  /// In ar, this message translates to:
+  /// **'أجب عن كل الأسئلة للحفظ.'**
+  String get dailyCheckNeedAnswers;
+
+  /// No description provided for @habitsTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'عاداتي الجيدة'**
+  String get habitsTitle;
+
+  /// No description provided for @habitsEmpty.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر عادة جيدة تحلّ محلّ التعاطي.'**
+  String get habitsEmpty;
+
+  /// No description provided for @habitsAdd.
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف عادة'**
+  String get habitsAdd;
+
+  /// No description provided for @habitsOwn.
+  ///
+  /// In ar, this message translates to:
+  /// **'بكلماتي'**
+  String get habitsOwn;
+
+  /// No description provided for @habitsOwnHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثال: البستنة'**
+  String get habitsOwnHint;
+
+  /// No description provided for @habitsReminder.
+  ///
+  /// In ar, this message translates to:
+  /// **'تذكير يومي'**
+  String get habitsReminder;
+
+  /// No description provided for @habitsRemove.
+  ///
+  /// In ar, this message translates to:
+  /// **'إزالة {habit}'**
+  String habitsRemove(String habit);
+
+  /// No description provided for @habitsDone.
+  ///
+  /// In ar, this message translates to:
+  /// **'{habit}: تمّ اليوم'**
+  String habitsDone(String habit);
+
+  /// No description provided for @habitsOpen.
+  ///
+  /// In ar, this message translates to:
+  /// **'{habit}: لم يتمّ بعد'**
+  String habitsOpen(String habit);
+
+  /// No description provided for @habitsMax.
+  ///
+  /// In ar, this message translates to:
+  /// **'يمكنك اختيار 5 عادات كحد أقصى.'**
+  String get habitsMax;
+
+  /// No description provided for @goalTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'هدفك الصغير التالي'**
+  String get goalTitle;
+
+  /// No description provided for @goalChange.
+  ///
+  /// In ar, this message translates to:
+  /// **'غيّر الهدف'**
+  String get goalChange;
+
+  /// No description provided for @goalAuto.
+  ///
+  /// In ar, this message translates to:
+  /// **'تلقائي'**
+  String get goalAuto;
+
   /// No description provided for @reminderTitle.
   ///
   /// In ar, this message translates to:
@@ -2455,6 +2623,24 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'هذا الموعد لم يُدفع بعد.'**
   String get receiptNotPaid;
+
+  /// No description provided for @reminderDailyCheck.
+  ///
+  /// In ar, this message translates to:
+  /// **'حان وقت تذكيرك اليومي.'**
+  String get reminderDailyCheck;
+
+  /// No description provided for @reminderHabit.
+  ///
+  /// In ar, this message translates to:
+  /// **'حان وقت: {habit}'**
+  String reminderHabit(String habit);
+
+  /// No description provided for @reminderHabitOwn.
+  ///
+  /// In ar, this message translates to:
+  /// **'حان وقت عادتك.'**
+  String get reminderHabitOwn;
 }
 
 class _AppLocalizationsDelegate

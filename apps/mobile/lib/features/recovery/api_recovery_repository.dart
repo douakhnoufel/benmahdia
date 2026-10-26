@@ -53,6 +53,9 @@ class ApiRecoveryRepository implements RecoveryRepository {
       response = await _once(method, path, body);
     }
     if (nullOn404 && response.statusCode == 404) return null;
+    if (response.statusCode == 403 && _code(response) == 'recovery_locked') {
+      throw const RecoveryLocked();
+    }
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw const RecoveryUnavailable();
     }
@@ -61,6 +64,18 @@ class ApiRecoveryRepository implements RecoveryRepository {
       return text.isEmpty ? null : jsonDecode(text);
     } on FormatException {
       throw const RecoveryUnavailable();
+    }
+  }
+
+  /// The API's error code, e.g. "recovery_locked"; null when there is none.
+  static String? _code(http.Response response) {
+    try {
+      final body = jsonDecode(utf8.decode(response.bodyBytes));
+      final detail = body is Map ? body['detail'] : null;
+      final code = detail is Map ? detail['code'] : null;
+      return code is String ? code : null;
+    } on FormatException {
+      return null;
     }
   }
 
@@ -100,6 +115,11 @@ class ApiRecoveryRepository implements RecoveryRepository {
       return Addiction(
         id: m['id'] as String,
         type: AddictionType.values.byName(m['type'] as String),
+        profile: switch (m['profile']) {
+          final String p => SubstanceProfile.values.byName(p),
+          _ => null,
+        },
+        goalDays: m['goal_days'] as int?,
         substance: m['substance'] as String?,
         reviewed: m['review_status'] == 'confirmed',
         start: DateTime.parse(m['clean_since'] as String).toLocal(),
@@ -124,7 +144,8 @@ class ApiRecoveryRepository implements RecoveryRepository {
 
   @override
   Future<Addiction> addAddiction({
-    required AddictionType type,
+    AddictionType? type,
+    SubstanceProfile? profile,
     required DateTime cleanSince,
     String? substance,
   }) async => _addictionFrom(
@@ -132,7 +153,8 @@ class ApiRecoveryRepository implements RecoveryRepository {
       'POST',
       'v1/me/addictions',
       body: {
-        'type': type.name,
+        'type': ?type?.name,
+        'profile': ?profile?.name,
         'substance': substance,
         'clean_since': _utc(cleanSince),
       },
@@ -148,12 +170,201 @@ class ApiRecoveryRepository implements RecoveryRepository {
     await _send(
       'POST',
       'v1/me/addictions/${addiction.id}/relapses',
+      body: {if (at != null) 'at': _utc(at), 'note': ?note},
+    ),
+  );
+
+  @override
+  Future<Addiction> setGoal(Addiction addiction, int? days) async =>
+      _addictionFrom(
+        await _send(
+          'PUT',
+          'v1/me/addictions/${addiction.id}/goal',
+          body: {'days': days},
+        ),
+      );
+
+  // --- per-substance tracking (PRD 5.6) -------------------------------------
+
+  static LocalizedText _text(Object? json) {
+    final m = json! as Map<String, dynamic>;
+    return LocalizedText(ar: m['ar'] as String, fr: m['fr'] as String);
+  }
+
+  static DateTime _day(String ymd) {
+    final p = ymd.split('-').map(int.parse).toList();
+    return DateTime(p[0], p[1], p[2]);
+  }
+
+  @override
+  Future<List<ProfileSpec>> profiles() async {
+    final json = await _send('GET', 'v1/me/recovery/profiles');
+    try {
+      return [
+        for (final p in json! as List)
+          ProfileSpec(
+            profile: SubstanceProfile.values.byName(p['key'] as String),
+            type: AddictionType.values.byName(p['type'] as String),
+            name: _text(p['name']),
+            signals: [
+              for (final sig in p['signals'] as List)
+                SignalSpec(
+                  key: sig['key'] as String,
+                  label: _text(sig['label']),
+                ),
+            ],
+            notes: [
+              for (final n in p['notes'] as List)
+                EarlyNote(day: n['day'] as int, text: _text(n['text'])),
+            ],
+          ),
+      ];
+    } on Object {
+      throw const RecoveryUnavailable();
+    }
+  }
+
+  @override
+  Future<CheckHistory> addictionChecks() async {
+    final json = await _send('GET', 'v1/me/addiction-checks');
+    try {
+      final m = json! as Map<String, dynamic>;
+      return (
+        checks: [
+          for (final c in m['checks'] as List)
+            AddictionCheck(
+              addictionId: c['addiction_id'] as String,
+              day: _day(c['day'] as String),
+              used: c['used'] as bool,
+              craving: c['craving'] as int,
+              signals: (c['signals'] as Map).cast<String, int>(),
+            ),
+        ],
+        doneDays: {for (final d in m['done_days'] as List) _day(d as String)},
+      );
+    } on Object {
+      throw const RecoveryUnavailable();
+    }
+  }
+
+  @override
+  Future<void> saveCheck(AddictionCheck check) async {
+    await _send(
+      'PUT',
+      'v1/me/addictions/${check.addictionId}/checks/${_ymd(check.day)}',
       body: {
-        if (at != null) 'at': _utc(at),
-        'note': ?note,
+        'used': check.used,
+        'craving': check.craving,
+        'signals': check.signals,
+      },
+    );
+  }
+
+  // --- good habits (PRD 5.6) ------------------------------------------------
+
+  static const _habitWire = {
+    HabitKind.sport: 'sport',
+    HabitKind.brushTeeth: 'brush_teeth',
+    HabitKind.water: 'water',
+    HabitKind.reading: 'reading',
+    HabitKind.callFamily: 'call_family',
+    HabitKind.sleep: 'sleep',
+    HabitKind.custom: 'custom',
+  };
+
+  static HabitKind _habitKind(Object? wire) {
+    for (final e in _habitWire.entries) {
+      if (e.value == wire) return e.key;
+    }
+    throw const RecoveryUnavailable();
+  }
+
+  static DayTime? _time(Object? hhmm) {
+    if (hhmm == null) return null;
+    final match = RegExp(r'^(\d{2}):(\d{2})$').firstMatch('$hhmm');
+    if (match == null) throw const RecoveryUnavailable();
+    return (hour: int.parse(match[1]!), minute: int.parse(match[2]!));
+  }
+
+  static Habit _habitFrom(Object? json) {
+    try {
+      final m = json! as Map<String, dynamic>;
+      return Habit(
+        id: m['id'] as String,
+        kind: _habitKind(m['kind']),
+        text: m['text'] as String?,
+        reminder: _time(m['reminder_time']),
+        days: {for (final d in m['days'] as List) _day(d as String)},
+      );
+    } on Object {
+      throw const RecoveryUnavailable();
+    }
+  }
+
+  @override
+  Future<Map<HabitKind, LocalizedText>> habitCatalog() async {
+    final json = await _send('GET', 'v1/me/habits/catalog');
+    try {
+      return {
+        for (final item in json! as List)
+          _habitKind(item['kind']): _text(item['label']),
+      };
+    } on Object {
+      throw const RecoveryUnavailable();
+    }
+  }
+
+  @override
+  Future<List<Habit>> habits() async {
+    final json = await _send('GET', 'v1/me/habits');
+    if (json is! List) throw const RecoveryUnavailable();
+    return json.map(_habitFrom).toList();
+  }
+
+  @override
+  Future<Habit> addHabit(
+    HabitKind kind, {
+    String? text,
+    DayTime? reminder,
+  }) async => _habitFrom(
+    await _send(
+      'POST',
+      'v1/me/habits',
+      body: {
+        'kind': _habitWire[kind],
+        'text': ?text,
+        if (reminder != null)
+          'reminder_time': _hhmm(reminder.hour, reminder.minute),
       },
     ),
   );
+
+  @override
+  Future<void> removeHabit(Habit habit) async {
+    await _send('DELETE', 'v1/me/habits/${habit.id}');
+  }
+
+  @override
+  Future<Habit> setHabitReminder(Habit habit, DayTime? time) async =>
+      _habitFrom(
+        await _send(
+          'PUT',
+          'v1/me/habits/${habit.id}/reminder',
+          body: {'time': time == null ? null : _hhmm(time.hour, time.minute)},
+        ),
+      );
+
+  @override
+  Future<void> markHabit(
+    Habit habit,
+    DateTime day, {
+    required bool done,
+  }) async {
+    await _send(
+      done ? 'PUT' : 'DELETE',
+      'v1/me/habits/${habit.id}/days/${_ymd(day)}',
+    );
+  }
 
   // --- daily check and reminder -------------------------------------------
 

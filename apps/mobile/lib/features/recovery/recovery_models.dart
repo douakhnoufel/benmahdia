@@ -20,6 +20,23 @@ int nextMilestone(int days) {
   return (days ~/ 365 + 1) * 365;
 }
 
+/// Small goals (PRD 5.6), in days of the current streak; after the last
+/// step the milestone ladder takes over, then every year.
+const goalSteps = [1, 3, 7, 14, 28];
+const _laterGoals = [60, 90, 180, 365];
+
+/// The step the app picks by itself: the first one not reached yet.
+int nextGoal(int days) {
+  for (final g in [...goalSteps, ..._laterGoals]) {
+    if (days < g) return g;
+  }
+  return (days ~/ 365 + 1) * 365;
+}
+
+/// The patient's own goal while it is still ahead, else the next step.
+int currentGoal(int days, int? chosen) =>
+    chosen != null && days < chosen ? chosen : nextGoal(days);
+
 /// Kinds of addiction the doctor can set (PRD 3).
 enum AddictionType {
   opioids,
@@ -27,8 +44,123 @@ enum AddictionType {
   alcohol,
   tobacco,
   pills,
+  stimulants,
   gambling,
   other,
+}
+
+/// How an addiction is tracked (PRD 5.6). Without one, tracking is
+/// generic: the daily check rates craving only.
+enum SubstanceProfile {
+  nicotine,
+  thc,
+  pregabalin,
+  buprenorphine,
+  cocaine,
+  amphetamines,
+}
+
+/// One signal a profile's daily check rates 1-5 (higher = harder).
+class SignalSpec {
+  const SignalSpec({required this.key, required this.label});
+
+  final String key;
+  final LocalizedText label;
+}
+
+/// A short "what to expect" note for an early day, written by the clinic.
+class EarlyNote {
+  const EarlyNote({required this.day, required this.text});
+
+  final int day;
+  final LocalizedText text;
+}
+
+/// What one substance profile tracks, from the server's catalog.
+class ProfileSpec {
+  const ProfileSpec({
+    required this.profile,
+    required this.type,
+    required this.name,
+    required this.signals,
+    required this.notes,
+  });
+
+  final SubstanceProfile profile;
+  final AddictionType type;
+  final LocalizedText name;
+  final List<SignalSpec> signals;
+  final List<EarlyNote> notes;
+
+  /// The note for the stage the patient is at: the latest one reached, shown
+  /// for a week after its day.
+  EarlyNote? noteFor(int days) {
+    EarlyNote? found;
+    for (final n in notes) {
+      if (n.day <= days) found = n;
+    }
+    return found != null && days - found.day < 7 ? found : null;
+  }
+}
+
+/// One day's check for one addiction (PRD 5.6).
+class AddictionCheck {
+  const AddictionCheck({
+    required this.addictionId,
+    required this.day,
+    required this.used,
+    required this.craving,
+    this.signals = const {},
+  });
+
+  final String addictionId;
+
+  /// A [dayOf] date.
+  final DateTime day;
+  final bool used;
+
+  /// 1-5, as are the [signals] ratings.
+  final int craving;
+  final Map<String, int> signals;
+}
+
+/// The patient's checks and the days on which every addiction was checked.
+typedef CheckHistory = ({List<AddictionCheck> checks, Set<DateTime> doneDays});
+
+/// Good habits from the clinic's list, or one in the patient's own words.
+enum HabitKind { sport, brushTeeth, water, reading, callFamily, sleep, custom }
+
+/// A good habit the patient keeps instead of using (PRD 5.6).
+class Habit {
+  const Habit({
+    required this.id,
+    required this.kind,
+    this.text,
+    this.reminder,
+    this.days = const {},
+  });
+
+  final String id;
+  final HabitKind kind;
+
+  /// The patient's own words, for [HabitKind.custom] only.
+  final String? text;
+  final DayTime? reminder;
+
+  /// Days it was done, as [dayOf] dates.
+  final Set<DateTime> days;
+
+  Habit copyWith({
+    DayTime? reminder,
+    bool clearReminder = false,
+    Set<DateTime>? days,
+  }) => Habit(
+    id: id,
+    kind: kind,
+    text: text,
+    reminder: clearReminder ? null : reminder ?? this.reminder,
+    days: days ?? this.days,
+  );
 }
 
 /// One addiction the patient tracks, with its own day counter (PRD 5.1).
@@ -45,10 +177,18 @@ class Addiction {
     required this.pastDays,
     this.substance,
     this.reviewed = true,
+    this.profile,
+    this.goalDays,
   });
 
   final String id;
   final AddictionType type;
+
+  /// How it is tracked (PRD 5.6); null = generic.
+  final SubstanceProfile? profile;
+
+  /// The small goal the patient chose; null lets the app pick.
+  final int? goalDays;
 
   /// The exact product, in the patient's words (optional).
   final String? substance;
@@ -77,12 +217,29 @@ class Addiction {
 
   int total(DateTime now) => pastDays + days(now);
 
+  /// What the circle fills toward now.
+  int goal(DateTime now) => currentGoal(days(now), goalDays);
+
+  Addiction withGoal(int? days) => Addiction(
+    id: id,
+    type: type,
+    profile: profile,
+    substance: substance,
+    reviewed: reviewed,
+    start: start,
+    longestPastDays: longestPastDays,
+    pastDays: pastDays,
+    goalDays: days,
+  );
+
   /// The counter after a relapse at [at] (never before the current start).
   Addiction relapsed(DateTime at) {
     final when = at.isBefore(start) ? start : at;
+    // The goal goes back to the first small step (PRD 5.6).
     return Addiction(
       id: id,
       type: type,
+      profile: profile,
       substance: substance,
       reviewed: reviewed,
       start: when,
@@ -173,4 +330,10 @@ class ClinicInfo {
 /// show a retry message and keep what they had.
 class RecoveryUnavailable implements Exception {
   const RecoveryUnavailable();
+}
+
+/// Recovery opens after the first confirmed (paid) appointment (PRD 5); until
+/// then the tab shows a locked state with a Book button.
+class RecoveryLocked extends RecoveryUnavailable {
+  const RecoveryLocked();
 }

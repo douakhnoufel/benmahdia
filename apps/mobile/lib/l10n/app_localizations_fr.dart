@@ -1198,6 +1198,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'alcohol': 'Alcool',
       'tobacco': 'Tabac',
       'pills': 'Psychotropes (comprimés)',
+      'stimulants': 'Stimulants',
       'gambling': 'Jeux d\'argent',
       'other': 'Autre',
     });
@@ -1386,6 +1387,103 @@ class AppLocalizationsFr extends AppLocalizations {
   String get scanNotAlgerian => 'Seul le passeport algérien est accepté.';
 
   @override
+  String get substanceLabel => 'Substance';
+
+  @override
+  String get substanceOther => 'Autre substance';
+
+  @override
+  String get recoveryLockedTitle => 'S\'ouvre après votre premier rendez-vous';
+
+  @override
+  String get recoveryLockedBody =>
+      'Le suivi s\'ouvre une fois votre premier rendez-vous confirmé et payé.';
+
+  @override
+  String get recoveryLockedBook => 'Prendre rendez-vous';
+
+  @override
+  String get dailyCheckAction => 'Faire le point du jour';
+
+  @override
+  String get dailyCheckTitle => 'Comment s\'est passée votre journée ?';
+
+  @override
+  String dailyCheckWithout(String substance) {
+    return 'Aujourd\'hui sans $substance ?';
+  }
+
+  @override
+  String get dailyCheckYes => 'Oui';
+
+  @override
+  String get dailyCheckNo => 'Non';
+
+  @override
+  String get dailyCheckCraving => 'Envie de consommer';
+
+  @override
+  String get ratingLow => 'Faible';
+
+  @override
+  String get ratingHigh => 'Fort';
+
+  @override
+  String ratingValue(String label, int value) {
+    return '$label : $value sur 5';
+  }
+
+  @override
+  String get dailyCheckNeedAnswers =>
+      'Répondez à toutes les questions pour enregistrer.';
+
+  @override
+  String get habitsTitle => 'Mes bonnes habitudes';
+
+  @override
+  String get habitsEmpty =>
+      'Choisissez une bonne habitude pour remplacer la consommation.';
+
+  @override
+  String get habitsAdd => 'Ajouter une habitude';
+
+  @override
+  String get habitsOwn => 'Avec mes mots';
+
+  @override
+  String get habitsOwnHint => 'Ex. : jardiner';
+
+  @override
+  String get habitsReminder => 'Rappel quotidien';
+
+  @override
+  String habitsRemove(String habit) {
+    return 'Retirer $habit';
+  }
+
+  @override
+  String habitsDone(String habit) {
+    return '$habit : fait aujourd\'hui';
+  }
+
+  @override
+  String habitsOpen(String habit) {
+    return '$habit : pas encore fait';
+  }
+
+  @override
+  String get habitsMax => 'Vous pouvez garder 5 habitudes au maximum.';
+
+  @override
+  String get goalTitle => 'Votre prochain petit objectif';
+
+  @override
+  String get goalChange => 'Changer l\'objectif';
+
+  @override
+  String get goalAuto => 'Automatique';
+
+  @override
   String get reminderTitle => 'Rappel';
 
   @override
@@ -1430,4 +1528,15 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get receiptNotPaid => 'Ce rendez-vous n\'est pas encore payé.';
+
+  @override
+  String get reminderDailyCheck => 'C\'est l\'heure de votre rappel du jour.';
+
+  @override
+  String reminderHabit(String habit) {
+    return 'C\'est l\'heure : $habit';
+  }
+
+  @override
+  String get reminderHabitOwn => 'C\'est l\'heure de votre habitude.';
 }

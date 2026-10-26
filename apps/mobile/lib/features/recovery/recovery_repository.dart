@@ -6,8 +6,10 @@ import 'api_recovery_repository.dart';
 import 'fake_recovery_repository.dart';
 import 'recovery_models.dart';
 
-/// What the recovery home needs (PRD 5): day counters, the quote of the day,
-/// today's doses and the clinic's details.
+/// What the recovery home needs (PRD 5): day counters, the per-substance
+/// daily check, good habits, the quote of the day, today's doses and the
+/// clinic's details. Every call throws [RecoveryLocked] until the first
+/// confirmed appointment.
 abstract interface class RecoveryRepository {
   /// Current time. Injected so tests control "now".
   DateTime now();
@@ -15,12 +17,40 @@ abstract interface class RecoveryRepository {
   /// The addictions the patient tracks, one counter each.
   Future<List<Addiction>> addictions();
 
-  /// Adds an addiction the patient entered; the doctor reviews it.
+  /// Adds an addiction the patient entered; the doctor reviews it. A
+  /// [profile] sets the type; without one, [type] is needed.
   Future<Addiction> addAddiction({
-    required AddictionType type,
+    AddictionType? type,
+    SubstanceProfile? profile,
     required DateTime cleanSince,
     String? substance,
   });
+
+  /// The patient's next small goal for [addiction]; null = automatic.
+  Future<Addiction> setGoal(Addiction addiction, int? days);
+
+  /// What each substance profile asks (PRD 5.6).
+  Future<List<ProfileSpec>> profiles();
+
+  /// The recent per-addiction checks, and the days fully checked.
+  Future<CheckHistory> addictionChecks();
+
+  /// Saves [check]; it can be changed again the same day.
+  Future<void> saveCheck(AddictionCheck check);
+
+  /// The clinic's list of good habits, with their labels.
+  Future<Map<HabitKind, LocalizedText>> habitCatalog();
+
+  Future<List<Habit>> habits();
+
+  Future<Habit> addHabit(HabitKind kind, {String? text, DayTime? reminder});
+
+  Future<void> removeHabit(Habit habit);
+
+  Future<Habit> setHabitReminder(Habit habit, DayTime? time);
+
+  /// Ticks or unticks [habit] as done on [day].
+  Future<void> markHabit(Habit habit, DateTime day, {required bool done});
 
   /// Restarts [addiction]'s counter from [at] (default now); the doctor is
   /// told (PRD 5.1).

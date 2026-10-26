@@ -6,22 +6,28 @@ import '../booking/booking_format.dart';
 import 'recovery_models.dart';
 
 /// What the patient enters for one addiction.
+/// A [profile] sets the type; without one ("other substance"), [type] is
+/// set and tracking is generic.
 typedef AddictionEntry = ({
-  AddictionType type,
+  AddictionType? type,
+  SubstanceProfile? profile,
   String? substance,
   DateTime cleanSince,
 });
 
-/// "What are you recovering from?": the type, the exact substance (optional)
-/// and the day of the last use. The doctor reviews it afterwards.
+/// "What are you recovering from?": the substance (one of the clinic's
+/// profiles, or another substance and its type), the exact product
+/// (optional) and the day of the last use. The doctor reviews it afterwards.
 class AddictionFormScreen extends StatefulWidget {
   const AddictionFormScreen({
     super.key,
     required this.today,
+    required this.profiles,
     required this.onSave,
   });
 
   final DateTime today;
+  final List<ProfileSpec> profiles;
   final Future<void> Function(AddictionEntry entry) onSave;
 
   @override
@@ -31,6 +37,8 @@ class AddictionFormScreen extends StatefulWidget {
 class _AddictionFormScreenState extends State<AddictionFormScreen> {
   final _substance = TextEditingController();
   AddictionType? _type;
+  SubstanceProfile? _profile;
+  bool _other = false;
   late DateTime _since = dayOf(widget.today);
   bool _saving = false;
 
@@ -51,12 +59,15 @@ class _AddictionFormScreenState extends State<AddictionFormScreen> {
     if (picked != null) setState(() => _since = picked);
   }
 
-  Future<void> _save(AddictionType type) async {
+  bool get _ready => _profile != null || (_other && _type != null);
+
+  Future<void> _save() async {
     setState(() => _saving = true);
     final substance = _substance.text.trim();
     try {
       await widget.onSave((
-        type: type,
+        type: _profile == null ? _type : null,
+        profile: _profile,
         substance: substance.isEmpty ? null : substance,
         cleanSince: _since,
       ));
@@ -69,7 +80,7 @@ class _AddictionFormScreenState extends State<AddictionFormScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
-    final type = _type;
+    final lang = Localizations.localeOf(context).languageCode;
 
     return Scaffold(
       appBar: AppBar(backgroundColor: AppColors.background),
@@ -88,20 +99,48 @@ class _AddictionFormScreenState extends State<AddictionFormScreen> {
           const SizedBox(height: AppSpace.sm),
           Text(l10n.addictionFormBody, style: text.bodyLarge),
           const SizedBox(height: AppSpace.xl),
-          Text(l10n.addictionTypeLabel, style: text.labelMedium),
+          Text(l10n.substanceLabel, style: text.labelMedium),
           const SizedBox(height: AppSpace.sm),
           Wrap(
             spacing: AppSpace.sm,
             runSpacing: AppSpace.sm,
             children: [
-              for (final t in AddictionType.values)
+              for (final p in widget.profiles)
                 ChoiceChip(
-                  label: Text(l10n.addictionType(t.name)),
-                  selected: _type == t,
-                  onSelected: (_) => setState(() => _type = t),
+                  label: Text(p.name.of(lang)),
+                  selected: _profile == p.profile,
+                  onSelected: (_) => setState(() {
+                    _profile = p.profile;
+                    _other = false;
+                  }),
                 ),
+              ChoiceChip(
+                label: Text(l10n.substanceOther),
+                selected: _other,
+                onSelected: (_) => setState(() {
+                  _profile = null;
+                  _other = true;
+                }),
+              ),
             ],
           ),
+          if (_other) ...[
+            const SizedBox(height: AppSpace.xl),
+            Text(l10n.addictionTypeLabel, style: text.labelMedium),
+            const SizedBox(height: AppSpace.sm),
+            Wrap(
+              spacing: AppSpace.sm,
+              runSpacing: AppSpace.sm,
+              children: [
+                for (final t in AddictionType.values)
+                  ChoiceChip(
+                    label: Text(l10n.addictionType(t.name)),
+                    selected: _type == t,
+                    onSelected: (_) => setState(() => _type = t),
+                  ),
+              ],
+            ),
+          ],
           const SizedBox(height: AppSpace.xl),
           TextField(
             controller: _substance,
@@ -126,7 +165,7 @@ class _AddictionFormScreenState extends State<AddictionFormScreen> {
           ),
           const SizedBox(height: AppSpace.xl),
           FilledButton(
-            onPressed: type == null || _saving ? null : () => _save(type),
+            onPressed: !_ready || _saving ? null : _save,
             child: Text(l10n.addictionSave),
           ),
         ],

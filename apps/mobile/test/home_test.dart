@@ -6,6 +6,7 @@ import 'package:benmahdia_mobile/features/companion/companion_repository.dart';
 import 'package:benmahdia_mobile/features/companion/fake_companion_repository.dart';
 import 'package:benmahdia_mobile/features/home/home_shell.dart';
 import 'package:benmahdia_mobile/features/recovery/addiction_form_screen.dart';
+import 'package:benmahdia_mobile/features/recovery/daily_check_screen.dart';
 import 'package:benmahdia_mobile/features/recovery/fake_recovery_repository.dart';
 import 'package:benmahdia_mobile/features/recovery/recovery_models.dart';
 import 'package:benmahdia_mobile/features/recovery/recovery_repository.dart';
@@ -96,7 +97,7 @@ void main() {
       expect(find.byType(NavigationBar), findsOneWidget);
       expect(find.text('مواعيدي'), findsWidgets);
       expect(find.text('المرافق'), findsWidgets);
-      expect(find.text('الأقراص المهلوسة'), findsOneWidget);
+      expect(find.text('البريغابالين'), findsOneWidget);
       expect(find.textContaining('دون تعاطٍ منذ'), findsOneWidget);
       expect(directionOf(tester, RecoveryScreen), TextDirection.rtl);
     });
@@ -121,13 +122,33 @@ void main() {
   });
 
   group('recovery', () {
-    testWidgets('ticking today fills the week', (tester) async {
-      await _pumpShell(tester);
-      await _scrollTo(tester, find.text('مرّ اليوم دون تعاطٍ'));
+    testWidgets('the daily check per substance fills the week', (tester) async {
+      final setup = await _pumpShell(tester);
+      await _scrollTo(tester, find.text('سجّل يومك'));
       expect(find.text('6 من 7'), findsOneWidget);
-      await tester.tap(find.text('مرّ اليوم دون تعاطٍ'));
+      await tester.tap(find.text('سجّل يومك'));
       await tester.pumpAndSettle();
-      expect(find.text('سُجّل يومك. أحسنت.'), findsOneWidget);
+      expect(find.byType(DailyCheckScreen), findsOneWidget);
+      expect(find.text('اليوم دون البريغابالين؟'), findsOneWidget);
+
+      final save = find.widgetWithText(FilledButton, 'حفظ');
+      await tester.tap(find.text('نعم'));
+      await tester.tap(
+        find.byKey(const ValueKey('rating-الرغبة في التعاطي-2')),
+      );
+      await tester.tap(find.byKey(const ValueKey('rating-القلق-3')));
+      await tester.pump();
+      expect(tester.widget<FilledButton>(save).onPressed, isNull);
+      await tester.tap(find.byKey(const ValueKey('rating-صعوبة النوم-1')));
+      await tester.pump();
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DailyCheckScreen), findsNothing);
+      final today = setup.recovery.checks.last;
+      expect((today.used, today.craving), (false, 2));
+      expect(today.signals, {'anxiety': 3, 'sleep': 1});
+      expect(find.text('سُجّل يومك. أحسنت.'), findsWidgets);
       expect(find.text('7 من 7'), findsOneWidget);
     });
 
@@ -186,9 +207,23 @@ void main() {
 
       final save = find.widgetWithText(FilledButton, 'حفظ');
       expect(tester.widget<FilledButton>(save).onPressed, isNull);
+      await tester.tap(find.text('مادة أخرى'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('القمار'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('القمار'));
+      await tester.dragUntilVisible(
+        find.byType(TextField),
+        find.byType(ListView),
+        const Offset(0, -200),
+      );
       await tester.enterText(find.byType(TextField), 'ألعاب الرهان');
       await tester.pump();
+      await tester.dragUntilVisible(
+        save,
+        find.byType(ListView),
+        const Offset(0, -200),
+      );
       await tester.tap(save);
       await tester.pumpAndSettle();
 
