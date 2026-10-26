@@ -8,6 +8,8 @@ import { Failed, Loading } from './Status';
 const KIND: Record<string, StringKey> = {
   relapse: 'alertRelapse',
   missed_doses: 'alertMissedDoses',
+  booking_confirmed: 'alertBookingConfirmed',
+  booking_cancelled: 'alertBookingCancelled',
 };
 
 /** The doctor's alerts. They name an event and a patient, nothing medical;
