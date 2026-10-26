@@ -41,6 +41,7 @@ Tests use an in-memory SQLite database and a frozen clock; no Docker needed.
 | DELETE | `/v1/me` | Delete the account (password required if it has one). Disabled at once; erased after 30 days by `python -m app.purge`. |
 | GET, POST | `/v1/me/addictions` | The patient's addictions (pending doctor review) / add one. |
 | POST | `/v1/me/addictions/{id}/relapses` | Log a relapse: restarts the counter, keeps past streaks, alerts the doctor. |
+| POST | `/v1/me/addictions/{id}/milestone/seen` | The app showed the celebration for the milestone reached now (`milestone` / `milestone_seen` in each addiction). |
 | GET | `/v1/me/checkins` | Days ticked "without use" (last 60 days, or `since`). |
 | PUT | `/v1/me/checkins/{day}` | Tick a day (today ± a small window). Idempotent. |
 | GET, PUT | `/v1/me/reminder` | Daily-check reminder time `HH:MM` or `null`. |

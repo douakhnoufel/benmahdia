@@ -27,7 +27,7 @@ from ..models import (
     SubstanceProfile,
     User,
 )
-from ..substances import GOAL_STEPS, PROFILES, current_goal
+from ..substances import GOAL_STEPS, PROFILES, current_goal, reached_milestone
 from .doctors import utc_iso
 
 router = APIRouter(prefix="/v1/me/addictions", tags=["recovery"])
@@ -107,10 +107,19 @@ class AddictionOut(BaseModel):
     # circle fills toward now, both in days of the current streak (PRD 5.6).
     goal_days: int | None
     goal: int
+    # The highest milestone of the current streak (PRD 5.1), in days (0 =
+    # none yet), and the highest one the app already celebrated: the app
+    # celebrates when [milestone] is above [milestone_seen].
+    milestone: int
+    milestone_seen: int
+
+
+def _streak(a: Addiction) -> int:
+    return max(0, (clock.now() - a.sobriety_start).days)
 
 
 def out(a: Addiction) -> AddictionOut:
-    streak = max(0, (clock.now() - a.sobriety_start).days)
+    streak = _streak(a)
     return AddictionOut(
         id=a.id,
         type=a.type,
@@ -122,6 +131,8 @@ def out(a: Addiction) -> AddictionOut:
         review_status=a.review_status,
         goal_days=a.goal_days,
         goal=current_goal(streak, a.goal_days),
+        milestone=reached_milestone(streak),
+        milestone_seen=a.milestone_seen,
     )
 
 
@@ -205,6 +216,7 @@ def log_relapse(
     a.longest_past_days = max(a.longest_past_days, streak)
     a.sobriety_start = at
     a.goal_days = None  # back to the first small goal
+    a.milestone_seen = a.milestone_alerted = 0  # the new streak starts its own ladder
     db.add(Relapse(addiction_id=a.id, occurred_at=at, note=body.note))
     doctor_id = _doctor_of(db, user.id)
     if doctor_id is not None:
@@ -235,6 +247,21 @@ def set_goal(
         if body.days not in GOAL_STEPS or body.days <= streak:
             raise ApiError(422, "goal_invalid")
     a.goal_days = body.days
+    db.commit()
+    db.refresh(a)
+    return out(a)
+
+
+@router.post("/{addiction_id}/milestone/seen", response_model=AddictionOut)
+def milestone_seen(
+    addiction_id: uuid.UUID,
+    user: User = Depends(patient),
+    db: Session = Depends(get_db),
+) -> AddictionOut:
+    """The app showed the celebration for the milestone reached now (PRD
+    5.1), so it does not show it again, on this phone or another."""
+    a = _own(db, user, addiction_id)
+    a.milestone_seen = max(a.milestone_seen, reached_milestone(_streak(a)))
     db.commit()
     db.refresh(a)
     return out(a)

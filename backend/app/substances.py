@@ -98,6 +98,17 @@ GOAL_STEPS = (1, 3, 7, 14, 28)
 LATER_MILESTONES = (60, 90, 180, 365)
 
 
+# The milestone ladder (PRD 5.1), then every year.
+MILESTONES = (1, 3, 7, 14, 30, 60, 90, 180, 365)
+
+
+def reached_milestone(streak_days: int) -> int:
+    """The highest milestone the streak has reached; 0 before the first day."""
+    if streak_days >= 365:
+        return streak_days // 365 * 365
+    return max((m for m in MILESTONES if m <= streak_days), default=0)
+
+
 def next_goal(streak_days: int) -> int:
     """The step the app picks by itself: the first one not reached yet."""
     for step in GOAL_STEPS + LATER_MILESTONES:

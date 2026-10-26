@@ -26,6 +26,7 @@ from .models import (
     ReviewStatus,
 )
 from .routers.recovery import _doctor_of
+from .substances import reached_milestone
 
 DAYS_IN_A_ROW = 2
 # PRD 5.6, fixed in v1.
@@ -152,8 +153,30 @@ def no_checkin_alerts(db: Session) -> int:
     return created
 
 
+def milestone_alerts(db: Session) -> int:
+    """"milestone" (PRD 5.1): one alert for each milestone a streak reaches,
+    even if the patient did not open the app. A streak that starts far back
+    (or a missed run) gives one alert for the highest milestone, not one per
+    step. It names no addiction."""
+    now = clock.now()
+    created = 0
+    for a in db.scalars(_tracked()):
+        reached = reached_milestone(max(0, (now - a.sobriety_start).days))
+        if reached <= a.milestone_alerted:
+            continue
+        a.milestone_alerted = reached
+        doctor_id = _doctor_of(db, a.patient_id)
+        if doctor_id is not None:
+            db.add(Alert(doctor_id=doctor_id, patient_id=a.patient_id, type="milestone"))
+            created += 1
+        db.flush()
+    db.commit()
+    return created
+
+
 if __name__ == "__main__":
     with SessionLocal() as session:
         print(f"Raised {missed_dose_alerts(session)} missed-dose alert(s).")
         print(f"Raised {craving_alerts(session)} craving alert(s).")
         print(f"Raised {no_checkin_alerts(session)} missed-check alert(s).")
+        print(f"Raised {milestone_alerts(session)} milestone alert(s).")

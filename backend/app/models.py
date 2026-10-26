@@ -408,6 +408,10 @@ class Addiction(Base):
     # The small goal the patient chose (PRD 5.6), in days of the current
     # streak; None lets the app pick the next step. A relapse clears it.
     goal_days: Mapped[int | None] = mapped_column(Integer)
+    # The highest milestone of the current streak (PRD 5.1) the app already
+    # celebrated, and the one the doctor was told about. A relapse resets both.
+    milestone_seen: Mapped[int] = mapped_column(Integer, default=0)
+    milestone_alerted: Mapped[int] = mapped_column(Integer, default=0)
     # The exact product, in the patient's words.
     substance: Mapped[str | None] = mapped_column(String(100))
     sobriety_start: Mapped[datetime] = mapped_column(DateTime)
@@ -638,7 +642,8 @@ class Alert(Base):
     patient_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
-    # "relapse", "missed_doses", "craving_high", "no_checkin"; "milestone" later.
+    # "relapse", "missed_doses", "craving_high", "no_checkin", "milestone",
+    # "booking_confirmed", "booking_cancelled".
     type: Mapped[str] = mapped_column(String(32))
     priority: Mapped[str] = mapped_column(String(8), default="normal")
     read: Mapped[bool] = mapped_column(Boolean, default=False)
