@@ -162,6 +162,24 @@ def test_relapse_alerts_the_patients_doctor_without_medical_content(client, sms)
         assert "secret" not in repr(vars(alert))
 
 
+def test_relapse_alert_skips_a_doctor_the_patient_only_holds_a_slot_with(client, sms):
+    # An unpaid hold does not make someone the patient's doctor (as in
+    # _own_patient), so the alert goes to the doctor of the paid visit.
+    from app.models import AppointmentStatus
+
+    from .test_staff import other_doctor
+
+    paid, held = make_doctor(), other_doctor()
+    s = verified_patient(client, sms)
+    pid = uuid.UUID(s["user"]["id"])
+    add_appointment(paid.user_id, pid, clock.now() - timedelta(days=3))
+    add_appointment(held, pid, clock.now() + timedelta(days=2), status=AppointmentStatus.awaiting_payment)
+    a = add(client, s).json()
+    client.post(f"/v1/me/addictions/{a['id']}/relapses", json={}, headers=bearer(s))
+    with Session(engine) as db:
+        assert [x.doctor_id for x in db.query(Alert).all()] == [paid.user_id]
+
+
 def test_relapse_is_locked_before_the_first_confirmed_appointment(client, sms):
     # Recovery opens with the first paid visit (PRD 5), so a patient with no
     # doctor yet cannot reach the relapse route, and no doctor is alerted.
