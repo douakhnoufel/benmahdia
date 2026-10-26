@@ -187,12 +187,18 @@ void main() {
       rest: FakeRecoveryRepository(),
       client: MockClient((_) async => throw http.ClientException('down')),
     );
-    await expectLater(offline.addictions(), throwsA(isA<RecoveryUnavailable>()));
+    await expectLater(
+      offline.addictions(),
+      throwsA(isA<RecoveryUnavailable>()),
+    );
   });
 
   test('reads the ticked days as calendar days', () async {
     final r = repo((_) => _json(200, ['2026-10-16', '2026-10-17']));
-    expect(await r.checkIns(), {DateTime(2026, 10, 16), DateTime(2026, 10, 17)});
+    expect(await r.checkIns(), {
+      DateTime(2026, 10, 16),
+      DateTime(2026, 10, 17),
+    });
     expect(sent.single.url.path, '/v1/me/checkins');
     await expectLater(
       repo((_) => _json(200, ['oops'])).checkIns(),
@@ -215,10 +221,10 @@ void main() {
   });
 
   test('reads, sets and clears the reminder time', () async {
-    expect(
-      await repo((_) => _json(200, {'time': '21:05'})).reminder(),
-      (hour: 21, minute: 5),
-    );
+    expect(await repo((_) => _json(200, {'time': '21:05'})).reminder(), (
+      hour: 21,
+      minute: 5,
+    ));
     expect(await repo((_) => _json(200, {'time': null})).reminder(), isNull);
     await expectLater(
       repo((_) => _json(200, {'time': '9pm'})).reminder(),
@@ -303,7 +309,12 @@ void main() {
   });
 
   test('reads the quote of the day without an author line', () async {
-    final r = repo((_) => _json(200, {'text_ar': 'يوماً بعد يوم.', 'text_fr': 'Un jour à la fois.'}));
+    final r = repo(
+      (_) => _json(200, {
+        'text_ar': 'يوماً بعد يوم.',
+        'text_fr': 'Un jour à la fois.',
+      }),
+    );
     final quote = (await r.quoteOfDay())!;
     expect(sent.single.url.path, '/v1/me/quote');
     expect(quote.text.of('fr'), 'Un jour à la fois.');
@@ -311,20 +322,23 @@ void main() {
     expect(quote.source.of('fr'), isEmpty);
   });
 
-  test('has no quote when the server has none, but fails on a real error', () async {
-    expect(
-      await repo(
-        (_) => _json(404, {
-          'detail': {'code': 'no_quote'},
-        }),
-      ).quoteOfDay(),
-      isNull,
-    );
-    await expectLater(
-      repo((_) => _json(500, const {})).quoteOfDay(),
-      throwsA(isA<RecoveryUnavailable>()),
-    );
-  });
+  test(
+    'has no quote when the server has none, but fails on a real error',
+    () async {
+      expect(
+        await repo(
+          (_) => _json(404, {
+            'detail': {'code': 'no_quote'},
+          }),
+        ).quoteOfDay(),
+        isNull,
+      );
+      await expectLater(
+        repo((_) => _json(500, const {})).quoteOfDay(),
+        throwsA(isA<RecoveryUnavailable>()),
+      );
+    },
+  );
 
   test('keeps the clinic card local and tells the time', () async {
     final r = repo((_) => _json(500, const {}));

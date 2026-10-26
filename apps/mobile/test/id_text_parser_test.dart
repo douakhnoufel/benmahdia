@@ -52,7 +52,13 @@ void main() {
     });
 
     test('rejects what is not a real past date', () {
-      for (final bad in ['', '1990', '31/02/1990', '1899-01-01', '2027-01-01']) {
+      for (final bad in [
+        '',
+        '1990',
+        '31/02/1990',
+        '1899-01-01',
+        '2027-01-01',
+      ]) {
         expect(parseDate(bad, today: _today), isNull, reason: bad);
       }
     });
