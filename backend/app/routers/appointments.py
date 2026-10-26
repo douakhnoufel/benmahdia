@@ -7,7 +7,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from .. import audit, checkin, scheduling
+from .. import audit, checkin, notices, scheduling
 from ..clock import clock
 from ..config import get_settings
 from ..db import get_db
@@ -243,6 +243,7 @@ def confirm(
     a.method = body.method
     a.hold_expires_at = None
     checkin.issue(db, a)
+    notices.booking_alert(db, a, notices.CONFIRMED)
     audit.record(db, "appointment.confirmed", actor_id=patient.id, target=str(a.id), request=request)
     db.commit()
     return _out(db, a)
@@ -309,6 +310,7 @@ def cancel(
         raise ApiError(409, "too_late_to_cancel")
     a.status = AppointmentStatus.cancelled
     a.cancelled_at = now
+    notices.booking_alert(db, a, notices.CANCELLED)
     audit.record(db, "appointment.cancelled", actor_id=patient.id, target=str(a.id), request=request)
     db.commit()
     return _out(db, a)
