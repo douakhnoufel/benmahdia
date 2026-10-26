@@ -19,7 +19,9 @@ from ..models import (
     Availability,
     AvailabilityException,
     DoctorProfile,
+    Payment,
     PaymentMethod,
+    PaymentStatus,
     User,
 )
 from .doctors import DoctorOut, doctor_out, utc_iso
@@ -50,6 +52,21 @@ class AppointmentOut(BaseModel):
     hold_expires_at: str | None
     # Shown to the patient to present at the front desk; only while confirmed.
     checkin_code: str | None = None
+
+
+class ReceiptOut(BaseModel):
+    # Short reference printed on the receipt; it is derived from the
+    # appointment id and holds no personal data.
+    number: str
+    appointment_id: uuid.UUID
+    doctor_name_ar: str
+    doctor_name_fr: str
+    start: str
+    amount_dzd: int
+    method: PaymentMethod
+    paid_at: str
+    # Chargily's payment id for a card payment; None when paid at the clinic.
+    payment_ref: str | None
 
 
 class FollowUpOut(BaseModel):
@@ -290,6 +307,37 @@ def follow_up(
         after=_out(db, last),
         day=(visit_day + timedelta(days=FOLLOW_UP_DAYS)).isoformat(),
         days=FOLLOW_UP_DAYS,
+    )
+
+
+@router.get("/{appointment_id}/receipt", response_model=ReceiptOut)
+def receipt(
+    appointment_id: uuid.UUID,
+    patient: User = Depends(verified_patient),
+    db: Session = Depends(get_db),
+) -> ReceiptOut:
+    """Proof of payment for one of the patient's own paid appointments
+    (PRD 4.4). It is a payment receipt, not a tax invoice, and carries no
+    medical content."""
+    a = _mine(db, patient, appointment_id)
+    if a.paid_at is None or a.method is None:
+        raise ApiError(409, "not_paid")
+    profile = db.get(DoctorProfile, a.doctor_id)
+    ref = db.scalar(
+        select(Payment.chargily_id).where(
+            Payment.appointment_id == a.id, Payment.status == PaymentStatus.paid
+        )
+    )
+    return ReceiptOut(
+        number="BM-" + a.id.hex[:8].upper(),
+        appointment_id=a.id,
+        doctor_name_ar=profile.name_ar,
+        doctor_name_fr=profile.name_fr,
+        start=utc_iso(a.start_utc),
+        amount_dzd=a.price_dzd,
+        method=a.method,
+        paid_at=utc_iso(a.paid_at),
+        payment_ref=ref,
     )
 
 
