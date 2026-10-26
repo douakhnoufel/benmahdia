@@ -1557,4 +1557,27 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get articleTopicMotivation => 'التحفيز';
+
+  @override
+  String get milestoneTitle => 'أحسنت!';
+
+  @override
+  String milestoneBody(int days, String name) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days يوم',
+      many: '$days يوماً',
+      few: '$days أيام',
+      two: 'يومان',
+      one: 'يوم كامل',
+    );
+    return '$_temp0 دون $name. خطوة حقيقية، واصل.';
+  }
+
+  @override
+  String get milestoneBadges => 'شاراتك في هذه المرحلة';
+
+  @override
+  String get milestoneContinue => 'متابعة';
 }

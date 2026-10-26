@@ -120,6 +120,7 @@ class ApiRecoveryRepository implements RecoveryRepository {
           _ => null,
         },
         goalDays: m['goal_days'] as int?,
+        milestoneSeen: m['milestone_seen'] as int? ?? 0,
         substance: m['substance'] as String?,
         reviewed: m['review_status'] == 'confirmed',
         start: DateTime.parse(m['clean_since'] as String).toLocal(),
@@ -182,6 +183,12 @@ class ApiRecoveryRepository implements RecoveryRepository {
           'v1/me/addictions/${addiction.id}/goal',
           body: {'days': days},
         ),
+      );
+
+  @override
+  Future<Addiction> markMilestoneSeen(Addiction addiction) async =>
+      _addictionFrom(
+        await _send('POST', 'v1/me/addictions/${addiction.id}/milestone/seen'),
       );
 
   // --- per-substance tracking (PRD 5.6) -------------------------------------

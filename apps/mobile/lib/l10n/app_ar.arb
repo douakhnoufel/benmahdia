@@ -640,5 +640,10 @@
   "articleTopicRelapse": "الوقاية من الانتكاس",
   "articleTopicMedication": "الأدوية",
   "articleTopicFamily": "العائلة والدعم",
-  "articleTopicMotivation": "التحفيز"
+  "articleTopicMotivation": "التحفيز",
+  "milestoneTitle": "أحسنت!",
+  "milestoneBody": "{days, plural, =1{يوم كامل} =2{يومان} few{{days} أيام} many{{days} يوماً} other{{days} يوم}} دون {name}. خطوة حقيقية، واصل.",
+  "@milestoneBody": {"placeholders": {"days": {"type": "int"}, "name": {"type": "String"}}},
+  "milestoneBadges": "شاراتك في هذه المرحلة",
+  "milestoneContinue": "متابعة"
 }

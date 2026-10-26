@@ -1585,4 +1585,24 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get articleTopicMotivation => 'Motivation';
+
+  @override
+  String get milestoneTitle => 'Bravo !';
+
+  @override
+  String milestoneBody(int days, String name) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days jours',
+      one: 'Une journée entière',
+    );
+    return '$_temp0 sans $name. C\'est un vrai pas, continuez.';
+  }
+
+  @override
+  String get milestoneBadges => 'Vos badges de cette série';
+
+  @override
+  String get milestoneContinue => 'Continuer';
 }

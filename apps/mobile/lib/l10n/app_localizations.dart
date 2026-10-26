@@ -2731,6 +2731,30 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'التحفيز'**
   String get articleTopicMotivation;
+
+  /// No description provided for @milestoneTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'أحسنت!'**
+  String get milestoneTitle;
+
+  /// No description provided for @milestoneBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'{days, plural, =1{يوم كامل} =2{يومان} few{{days} أيام} many{{days} يوماً} other{{days} يوم}} دون {name}. خطوة حقيقية، واصل.'**
+  String milestoneBody(int days, String name);
+
+  /// No description provided for @milestoneBadges.
+  ///
+  /// In ar, this message translates to:
+  /// **'شاراتك في هذه المرحلة'**
+  String get milestoneBadges;
+
+  /// No description provided for @milestoneContinue.
+  ///
+  /// In ar, this message translates to:
+  /// **'متابعة'**
+  String get milestoneContinue;
 }
 
 class _AppLocalizationsDelegate

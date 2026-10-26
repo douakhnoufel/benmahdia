@@ -445,5 +445,9 @@
   "articleTopicRelapse": "Prévenir la rechute",
   "articleTopicMedication": "Médicaments",
   "articleTopicFamily": "Famille et soutien",
-  "articleTopicMotivation": "Motivation"
+  "articleTopicMotivation": "Motivation",
+  "milestoneTitle": "Bravo !",
+  "milestoneBody": "{days, plural, =1{Une journée entière} other{{days} jours}} sans {name}. C'est un vrai pas, continuez.",
+  "milestoneBadges": "Vos badges de cette série",
+  "milestoneContinue": "Continuer"
 }
