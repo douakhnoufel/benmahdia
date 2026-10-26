@@ -1384,4 +1384,17 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get scanNotAlgerian => 'Seul le passeport algérien est accepté.';
+
+  @override
+  String get reminderTitle => 'Rappel';
+
+  @override
+  String reminderTomorrow(String time) {
+    return 'Votre rendez-vous est demain à $time.';
+  }
+
+  @override
+  String reminderSoon(String time) {
+    return 'Votre rendez-vous est dans une heure, à $time.';
+  }
 }

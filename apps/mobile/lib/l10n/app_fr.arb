@@ -385,5 +385,8 @@
   "selfieCheck": "La photo est-elle nette ?",
   "selfieUse": "Utiliser cette photo",
   "selfieCamPrivacy": "La photo est envoyée chiffrée, à votre médecin seulement.",
-  "scanNotAlgerian": "Seul le passeport algérien est accepté."
+  "scanNotAlgerian": "Seul le passeport algérien est accepté.",
+  "reminderTitle": "Rappel",
+  "reminderTomorrow": "Votre rendez-vous est demain à {time}.",
+  "reminderSoon": "Votre rendez-vous est dans une heure, à {time}."
 }

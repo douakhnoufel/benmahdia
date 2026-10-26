@@ -560,5 +560,22 @@
   "selfieCheck": "هل الصورة واضحة؟",
   "selfieUse": "استعمل هذه الصورة",
   "selfieCamPrivacy": "تُرسل الصورة مشفّرة إلى طبيبك فقط.",
-  "scanNotAlgerian": "نقبل جواز السفر الجزائري فقط."
+  "scanNotAlgerian": "نقبل جواز السفر الجزائري فقط.",
+  "reminderTitle": "تذكير",
+  "reminderTomorrow": "موعدك غدًا على الساعة {time}.",
+  "@reminderTomorrow": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderSoon": "موعدك بعد ساعة، على الساعة {time}.",
+  "@reminderSoon": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  }
 }

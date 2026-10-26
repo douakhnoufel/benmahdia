@@ -8,6 +8,7 @@ import '../../l10n/app_localizations.dart';
 import '../../theme/app_tokens.dart';
 import '../../widgets/flow_top_bar.dart';
 import '../../widgets/staggered_reveal.dart';
+import 'appointment_reminders.dart';
 import 'booking_format.dart';
 import 'booking_models.dart';
 import 'booking_repository.dart';
@@ -87,6 +88,7 @@ class _BookConfirmScreenState extends ConsumerState<BookConfirmScreen> {
       if (!mounted) return;
       _booked = true;
       _timer?.cancel();
+      unawaited(refreshReminders(ref, l10n, ask: true));
       widget.onDone(appointment);
     } on SlotUnavailable {
       // The server gave the slot back (the hold ran out): show the same
@@ -131,6 +133,7 @@ class _BookConfirmScreenState extends ConsumerState<BookConfirmScreen> {
       _booked = true;
       _poll?.cancel();
       _timer?.cancel();
+      unawaited(refreshReminders(ref, AppLocalizations.of(context), ask: true));
       widget.onDone(appointment);
     } on SlotUnavailable {
       _showExpired();

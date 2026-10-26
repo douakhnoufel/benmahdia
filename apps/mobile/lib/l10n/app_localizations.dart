@@ -2371,6 +2371,24 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'نقبل جواز السفر الجزائري فقط.'**
   String get scanNotAlgerian;
+
+  /// No description provided for @reminderTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تذكير'**
+  String get reminderTitle;
+
+  /// No description provided for @reminderTomorrow.
+  ///
+  /// In ar, this message translates to:
+  /// **'موعدك غدًا على الساعة {time}.'**
+  String reminderTomorrow(String time);
+
+  /// No description provided for @reminderSoon.
+  ///
+  /// In ar, this message translates to:
+  /// **'موعدك بعد ساعة، على الساعة {time}.'**
+  String reminderSoon(String time);
 }
 
 class _AppLocalizationsDelegate

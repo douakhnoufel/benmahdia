@@ -1358,4 +1358,17 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get scanNotAlgerian => 'نقبل جواز السفر الجزائري فقط.';
+
+  @override
+  String get reminderTitle => 'تذكير';
+
+  @override
+  String reminderTomorrow(String time) {
+    return 'موعدك غدًا على الساعة $time.';
+  }
+
+  @override
+  String reminderSoon(String time) {
+    return 'موعدك بعد ساعة، على الساعة $time.';
+  }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,6 +9,7 @@ import '../../widgets/staggered_reveal.dart';
 import 'booking_format.dart';
 import 'booking_models.dart';
 import 'booking_repository.dart';
+import 'appointment_reminders.dart';
 import 'booking_widgets.dart';
 
 /// The patient's upcoming and past appointments. An upcoming appointment can
@@ -42,7 +45,15 @@ class _MyAppointmentsScreenState extends ConsumerState<MyAppointmentsScreen> {
 
   Future<_Data> _load() async {
     final repo = ref.read(bookingRepositoryProvider);
+    final l10n = AppLocalizations.of(context);
     final (all, followUp) = await (repo.appointments(), repo.followUp()).wait;
+    // Each fresh list also rebuilds the 24 h / 1 h reminders on the phone.
+    unawaited(
+      ref
+          .read(appointmentRemindersProvider)
+          .sync(all, now: repo.now(), l10n: l10n)
+          .catchError((Object _) {}),
+    );
     return (all: all, followUp: followUp);
   }
 
