@@ -152,6 +152,7 @@ class FakeBookingRepository implements BookingRepository {
       status: AppointmentStatus.confirmed,
       priceDzd: hold.doctor.priceDzd,
       method: method,
+      paid: method.online,
     );
     _appointments.add(appointment);
     return appointment;
@@ -183,6 +184,23 @@ class FakeBookingRepository implements BookingRepository {
     return cancelled;
   }
 
+  @override
+  Future<Receipt> receipt(Appointment appointment) async {
+    if (!appointment.paid) {
+      throw const BookingRefused(BookingRefusal.notPaid);
+    }
+    return Receipt(
+      number: 'BM-${appointment.id.toUpperCase().padLeft(8, '0')}',
+      doctorNameAr: appointment.doctor.nameAr,
+      doctorNameFr: appointment.doctor.nameFr,
+      start: appointment.start,
+      amountDzd: appointment.priceDzd,
+      method: appointment.method,
+      paidAt: appointment.start.subtract(const Duration(days: 2)),
+      paymentRef: appointment.method.online ? 'chk_sample' : null,
+    );
+  }
+
   void _seed() {
     final t = now();
     Appointment at(int dayOffset, int hour, int minute, AppointmentStatus s) {
@@ -195,6 +213,7 @@ class FakeBookingRepository implements BookingRepository {
         status: s,
         priceDzd: sampleDoctor.priceDzd,
         method: PaymentMethod.edahabia,
+        paid: s != AppointmentStatus.awaitingPayment,
       );
     }
 

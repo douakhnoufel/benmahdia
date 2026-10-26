@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/app_route.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_tokens.dart';
 import '../../widgets/staggered_reveal.dart';
@@ -11,6 +12,7 @@ import 'booking_models.dart';
 import 'booking_repository.dart';
 import 'appointment_reminders.dart';
 import 'booking_widgets.dart';
+import 'receipt_screen.dart';
 
 /// The patient's upcoming and past appointments. An upcoming appointment can
 /// be cancelled until the notice period (24 h) starts. Under the upcoming
@@ -102,6 +104,15 @@ class _MyAppointmentsScreenState extends ConsumerState<MyAppointmentsScreen> {
     });
   }
 
+  void _openReceipt(Appointment appointment) => unawaited(
+    Navigator.of(context).push<void>(
+      appRoute(
+        ReceiptScreen(appointment: appointment),
+        reduced: AppMotion.reduced(context),
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -179,7 +190,12 @@ class _MyAppointmentsScreenState extends ConsumerState<MyAppointmentsScreen> {
                                   children: [
                                     for (var i = 0; i < items.length; i++) ...[
                                       if (i > 0) const Divider(),
-                                      _PastRow(appointment: items[i]),
+                                      _PastRow(
+                                        appointment: items[i],
+                                        onReceipt: items[i].paid
+                                            ? () => _openReceipt(items[i])
+                                            : null,
+                                      ),
                                     ],
                                   ],
                                 ),
@@ -195,6 +211,7 @@ class _MyAppointmentsScreenState extends ConsumerState<MyAppointmentsScreen> {
                                         a.start.difference(now) >= repo.notice,
                                     noticeHours: repo.notice.inHours,
                                     onCancel: () => _cancel(a),
+                                    onReceipt: () => _openReceipt(a),
                                   ),
                                 if (followUp != null && showFollowUp)
                                   _FollowUpCard(
@@ -413,12 +430,14 @@ class _UpcomingCard extends StatelessWidget {
     required this.canCancel,
     required this.noticeHours,
     required this.onCancel,
+    required this.onReceipt,
   });
 
   final Appointment appointment;
   final bool canCancel;
   final int noticeHours;
   final VoidCallback onCancel;
+  final VoidCallback onReceipt;
 
   @override
   Widget build(BuildContext context) {
@@ -471,6 +490,12 @@ class _UpcomingCard extends StatelessWidget {
               ),
             if (a.checkinCode case final code? when confirmed)
               _BookingCode(code: code),
+            if (a.paid)
+              TextButton.icon(
+                onPressed: onReceipt,
+                icon: const Icon(Icons.receipt_long_rounded),
+                label: Text(l10n.apptReceipt),
+              ),
             if (confirmed && canCancel)
               OutlinedButton(
                 style: OutlinedButton.styleFrom(
@@ -617,9 +642,12 @@ class _FollowUpCard extends StatelessWidget {
 }
 
 class _PastRow extends StatelessWidget {
-  const _PastRow({required this.appointment});
+  const _PastRow({required this.appointment, this.onReceipt});
 
   final Appointment appointment;
+
+  /// Opens the receipt; null when the visit was not paid.
+  final VoidCallback? onReceipt;
 
   @override
   Widget build(BuildContext context) {
@@ -666,6 +694,12 @@ class _PastRow extends StatelessWidget {
             ),
           ),
           StatusBadge(status: a.status),
+          if (onReceipt != null)
+            IconButton(
+              tooltip: l10n.apptReceipt,
+              onPressed: onReceipt,
+              icon: const Icon(Icons.receipt_long_rounded),
+            ),
         ],
       ),
     );

@@ -62,6 +62,9 @@ abstract interface class BookingRepository {
 
   /// Cancels [appointment]. Throws [TooLateToCancel] inside the notice.
   Future<Appointment> cancel(Appointment appointment);
+
+  /// The receipt of a paid [appointment] (PRD 4.4).
+  Future<Receipt> receipt(Appointment appointment);
 }
 
 /// The booking API when `API_BASE_URL` is set, otherwise sample data.

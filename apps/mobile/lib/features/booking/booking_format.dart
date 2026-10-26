@@ -31,6 +31,7 @@ extension BookingErrors on AppLocalizations {
   /// server's reason when it refused, otherwise a connection problem.
   String bookingError(BookingUnavailable error) => switch (error) {
     BookingRefused(reason: BookingRefusal.notVerified) => bookErrNotVerified,
+    BookingRefused(reason: BookingRefusal.notPaid) => receiptNotPaid,
     BookingRefused(reason: BookingRefusal.signedOut) => bookErrSignedOut,
     BookingRefused(reason: BookingRefusal.forbidden) => bookErrForbidden,
     BookingRefused(reason: BookingRefusal.doctorNotFound) => bookErrDoctorGone,

@@ -2389,6 +2389,72 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'موعدك بعد ساعة، على الساعة {time}.'**
   String reminderSoon(String time);
+
+  /// No description provided for @apptReceipt.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض الوصل'**
+  String get apptReceipt;
+
+  /// No description provided for @receiptTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'وصل الدفع'**
+  String get receiptTitle;
+
+  /// No description provided for @receiptNumber.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم الوصل'**
+  String get receiptNumber;
+
+  /// No description provided for @receiptDoctor.
+  ///
+  /// In ar, this message translates to:
+  /// **'الطبيب'**
+  String get receiptDoctor;
+
+  /// No description provided for @receiptVisit.
+  ///
+  /// In ar, this message translates to:
+  /// **'الموعد'**
+  String get receiptVisit;
+
+  /// No description provided for @receiptPaidOn.
+  ///
+  /// In ar, this message translates to:
+  /// **'تاريخ الدفع'**
+  String get receiptPaidOn;
+
+  /// No description provided for @receiptRef.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرجع الدفع'**
+  String get receiptRef;
+
+  /// No description provided for @receiptNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'وصل دفع، وليس فاتورة.'**
+  String get receiptNote;
+
+  /// No description provided for @receiptCopy.
+  ///
+  /// In ar, this message translates to:
+  /// **'نسخ الوصل'**
+  String get receiptCopy;
+
+  /// No description provided for @receiptCopied.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم نسخ الوصل'**
+  String get receiptCopied;
+
+  /// No description provided for @receiptNotPaid.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الموعد لم يُدفع بعد.'**
+  String get receiptNotPaid;
 }
 
 class _AppLocalizationsDelegate

@@ -388,5 +388,16 @@
   "scanNotAlgerian": "Seul le passeport algérien est accepté.",
   "reminderTitle": "Rappel",
   "reminderTomorrow": "Votre rendez-vous est demain à {time}.",
-  "reminderSoon": "Votre rendez-vous est dans une heure, à {time}."
+  "reminderSoon": "Votre rendez-vous est dans une heure, à {time}.",
+  "apptReceipt": "Voir le reçu",
+  "receiptTitle": "Reçu de paiement",
+  "receiptNumber": "N° de reçu",
+  "receiptDoctor": "Médecin",
+  "receiptVisit": "Rendez-vous",
+  "receiptPaidOn": "Payé le",
+  "receiptRef": "Référence du paiement",
+  "receiptNote": "Reçu de paiement, pas une facture.",
+  "receiptCopy": "Copier le reçu",
+  "receiptCopied": "Reçu copié",
+  "receiptNotPaid": "Ce rendez-vous n'est pas encore payé."
 }

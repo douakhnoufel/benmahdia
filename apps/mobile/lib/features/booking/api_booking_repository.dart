@@ -137,6 +137,7 @@ class ApiBookingRepository implements BookingRepository {
       'too_late_to_cancel' => const TooLateToCancel(),
       'not_a_hold' || 'appointment_not_found' => const SlotUnavailable(),
       'not_verified' => const BookingRefused(BookingRefusal.notVerified),
+      'not_paid' => const BookingRefused(BookingRefusal.notPaid),
       'token_invalid' ||
       'not_authenticated' => const BookingRefused(BookingRefusal.signedOut),
       'forbidden' => const BookingRefused(BookingRefusal.forbidden),
@@ -207,6 +208,7 @@ class ApiBookingRepository implements BookingRepository {
     priceDzd: json['price_dzd'] as int,
     method: _method(json['method'] as String?),
     checkinCode: json['checkin_code'] as String?,
+    paid: json['paid'] as bool? ?? false,
   );
 
   // --- repository -----------------------------------------------------------
@@ -333,4 +335,21 @@ class ApiBookingRepository implements BookingRepository {
     await _send('POST', 'v1/appointments/${appointment.id}/cancel')
         as Map<String, dynamic>,
   );
+
+  @override
+  Future<Receipt> receipt(Appointment appointment) async {
+    final json =
+        await _send('GET', 'v1/appointments/${appointment.id}/receipt')
+            as Map<String, dynamic>;
+    return Receipt(
+      number: json['number'] as String,
+      doctorNameAr: json['doctor_name_ar'] as String,
+      doctorNameFr: json['doctor_name_fr'] as String,
+      start: _parse(json['start'] as String),
+      amountDzd: json['amount_dzd'] as int,
+      method: _method(json['method'] as String?),
+      paidAt: _parse(json['paid_at'] as String),
+      paymentRef: json['payment_ref'] as String?,
+    );
+  }
 }

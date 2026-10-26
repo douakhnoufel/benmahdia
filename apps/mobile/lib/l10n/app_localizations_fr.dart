@@ -1397,4 +1397,37 @@ class AppLocalizationsFr extends AppLocalizations {
   String reminderSoon(String time) {
     return 'Votre rendez-vous est dans une heure, à $time.';
   }
+
+  @override
+  String get apptReceipt => 'Voir le reçu';
+
+  @override
+  String get receiptTitle => 'Reçu de paiement';
+
+  @override
+  String get receiptNumber => 'N° de reçu';
+
+  @override
+  String get receiptDoctor => 'Médecin';
+
+  @override
+  String get receiptVisit => 'Rendez-vous';
+
+  @override
+  String get receiptPaidOn => 'Payé le';
+
+  @override
+  String get receiptRef => 'Référence du paiement';
+
+  @override
+  String get receiptNote => 'Reçu de paiement, pas une facture.';
+
+  @override
+  String get receiptCopy => 'Copier le reçu';
+
+  @override
+  String get receiptCopied => 'Reçu copié';
+
+  @override
+  String get receiptNotPaid => 'Ce rendez-vous n\'est pas encore payé.';
 }

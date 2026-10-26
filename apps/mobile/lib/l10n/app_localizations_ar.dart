@@ -1371,4 +1371,37 @@ class AppLocalizationsAr extends AppLocalizations {
   String reminderSoon(String time) {
     return 'موعدك بعد ساعة، على الساعة $time.';
   }
+
+  @override
+  String get apptReceipt => 'عرض الوصل';
+
+  @override
+  String get receiptTitle => 'وصل الدفع';
+
+  @override
+  String get receiptNumber => 'رقم الوصل';
+
+  @override
+  String get receiptDoctor => 'الطبيب';
+
+  @override
+  String get receiptVisit => 'الموعد';
+
+  @override
+  String get receiptPaidOn => 'تاريخ الدفع';
+
+  @override
+  String get receiptRef => 'مرجع الدفع';
+
+  @override
+  String get receiptNote => 'وصل دفع، وليس فاتورة.';
+
+  @override
+  String get receiptCopy => 'نسخ الوصل';
+
+  @override
+  String get receiptCopied => 'تم نسخ الوصل';
+
+  @override
+  String get receiptNotPaid => 'هذا الموعد لم يُدفع بعد.';
 }

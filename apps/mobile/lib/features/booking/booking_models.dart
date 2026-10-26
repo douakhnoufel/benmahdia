@@ -109,6 +109,7 @@ class Appointment {
     required this.priceDzd,
     required this.method,
     this.checkinCode,
+    this.paid = false,
   });
 
   final String id;
@@ -122,6 +123,9 @@ class Appointment {
   /// The 6-character booking code the patient gives at the front desk
   /// (PRD 4.3). The server sends it only once the appointment is confirmed.
   final String? checkinCode;
+
+  /// Paid by card, or marked paid at the clinic: a [Receipt] is available.
+  final bool paid;
 
   /// Whether it still lies ahead and is not cancelled.
   bool isUpcoming(DateTime now) =>
@@ -138,7 +142,42 @@ class Appointment {
     priceDzd: priceDzd,
     method: method,
     checkinCode: checkinCode,
+    paid: paid,
   );
+}
+
+/// Proof of payment for one paid appointment (PRD 4.4). A payment receipt,
+/// not a tax invoice; it carries no medical content.
+class Receipt {
+  const Receipt({
+    required this.number,
+    required this.doctorNameAr,
+    required this.doctorNameFr,
+    required this.start,
+    required this.amountDzd,
+    required this.method,
+    required this.paidAt,
+    this.paymentRef,
+  });
+
+  /// Short reference, e.g. BM-1A2B3C4D.
+  final String number;
+  final String doctorNameAr;
+  final String doctorNameFr;
+
+  /// Appointment start, clinic time.
+  final DateTime start;
+  final int amountDzd;
+  final PaymentMethod method;
+
+  /// When it was paid, clinic time.
+  final DateTime paidAt;
+
+  /// Chargily's payment id for a card payment; null when paid at the clinic.
+  final String? paymentRef;
+
+  String doctorName(String languageCode) =>
+      languageCode == 'ar' ? doctorNameAr : doctorNameFr;
 }
 
 /// The next visit the app suggests: [days] days after the patient's latest
@@ -180,6 +219,9 @@ class BookingUnavailable implements Exception {
 enum BookingRefusal {
   /// `not_verified`: the ID is not approved yet.
   notVerified,
+
+  /// `not_paid`: no receipt yet.
+  notPaid,
 
   /// `token_invalid`, `not_authenticated`: the session ran out.
   signedOut,

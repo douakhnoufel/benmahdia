@@ -577,5 +577,16 @@
         "type": "String"
       }
     }
-  }
+  },
+  "apptReceipt": "عرض الوصل",
+  "receiptTitle": "وصل الدفع",
+  "receiptNumber": "رقم الوصل",
+  "receiptDoctor": "الطبيب",
+  "receiptVisit": "الموعد",
+  "receiptPaidOn": "تاريخ الدفع",
+  "receiptRef": "مرجع الدفع",
+  "receiptNote": "وصل دفع، وليس فاتورة.",
+  "receiptCopy": "نسخ الوصل",
+  "receiptCopied": "تم نسخ الوصل",
+  "receiptNotPaid": "هذا الموعد لم يُدفع بعد."
 }
