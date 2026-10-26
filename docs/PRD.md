@@ -140,7 +140,7 @@ After signing in, the patient goes to **Complete your profile**: scan their **Al
 - **Follow-up:** after a visit, the app suggests the next one about 30 days later and opens the calendar on that day; the patient can pick an earlier or later day. A follow-up costs the same as any appointment.
 - **Pilot payment:** until Chargily is wired, the app confirms only "pay at the clinic" appointments; card payments are confirmed solely by the signed webhook, never by the app.
 - **Statuses:** requested → awaiting payment → confirmed → completed / cancelled / no-show / rescheduled. An unpaid hold is released after a short timeout (e.g. 15 min, to confirm).
-- **Reminders:** push notification 24 h and 1 h before; doctor sees a daily agenda.
+- **Reminders:** 24 h and 1 h before each confirmed appointment, scheduled on the phone like medication reminders (they work offline and nothing passes through Apple or Google push servers). The lock-screen text shows only the time — no doctor or clinic name. The app rebuilds them each time it loads the appointments, so a cancelled visit loses its reminders; it asks for notification permission after the first booking. The doctor sees a daily agenda.
 - **Booking code and check-in:** each confirmed appointment gets a short code (6 characters, no look-alike letters) shown to the patient as text and a QR. At the front desk the doctor or secretary enters it in the dashboard's **Today** page, which marks the patient **arrived** and reminds staff to check the original ID card. A code works only for the doctor's own confirmed appointments on the clinic day, a repeat check-in changes nothing, and 10 wrong codes in 10 minutes lock the box for that account for a while. The QR card on the phone is not built yet: the dashboard takes the typed code.
 - **History:** patient sees past and upcoming appointments; doctor sees attendance rate per patient.
 - **Doctor notes** after each appointment (private, never visible to the patient or the AI unless the doctor chooses).
@@ -156,9 +156,9 @@ After signing in, the patient goes to **Complete your profile**: scan their **Al
 The patient pays for each appointment in the app through Chargily Pay; a slot is confirmed only once it is paid.
 
 - **Methods:** CIB and Edahabia cards through Chargily Pay (Algerian gateway, amounts in DZD).
-- **Flow:** patient picks a slot → slot is held → Chargily checkout opens → Chargily sends a signed webhook to the backend → appointment becomes confirmed and both sides are notified.
+- **Flow:** patient picks a slot → slot is held → Chargily checkout opens → Chargily sends a signed webhook to the backend → appointment becomes confirmed and both sides are notified: the patient in the app, the doctor by a dashboard alert (also when the patient cancels). Alerts carry no medical content.
 - **Price:** set per doctor by the super admin.
-- **Receipts:** the patient sees a receipt in the app; the doctor and super admin see paid / unpaid status per appointment.
+- **Receipts:** the patient sees a receipt in the app for each paid appointment (reference number, doctor, time, amount, method, payment date, Chargily reference for cards) and can copy it as text. It is a payment receipt, not a tax invoice. The doctor and super admin see paid / unpaid status per appointment.
 - **Cancellations and refunds:** deadline, refund or credit, and no-show rules to decide with the clinic.
 - **Security:** the app never sees or stores card numbers; only Chargily's payment id and status are kept.
 
@@ -497,7 +497,7 @@ The five flows below are what the backend, the patient app and the dashboard mus
 
 1. The patient picks a free 5–15 min slot; the slot is held for 15 min (one open hold per patient).
 2. Chargily checkout opens (CIB / Edahabia).
-3. The backend verifies Chargily's webhook → the appointment is confirmed → both sides are notified; reminders go out 24 h and 1 h before.
+3. The backend verifies Chargily's webhook → the appointment is confirmed → both sides are notified; reminders go out 24 h and 1 h before, scheduled on the phone.
 4. After the visit the doctor marks it completed or no-show and can add a private note.
 
 ### 12.3 Daily recovery loop
