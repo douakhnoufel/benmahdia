@@ -9,6 +9,7 @@ import '../../l10n/app_localizations.dart';
 import '../../theme/app_tokens.dart';
 import '../../widgets/app_mark.dart';
 import '../../widgets/staggered_reveal.dart';
+import '../articles/articles_screen.dart';
 import '../booking/booking_models.dart';
 import '../booking/booking_repository.dart';
 import '../booking/booking_widgets.dart';
@@ -526,6 +527,16 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  // Articles can be read at any time (PRD 5.5), so the
+                  // way in stays here even while tracking is locked.
+                  IconButton(
+                    onPressed: () => openArticles(context),
+                    tooltip: l10n.articlesTitle,
+                    icon: const Icon(
+                      Icons.menu_book_rounded,
+                      color: AppColors.teal700,
                     ),
                   ),
                 ],

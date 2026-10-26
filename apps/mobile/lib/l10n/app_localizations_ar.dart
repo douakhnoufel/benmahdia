@@ -1511,4 +1511,50 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get reminderHabitOwn => 'حان وقت عادتك.';
+
+  @override
+  String get articlesTitle => 'مقالات';
+
+  @override
+  String get articlesAll => 'الكل';
+
+  @override
+  String get articlesSaved => 'المحفوظة';
+
+  @override
+  String get articlesNone => 'لا توجد مقالات في هذا القسم بعد.';
+
+  @override
+  String get articlesNoneSaved =>
+      'لم تحفظ أي مقال بعد. اضغط على العلامة داخل المقال لحفظه.';
+
+  @override
+  String get articleSave => 'حفظ المقال';
+
+  @override
+  String get articleUnsave => 'إزالة من المحفوظة';
+
+  @override
+  String get articleSavedLabel => 'محفوظ';
+
+  @override
+  String get articleSaveFailed => 'تعذّر الحفظ. حاول مجددا.';
+
+  @override
+  String get articleTopicAddiction => 'فهم الإدمان';
+
+  @override
+  String get articleTopicCravings => 'الرغبة والمحفّزات';
+
+  @override
+  String get articleTopicRelapse => 'الوقاية من الانتكاس';
+
+  @override
+  String get articleTopicMedication => 'الأدوية';
+
+  @override
+  String get articleTopicFamily => 'العائلة والدعم';
+
+  @override
+  String get articleTopicMotivation => 'التحفيز';
 }

@@ -625,5 +625,20 @@
   "reminderDailyCheck": "حان وقت تذكيرك اليومي.",
   "reminderHabit": "حان وقت: {habit}",
   "@reminderHabit": {"placeholders": {"habit": {"type": "String"}}},
-  "reminderHabitOwn": "حان وقت عادتك."
+  "reminderHabitOwn": "حان وقت عادتك.",
+  "articlesTitle": "مقالات",
+  "articlesAll": "الكل",
+  "articlesSaved": "المحفوظة",
+  "articlesNone": "لا توجد مقالات في هذا القسم بعد.",
+  "articlesNoneSaved": "لم تحفظ أي مقال بعد. اضغط على العلامة داخل المقال لحفظه.",
+  "articleSave": "حفظ المقال",
+  "articleUnsave": "إزالة من المحفوظة",
+  "articleSavedLabel": "محفوظ",
+  "articleSaveFailed": "تعذّر الحفظ. حاول مجددا.",
+  "articleTopicAddiction": "فهم الإدمان",
+  "articleTopicCravings": "الرغبة والمحفّزات",
+  "articleTopicRelapse": "الوقاية من الانتكاس",
+  "articleTopicMedication": "الأدوية",
+  "articleTopicFamily": "العائلة والدعم",
+  "articleTopicMotivation": "التحفيز"
 }

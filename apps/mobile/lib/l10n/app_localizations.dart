@@ -2641,6 +2641,96 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'حان وقت عادتك.'**
   String get reminderHabitOwn;
+
+  /// No description provided for @articlesTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مقالات'**
+  String get articlesTitle;
+
+  /// No description provided for @articlesAll.
+  ///
+  /// In ar, this message translates to:
+  /// **'الكل'**
+  String get articlesAll;
+
+  /// No description provided for @articlesSaved.
+  ///
+  /// In ar, this message translates to:
+  /// **'المحفوظة'**
+  String get articlesSaved;
+
+  /// No description provided for @articlesNone.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد مقالات في هذا القسم بعد.'**
+  String get articlesNone;
+
+  /// No description provided for @articlesNoneSaved.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تحفظ أي مقال بعد. اضغط على العلامة داخل المقال لحفظه.'**
+  String get articlesNoneSaved;
+
+  /// No description provided for @articleSave.
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ المقال'**
+  String get articleSave;
+
+  /// No description provided for @articleUnsave.
+  ///
+  /// In ar, this message translates to:
+  /// **'إزالة من المحفوظة'**
+  String get articleUnsave;
+
+  /// No description provided for @articleSavedLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'محفوظ'**
+  String get articleSavedLabel;
+
+  /// No description provided for @articleSaveFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر الحفظ. حاول مجددا.'**
+  String get articleSaveFailed;
+
+  /// No description provided for @articleTopicAddiction.
+  ///
+  /// In ar, this message translates to:
+  /// **'فهم الإدمان'**
+  String get articleTopicAddiction;
+
+  /// No description provided for @articleTopicCravings.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرغبة والمحفّزات'**
+  String get articleTopicCravings;
+
+  /// No description provided for @articleTopicRelapse.
+  ///
+  /// In ar, this message translates to:
+  /// **'الوقاية من الانتكاس'**
+  String get articleTopicRelapse;
+
+  /// No description provided for @articleTopicMedication.
+  ///
+  /// In ar, this message translates to:
+  /// **'الأدوية'**
+  String get articleTopicMedication;
+
+  /// No description provided for @articleTopicFamily.
+  ///
+  /// In ar, this message translates to:
+  /// **'العائلة والدعم'**
+  String get articleTopicFamily;
+
+  /// No description provided for @articleTopicMotivation.
+  ///
+  /// In ar, this message translates to:
+  /// **'التحفيز'**
+  String get articleTopicMotivation;
 }
 
 class _AppLocalizationsDelegate

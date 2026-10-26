@@ -1539,4 +1539,50 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reminderHabitOwn => 'C\'est l\'heure de votre habitude.';
+
+  @override
+  String get articlesTitle => 'Articles';
+
+  @override
+  String get articlesAll => 'Tous';
+
+  @override
+  String get articlesSaved => 'Enregistrés';
+
+  @override
+  String get articlesNone => 'Pas encore d\'article dans cette rubrique.';
+
+  @override
+  String get articlesNoneSaved =>
+      'Aucun article enregistré. Touchez le marque-page dans un article pour le garder.';
+
+  @override
+  String get articleSave => 'Enregistrer l\'article';
+
+  @override
+  String get articleUnsave => 'Retirer des enregistrés';
+
+  @override
+  String get articleSavedLabel => 'Enregistré';
+
+  @override
+  String get articleSaveFailed => 'Enregistrement impossible. Réessayez.';
+
+  @override
+  String get articleTopicAddiction => 'Comprendre l\'addiction';
+
+  @override
+  String get articleTopicCravings => 'Envies et déclencheurs';
+
+  @override
+  String get articleTopicRelapse => 'Prévenir la rechute';
+
+  @override
+  String get articleTopicMedication => 'Médicaments';
+
+  @override
+  String get articleTopicFamily => 'Famille et soutien';
+
+  @override
+  String get articleTopicMotivation => 'Motivation';
 }
