@@ -2,10 +2,12 @@
 
 Checks the PRD 3 role matrix on every recovery route that takes an id or a
 patient id: a patient reaches only their own rows, and another patient's id
-answers exactly like a random one; a doctor reaches clinical data (addictions,
-checks, habits, goals, medications, alerts) only for their own patients; an
-unpaid hold, the super admin and a patient token open nothing; audit rows and
-logs carry row ids only. Fake data only: test phones 06612345NN, the seeded
+answers exactly like a random one; every doctor of the clinic (the super admin
+too) reaches the clinical data of every clinic patient, a patient with a
+booked visit, and opening a colleague's patient file is audited; a patient
+with only an unpaid hold, or no booking, is unknown to every doctor; an
+account without a doctor profile and a patient token open nothing; audit rows
+and logs carry row ids only. Fake data only: test phones 06612345NN, the seeded
 doctor plus test doctors, and placeholder words (QA-SUBST-A, QA-DRUG-A...)
 instead of real substances, drugs or notes.
 
@@ -33,16 +35,19 @@ from app.jobs import run_once
 from app.models import (
     Addiction,
     AddictionCheck,
+    AddictionType,
     Alert,
     AppointmentStatus,
     AuditLog,
     DailyCheck,
     DoseLog,
     Habit,
+    HabitKind,
     HabitLog,
     Medication,
     Relapse,
     Role,
+    SubstanceProfile,
     User,
 )
 
@@ -455,54 +460,86 @@ def test_extra_fields_cannot_set_review_or_medication_fields(client, sms):
 # --- R-83 / R-86 / R-88 / R-02: doctors without a paid visit ---------------------------
 
 
-def _foreign_actor(client, w: World, actor: str) -> dict:
-    victim = w.pb
-    if actor == "other_doctor":
-        return w.ha
-    if actor == "super_admin":
-        return w.hadmin
-    if actor == "hold_only":
-        add_appointment(w.doc_a, victim.id, MONDAY_9, status=AppointmentStatus.awaiting_payment,
-                        hold_expires_at=clock.now() + timedelta(minutes=10), method=None)
-        return w.ha
-    if actor == "expired_hold":
-        add_appointment(w.doc_a, victim.id, MONDAY_9, status=AppointmentStatus.awaiting_payment,
-                        hold_expires_at=clock.now() - timedelta(minutes=1), method=None)
-        return w.ha
-    raise AssertionError(actor)
+def _audit_rows(actor: uuid.UUID) -> list[AuditLog]:
+    with Session(engine) as db:
+        return list(db.scalars(select(AuditLog).where(
+            AuditLog.actor_id == actor, AuditLog.action == "patient_file.opened")))
 
 
-@pytest.mark.parametrize("actor", ["other_doctor", "super_admin", "hold_only", "expired_hold"])
-def test_doctor_without_a_paid_visit_reaches_none_of_the_patients_clinical_data(client, sms, actor):
-    """Patient B belongs to doctor B. Doctor A (also with an unpaid hold, live
-    or expired) and the super admin get, on every clinical route, exactly the
-    answer a random patient id gets, see nothing of B and change nothing."""
+@pytest.mark.parametrize("actor", ["other_doctor", "super_admin"])
+def test_every_doctor_of_the_clinic_reaches_a_clinic_patients_clinical_data(client, sms, actor):
+    """QA R-83 / R-86 / R-88 / R-02 and SEC-02, re-baselined to the shared
+    clinic rule (PRD 3). Patient B has a booked visit with doctor B only.
+    Doctor A, and the super admin (who holds the Doctor role), read and manage
+    B's clinical data on every route, and each opening is audited."""
     w = world(client, sms)
     victim = w.pb
-    h = _foreign_actor(client, w, actor)
+    h, who = (w.ha, w.doc_a) if actor == "other_doctor" else (w.hadmin, w.admin)
+    assert _audit_rows(who) == []
+    reads = ""
+    for method, path, body in STAFF_CLINICAL:
+        r = _call(client, method, fill(path, victim), body, h)
+        assert r.status_code < 300, (path, r.text)
+        if method == "get":
+            reads += r.text
+    assert f"QA-SUBST-{victim.tag}" in reads and f"QA-DRUG-{victim.tag}" in reads
+    read = client.post(f"/v1/staff/alerts/{victim.alert}/read", headers=h)
+    assert read.status_code == 200 and read.json()["read"] is True
+    listed = client.get("/v1/staff/alerts", headers=h)
+    assert victim.alert in listed.text  # every doctor sees every alert
+    rows = _audit_rows(who)
+    assert len(rows) == len(STAFF_CLINICAL)
+    assert {r.target for r in rows} == {str(victim.id)}  # ids only
+
+
+def _unbooked_patient(client, sms, phone: str, hold: str, w: World) -> Patient:
+    """A patient who has entered recovery data (and has a prescription row)
+    but holds no booked visit anywhere: no appointment, an unpaid hold, or an
+    expired one. Not a clinic patient (PRD 3)."""
+    s = verified_patient(client, sms, phone)
+    pid = user_id(phone)
+    if hold == "live_hold":
+        add_appointment(w.doc_a, pid, MONDAY_9, status=AppointmentStatus.awaiting_payment,
+                        hold_expires_at=clock.now() + timedelta(minutes=10), method=None)
+    elif hold == "expired_hold":
+        add_appointment(w.doc_a, pid, MONDAY_9, status=AppointmentStatus.awaiting_payment,
+                        hold_expires_at=clock.now() - timedelta(minutes=1), method=None)
+    # Recovery is locked until a booked visit, so the rows go straight in.
+    with Session(engine) as db:
+        add = Addiction(patient_id=pid, type=AddictionType.tobacco, profile=SubstanceProfile.nicotine,
+                        substance="QA-SUBST-U", sobriety_start=datetime(2026, 10, 7, 18, 0))
+        habit = Habit(patient_id=pid, kind=HabitKind.custom, text="QA-HABIT-U")
+        med = Medication(patient_id=pid, prescribed_by=w.doc_b, name="QA-DRUG-U", amount="QA-AMOUNT-U",
+                         times=["08:00"], start_date=date(2026, 10, 10), instructions="QA-INSTR-U")
+        db.add_all([add, habit, med])
+        db.commit()
+        addiction, habit_id, medication = str(add.id), str(habit.id), str(med.id)
+    return Patient("U", phone, s, pid, w.doc_b, addiction, habit_id, medication, RANDOM_ID)
+
+
+@pytest.mark.parametrize("hold", ["no_booking", "live_hold", "expired_hold"])
+@pytest.mark.parametrize("actor", ["doctor_a", "doctor_b", "super_admin"])
+def test_a_patient_without_a_booked_visit_is_unknown_to_every_doctor(client, sms, actor, hold):
+    """QA R-83 / R-88 / R-02, re-baselined (PRD 3: a clinic patient has a booked
+    visit, not an unpaid hold). A patient with no booking, a live hold or an
+    expired hold answers every doctor, and the super admin, on every clinical
+    route exactly as a random id does, and nothing changes or is audited."""
+    w = world(client, sms)
+    victim = _unbooked_patient(client, sms, "0661234513", hold, w)
+    h, who = {"doctor_a": (w.ha, w.doc_a), "doctor_b": (w.hb, w.doc_b),
+              "super_admin": (w.hadmin, w.admin)}[actor]
     before = state(victim.id)
     for method, path, body in STAFF_CLINICAL:
         theirs = _call(client, method, fill(path, victim), body, h)
         random = _call(client, method, fill(path, victim, p=RANDOM_ID), body, h)
         assert theirs.status_code == 404, (path, theirs.text)
         assert reply(theirs) == reply(random), path
-    read = client.post(f"/v1/staff/alerts/{victim.alert}/read", headers=h)
-    assert reply(read) == reply(client.post(f"/v1/staff/alerts/{RANDOM_ID}/read", headers=h))
-    assert read.status_code == 404
-    listed = ""
-    for path in ("/v1/staff/alerts", "/v1/staff/alerts?unread=true", "/v1/staff/patients"):
-        r = client.get(path, headers=h)
-        assert r.status_code == 200
-        listed += r.text
-    assert no_secrets(listed, victim) == []
+    listed = client.get("/v1/staff/patients", headers=h)
+    assert listed.status_code == 200
+    assert str(victim.id) not in listed.text
+    assert [s for s in clinical_secrets(victim)[:5] if s in listed.text] == []
     assert state(victim.id) == before
-    # The patient's new events still reach their own doctor only (the hold
-    # does not make doctor A the recipient).
-    assert client.post(f"/v1/me/addictions/{victim.addiction}/relapses", json={}, headers=victim.headers).status_code == 201
-    run_alert_jobs()
-    with Session(engine) as db:
-        doctors = set(db.scalars(select(Alert.doctor_id).where(Alert.patient_id == victim.id)))
-    assert doctors == {w.doc_b}
+    assert _audit_rows(who) == []
 
 
 def test_own_patient_path_with_another_patients_row_ids_looks_unknown(client, sms):
@@ -534,9 +571,9 @@ def test_the_patients_own_doctor_reaches_every_route(client, sms):
 def test_screens_outside_the_patient_file_carry_no_clinical_content(client, sms):
     """The clinic-wide agenda, the patient list, the sign-ups queue and the
     alerts, for the super admin and for doctor A: nothing of patient B's
-    clinical rows and no clinical field (B's visit itself may show: agendas
-    are shared clinic-wide, PRD 3). Doctor A's own patient file carries
-    nothing of B's either."""
+    clinical rows and no clinical field (B's visit itself and B's alert row,
+    ids and type only, may show: agendas and alerts are shared clinic-wide,
+    PRD 3). Doctor A's own patient file carries nothing of B's either."""
     w = world(client, sms)
     run_alert_jobs()
     screens = ("/v1/staff/agenda", "/v1/staff/agenda?day=2026-10-14", "/v1/staff/agenda?day=2026-10-19",
@@ -545,7 +582,8 @@ def test_screens_outside_the_patient_file_carry_no_clinical_content(client, sms)
         for path in screens:
             r = client.get(path, headers=h)
             assert r.status_code == 200, (path, r.text)
-            assert [s for s in clinical_secrets(w.pb) if s in r.text] == [], path
+            # B's alert id is an id on a shared alert list, not clinical content.
+            assert [s for s in clinical_secrets(w.pb) if s in r.text and s != w.pb.alert] == [], path
             assert clinical_keys(r.json()) == [], path
     agenda = client.get("/v1/staff/agenda?day=2026-10-14", headers=w.hadmin).json()
     assert {str(w.pa.id), str(w.pb.id)} <= {x["patient_id"] for x in agenda}  # the sweep saw B's visit
@@ -601,32 +639,37 @@ def test_super_admin_without_a_doctor_profile_is_refused_everywhere(client, sms)
 # --- R-87 / R-96 / R-100: alerts ----------------------------------------------------------
 
 
-def test_each_doctor_lists_and_marks_only_their_own_patients_alerts(client, sms):
+def test_every_doctor_lists_and_marks_every_patients_alerts(client, sms):
+    """QA R-87 / R-96 / R-100 and SEC-02, re-baselined (PRD 3: alerts go to
+    every doctor of the clinic). Doctor A, doctor B and the super admin each
+    list both patients' alerts, carrying no medical content, and any of them
+    can mark any alert read. An unknown alert id is 404."""
     w = world(client, sms)
     run_alert_jobs()
-    for h, own, other in ((w.ha, w.pa, w.pb), (w.hb, w.pb, w.pa)):
+    for h in (w.ha, w.hb, w.hadmin):
         for path in ("/v1/staff/alerts", "/v1/staff/alerts?unread=true"):
             r = client.get(path, headers=h)
             assert r.status_code == 200
-            assert {x["patient_id"] for x in r.json()} == {str(own.id)}, path
-            assert {x["type"] for x in r.json()} >= {"relapse", "missed_doses", "milestone"}
-            assert no_secrets(r.text, other) == []
+            assert {x["patient_id"] for x in r.json()} == {str(w.pa.id), str(w.pb.id)}, path
+            for p in (w.pa, w.pb):
+                assert {x["type"] for x in r.json() if x["patient_id"] == str(p.id)} >= {
+                    "relapse", "missed_doses", "milestone"}
             for x in r.json():
                 assert set(x) == {"id", "patient_id", "patient_phone", "type", "priority", "read", "created_at"}
-            # Alerts carry no medical content of the doctor's own patient either.
-            assert [s for s in own.secrets()[:6] if s in r.text] == []
-    assert client.get("/v1/staff/alerts", headers=w.hadmin).json() == []
+            # Alerts carry no medical content, whoever the patient is.
+            for p in (w.pa, w.pb):
+                assert [s for s in p.secrets()[:6] if s in r.text] == []
     with Session(engine) as db:
         for p in (w.pa, w.pb):
             assert set(db.scalars(select(Alert.doctor_id).where(Alert.patient_id == p.id))) == {p.doctor_id}
-    # Doctor A and the super admin cannot mark doctor B's alert read.
-    for h in (w.ha, w.hadmin):
-        theirs = client.post(f"/v1/staff/alerts/{w.pb.alert}/read", headers=h)
-        assert theirs.status_code == 404
-        assert reply(theirs) == reply(client.post(f"/v1/staff/alerts/{RANDOM_ID}/read", headers=h))
+    missing = client.post(f"/v1/staff/alerts/{RANDOM_ID}/read", headers=w.ha)
+    assert missing.status_code == 404
+    # Doctor A marks doctor B's patient's alert read; it is read for everyone.
+    assert client.post(f"/v1/staff/alerts/{w.pb.alert}/read", headers=w.ha).json()["read"] is True
     with Session(engine) as db:
-        assert db.get(Alert, uuid.UUID(w.pb.alert)).read is False
-    assert client.post(f"/v1/staff/alerts/{w.pb.alert}/read", headers=w.hb).json()["read"] is True
+        assert db.get(Alert, uuid.UUID(w.pb.alert)).read is True
+    unread = {x["id"] for x in client.get("/v1/staff/alerts?unread=true", headers=w.hb).json()}
+    assert w.pb.alert not in unread
 
 
 # --- R-90 / R-06 / R-91: tokens and roles -------------------------------------------------
@@ -752,16 +795,23 @@ def test_no_recovery_content_reaches_the_logs(client, sms, caplog):
     assert '"craving"' not in text and "irritab" not in text
 
 
-@pytest.mark.xfail(strict=True, reason="QA SEC-06: a doctor reading a patient's clinical data writes no audit row; PRD 8.3 audits who viewed patient data")
-def test_a_doctor_reading_clinical_data_is_audited(client, sms):
+def test_opening_a_colleagues_patient_file_is_audited_with_ids_only(client, sms):
+    """QA SEC-06, re-baselined to the PRD 3 rule: a doctor opening a colleague's
+    patient file writes one patient_file.opened row (actor and patient ids,
+    nothing else); opening their own patient's file writes none."""
     w = world(client, sms)
-    with Session(engine) as db:
-        before = db.query(AuditLog).filter(AuditLog.actor_id == w.doc_a).count()
-    for method, path, body in STAFF_READS:
+    for method, path, body in STAFF_READS:  # doctor A on A's own patient
         assert _call(client, method, fill(path, w.pa), body, w.ha).status_code == 200
-    with Session(engine) as db:
-        after = db.query(AuditLog).filter(AuditLog.actor_id == w.doc_a).count()
-    assert after - before >= len(STAFF_READS)
+    assert _audit_rows(w.doc_a) == []
+    for method, path, body in STAFF_READS:  # doctor A on B's patient
+        assert _call(client, method, fill(path, w.pb), body, w.ha).status_code == 200
+    rows = _audit_rows(w.doc_a)
+    assert len(rows) == len(STAFF_READS)
+    for row in rows:
+        assert (row.actor_id, row.target) == (w.doc_a, str(w.pb.id))
+        text = f"{row.action} {row.target} {row.ip}"
+        assert [s for s in w.pb.secrets()[:6] if s in text] == []
+    assert _audit_rows(w.doc_b) == []  # B reading B's own patient: nothing
 
 
 # --- R-54: two first saves of one check at the same time ------------------------------------
@@ -836,49 +886,60 @@ def test_two_real_simultaneous_first_saves_of_a_check_are_not_a_500(client, sms)
     assert set(outcomes) <= {204, 409}, outcomes
 
 
-# --- SEC-02 (known, carried): every doctor with a non-hold booking is "own" -------------
+# --- SEC-02, re-baselined: every clinic doctor reads and manages a clinic patient -------
 
 
 def _second_doctor_booking(w: World, status, start=MONDAY_9) -> None:
     add_appointment(w.doc_b, w.pa.id, start, status=status)
 
 
-@pytest.mark.xfail(strict=True, reason="QA SEC-02: two doctors with a paid booking both read the patient's recovery data (checks, habits, goals, medications)")
-def test_sec02_two_paid_doctors_do_not_both_read_recovery_data(client, sms):
+def test_sec02_two_paid_doctors_both_read_recovery_data(client, sms):
+    """QA SEC-02 under PRD 3: two doctors with a paid booking both read the
+    patient's recovery data (checks, habits, goals, medications)."""
     w = world(client, sms)
     _second_doctor_booking(w, AppointmentStatus.confirmed)
-    readers = 0
     for h in (w.ha, w.hb):
-        readers += any(_call(client, m, fill(p, w.pa), b, h).status_code == 200 for m, p, b in STAFF_READS)
-    assert readers <= 1
+        for m, p, b in STAFF_READS:
+            assert _call(client, m, fill(p, w.pa), b, h).status_code == 200, p
 
 
-@pytest.mark.xfail(strict=True, reason="QA SEC-02: a second doctor with a paid booking can stop the prescriber's medicine")
-def test_sec02_second_doctor_cannot_stop_another_doctors_prescription(client, sms):
+def test_sec02_second_doctor_can_stop_another_doctors_prescription(client, sms):
+    """QA SEC-02 under PRD 3: any doctor of the clinic manages the clinic
+    patient's medicines, so a second doctor stops the prescriber's medicine
+    (the row stays, inactive, with the prescriber's id)."""
     w = world(client, sms)
     _second_doctor_booking(w, AppointmentStatus.confirmed)
     r = client.delete(f"/v1/staff/patients/{w.pa.id}/medications/{w.pa.medication}", headers=w.hb)
-    assert r.status_code in (403, 404)
+    assert r.status_code == 204
+    with Session(engine) as db:
+        m = db.get(Medication, uuid.UUID(w.pa.medication))
+        assert (m.active, m.prescribed_by) == (False, w.doc_a)
 
 
-@pytest.mark.xfail(strict=True, reason="QA SEC-02: a doctor whose only appointment with the patient was cancelled reads the patient's recovery data")
-def test_sec02_a_cancelled_booking_opens_no_clinical_data(client, sms):
+def test_sec02_a_cancelled_booking_leaves_a_clinic_patient_open_to_every_doctor(client, sms):
+    """QA SEC-02 under PRD 3: the patient has a completed visit, so is a clinic
+    patient; a second doctor whose own booking was cancelled reads the data
+    like any colleague (and the opening is audited)."""
     w = world(client, sms)
     _second_doctor_booking(w, AppointmentStatus.cancelled)
     for method, path, body in STAFF_READS:
         r = _call(client, method, fill(path, w.pa), body, w.hb)
-        assert r.status_code == 404, path
+        assert r.status_code == 200, path
 
 
-@pytest.mark.xfail(strict=True, reason="QA SEC-02: a relapse alert goes to the doctor of the latest-starting booking (a cancelled one, or a future one the patient has not had yet), not to the doctor who saw the patient and prescribes")
 @pytest.mark.parametrize("status", [AppointmentStatus.cancelled, AppointmentStatus.confirmed])
-def test_sec02_a_relapse_alert_stays_with_the_patients_doctor(client, sms, status):
+def test_sec02_a_relapse_alert_reaches_every_doctor(client, sms, status):
+    """QA SEC-02 under PRD 3: whatever the second doctor's booking, the new
+    relapse alert and the nightly ones are in both doctors' lists."""
     w = world(client, sms)
     _second_doctor_booking(w, status)
     assert client.post(f"/v1/me/addictions/{w.pa.addiction}/relapses", json={}, headers=w.pa.headers).status_code == 201
     run_alert_jobs()
+    lists = []
+    for h in (w.ha, w.hb):
+        r = client.get("/v1/staff/alerts", headers=h)
+        assert r.status_code == 200
+        lists.append(sorted(x["id"] for x in r.json() if x["patient_id"] == str(w.pa.id)))
+    assert lists[0] == lists[1] != []
     with Session(engine) as db:
-        recipients = db.scalars(select(Alert.doctor_id).where(Alert.patient_id == w.pa.id)).all()
-    # The setup relapse went to doctor A; the new relapse and the nightly
-    # alerts must too: doctor B never had a visit with this patient.
-    assert w.doc_b not in recipients
+        assert db.scalar(select(Alert.id).where(Alert.patient_id == w.pa.id, Alert.type == "relapse")) is not None
