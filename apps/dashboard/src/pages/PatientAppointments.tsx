@@ -15,6 +15,12 @@ function notable(v: Visit): boolean {
   return v.mine && ['confirmed', 'completed', 'no_show'].includes(v.status) && new Date(v.start).getTime() <= Date.now();
 }
 
+/** The doctor writes on their own visits; a colleague's shared note is read only. */
+function noteButton(v: Visit): 'noteAdd' | 'noteOpen' | 'noteRead' | null {
+  if (notable(v)) return v.has_note ? 'noteOpen' : 'noteAdd';
+  return !v.mine && v.has_note ? 'noteRead' : null;
+}
+
 /** The patient's visits in the clinic, newest first, and how many they
  * attended (PRD 4.3). Other doctors' visits are booking data only. On their
  * own past visits, the doctor writes a private note. */
@@ -22,9 +28,9 @@ export function PatientAppointments({ patientId }: { patientId: string }) {
   const { t } = useI18n();
   const { load, reload, setLoad } = useLoad(() => api.patientAppointments(patientId), [patientId]);
 
-  function noted(id: string, has: boolean) {
+  function noted(id: string, has: boolean, shared: boolean) {
     if (load.state !== 'ready') return;
-    const appointments = load.data.appointments.map((v) => (v.id === id ? { ...v, has_note: has } : v));
+    const appointments = load.data.appointments.map((v) => (v.id === id ? { ...v, has_note: has, note_shared: has && shared } : v));
     setLoad({ state: 'ready', data: { ...load.data, appointments } });
   }
 
@@ -42,7 +48,7 @@ export function PatientAppointments({ patientId }: { patientId: string }) {
             ) : (
               <ul className="flex flex-col">
                 {load.data.appointments.map((v) => (
-                  <VisitRow key={v.id} visit={v} onNoted={(has) => noted(v.id, has)} />
+                  <VisitRow key={v.id} visit={v} onNoted={(has, shared) => noted(v.id, has, shared)} />
                 ))}
               </ul>
             )}
@@ -63,7 +69,7 @@ function Attendance({ completed, no_show, rate }: { completed: number; no_show: 
   );
 }
 
-function VisitRow({ visit, onNoted }: { visit: Visit; onNoted: (has: boolean) => void }) {
+function VisitRow({ visit, onNoted }: { visit: Visit; onNoted: (has: boolean, shared: boolean) => void }) {
   const { t, lang, date, time } = useI18n();
   const [editing, setEditing] = useState(false);
   const [receipt, setReceipt] = useState(false);
@@ -82,9 +88,9 @@ function VisitRow({ visit, onNoted }: { visit: Visit; onNoted: (has: boolean) =>
               {t(receipt ? 'close' : 'receipt')}
             </Button>
           )}
-          {notable(visit) && !editing && (
+          {noteButton(visit) && !editing && (
             <Button variant="secondary" onClick={() => setEditing(true)}>
-              {t(visit.has_note ? 'noteOpen' : 'noteAdd')}
+              {t(noteButton(visit)!)}
             </Button>
           )}
         </div>
@@ -95,11 +101,12 @@ function VisitRow({ visit, onNoted }: { visit: Visit; onNoted: (has: boolean) =>
   );
 }
 
-function NoteEditor({ appointmentId, onClose, onNoted }: { appointmentId: string; onClose: () => void; onNoted: (has: boolean) => void }) {
+function NoteEditor({ appointmentId, onClose, onNoted }: { appointmentId: string; onClose: () => void; onNoted: (has: boolean, shared: boolean) => void }) {
   const { t, date } = useI18n();
   const { load, reload } = useLoad(() => api.note(appointmentId), [appointmentId]);
   const [text, setText] = useState('');
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  const [shared, setShared] = useState(false);
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<'saved' | 'failed' | null>(null);
 
@@ -107,6 +114,7 @@ function NoteEditor({ appointmentId, onClose, onNoted }: { appointmentId: string
     if (load.state === 'ready') {
       setText(load.data.text ?? '');
       setUpdatedAt(load.data.updated_at);
+      setShared(load.data.shared);
     }
   }, [load]);
 
@@ -115,10 +123,11 @@ function NoteEditor({ appointmentId, onClose, onNoted }: { appointmentId: string
     setBusy(true);
     setOutcome(null);
     try {
-      const saved = await api.saveNote(appointmentId, text);
+      const saved = await api.saveNote(appointmentId, text, shared);
       setText(saved.text ?? '');
       setUpdatedAt(saved.updated_at);
-      onNoted(saved.text !== null);
+      setShared(saved.shared);
+      onNoted(saved.text !== null, saved.shared);
       setOutcome('saved');
     } catch {
       setOutcome('failed');
@@ -129,9 +138,18 @@ function NoteEditor({ appointmentId, onClose, onNoted }: { appointmentId: string
 
   if (load.state === 'loading') return <Loading />;
   if (load.state === 'error') return <Failed onRetry={reload} />;
+  if (!load.data.mine) {
+    return (
+      <div className="flex flex-col gap-sm rounded-field bg-sand-50 p-md">
+        <Notice>{t('noteSharedNotice')}</Notice>
+        <p className="whitespace-pre-wrap text-body text-ink-strong">{load.data.text}</p>
+        <div><Button variant="ghost" onClick={onClose}>{t('close')}</Button></div>
+      </div>
+    );
+  }
   return (
     <form onSubmit={submit} className="flex flex-col gap-sm rounded-field bg-sand-50 p-md">
-      <Notice>{t('notePrivacy')}</Notice>
+      <Notice>{t(shared ? 'noteSharedOwn' : 'notePrivacy')}</Notice>
       <label className="flex flex-col gap-xs text-label text-ink-strong">
         {t('noteLabel')}
         <textarea
@@ -144,6 +162,10 @@ function NoteEditor({ appointmentId, onClose, onNoted }: { appointmentId: string
             setOutcome(null);
           }}
         />
+      </label>
+      <label className="flex items-center gap-sm text-body text-ink-strong">
+        <input type="checkbox" checked={shared} onChange={(e) => { setShared(e.target.checked); setOutcome(null); }} />
+        {t('noteShare')}
       </label>
       <span className="text-caption text-ink-muted">
         {updatedAt ? `${fill(t('noteUpdated'), { date: date(updatedAt) })} · ` : ''}

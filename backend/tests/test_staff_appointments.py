@@ -45,6 +45,7 @@ def test_lists_every_visit_newest_first_with_attendance(client, patient):
         "id": str(upcoming.id), "start": "2026-10-20T08:00:00Z", "end": "2026-10-20T08:15:00Z",
         "status": "confirmed", "doctor_name_ar": "د. بن مهدية حسين", "doctor_name_fr": "Dr Benmahdia Hocine",
         "mine": True, "paid": False, "method": "clinic", "price_dzd": 2000, "has_note": False,
+        "note_shared": False,
     }
     assert (visits[2]["mine"], visits[2]["doctor_name_fr"], visits[2]["method"]) == (False, "Dr Autre", "cib")
 
@@ -58,13 +59,12 @@ def test_no_rate_before_the_first_past_visit(client, patient):
     assert len(body["appointments"]) == 1
 
 
-def test_only_for_the_doctors_own_patients(client, patient):
+def test_open_to_every_doctor_for_a_clinic_patient(client, patient):
     doctor_with_password()
     other = other_doctor()
     _, pid = patient
     add_appointment(other, pid, datetime(2026, 10, 20, 8, 0))
-    r = client.get(url(pid), headers=doc_headers(client))
-    assert (r.status_code, r.json()["detail"]["code"]) == (404, "patient_not_found")
+    assert client.get(url(pid), headers=doc_headers(client)).status_code == 200
     assert client.get(url(pid), headers=doc_headers(client, OTHER)).status_code == 200
     r = client.get(url("00000000-0000-0000-0000-000000000000"), headers=doc_headers(client))
     assert r.status_code == 404

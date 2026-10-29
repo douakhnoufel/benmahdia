@@ -39,10 +39,10 @@ def history(client, headers=None):
 def test_write_and_read_a_note(client, visit):
     _, _, a = visit
     h = doc_headers(client)
-    assert client.get(note_url(a.id), headers=h).json() == {"text": None, "updated_at": None}
+    assert client.get(note_url(a.id), headers=h).json() == {"text": None, "updated_at": None, "shared": False, "mine": True}
     r = client.put(note_url(a.id), json={"text": f"  {TEXT}  "}, headers=h)
     assert r.status_code == 200, r.text
-    assert r.json() == {"text": TEXT, "updated_at": "2026-10-17T18:00:00Z"}
+    assert r.json() == {"text": TEXT, "updated_at": "2026-10-17T18:00:00Z", "shared": False, "mine": True}
     assert client.get(note_url(a.id), headers=h).json()["text"] == TEXT
     assert history(client, h)[0]["has_note"] is True
 
@@ -63,7 +63,7 @@ def test_update_then_delete_with_empty_text(client, visit):
     assert client.put(note_url(a.id), json={"text": TEXT}, headers=h).json()["text"] == TEXT
     with Session(engine) as db:
         assert db.query(AppointmentNote).count() == 1
-    assert client.put(note_url(a.id), json={"text": "   "}, headers=h).json() == {"text": None, "updated_at": None}
+    assert client.put(note_url(a.id), json={"text": "   "}, headers=h).json() == {"text": None, "updated_at": None, "shared": False, "mine": True}
     with Session(engine) as db:
         assert db.query(AppointmentNote).count() == 0
     assert history(client, h)[0]["has_note"] is False
@@ -71,7 +71,7 @@ def test_update_then_delete_with_empty_text(client, visit):
     assert client.put(note_url(a.id), json={"text": ""}, headers=h).status_code == 200
 
 
-def test_only_the_visits_own_doctor(client, visit):
+def test_a_private_note_is_only_for_the_visits_own_doctor(client, visit):
     _, _, a = visit
     other = other_doctor()
     client.put(note_url(a.id), json={"text": TEXT}, headers=doc_headers(client))
@@ -84,6 +84,37 @@ def test_only_the_visits_own_doctor(client, visit):
     assert TEXT not in str(history(client, theirs))
     assert [v["has_note"] for v in history(client, theirs)] == [False, False]
     assert client.get(note_url(a.id), headers=doc_headers(client)).json()["text"] == TEXT
+
+
+def test_a_shared_note_is_read_only_for_the_other_doctors(client, visit):
+    _, _, a = visit
+    other = other_doctor()
+    mine = doc_headers(client)
+    add_appointment(other, user_id(), datetime(2026, 10, 13, 8, 0), status=AppointmentStatus.completed)
+    theirs = doc_headers(client, "other@example.invalid")
+    r = client.put(note_url(a.id), json={"text": TEXT, "shared": True}, headers=mine)
+    assert r.json()["shared"] is True
+    seen = client.get(note_url(a.id), headers=theirs).json()
+    assert (seen["text"], seen["shared"], seen["mine"]) == (TEXT, True, False)
+    assert client.put(note_url(a.id), json={"text": "x"}, headers=theirs).status_code == 404
+    flags = {v["id"]: (v["has_note"], v["note_shared"]) for v in history(client, theirs)}
+    assert flags[str(a.id)] == (True, True)
+    with Session(engine) as db:
+        assert db.scalar(select(AuditLog).where(AuditLog.action == "appointment.note_read")) is not None
+    # Taking the share back makes it private again.
+    client.put(note_url(a.id), json={"text": TEXT, "shared": False}, headers=mine)
+    assert client.get(note_url(a.id), headers=theirs).status_code == 404
+
+
+def test_opening_a_colleagues_patient_file_is_audited_by_id_only(client, visit):
+    _, _, a = visit
+    other = other_doctor()
+    client.get(f"/v1/staff/patients/{user_id()}/medications", headers=doc_headers(client, "other@example.invalid"))
+    client.get(f"/v1/staff/patients/{user_id()}/medications", headers=doc_headers(client))
+    with Session(engine) as db:
+        rows = db.scalars(select(AuditLog).where(AuditLog.action == "patient_file.opened")).all()
+    assert [str(r.target) for r in rows] == [str(user_id())]
+    assert str(rows[0].actor_id) == str(other)
 
 
 def test_needs_a_doctor(client, visit):

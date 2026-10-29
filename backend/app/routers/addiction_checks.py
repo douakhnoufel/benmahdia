@@ -27,7 +27,7 @@ from ..models import (
 )
 from ..substances import PROFILES, SIGNALS, Text, signals_of
 from .checkins import DAYS_AHEAD, DAYS_BACK, LIST_DAYS
-from .medications import _own_patient
+from .medications import clinic_patient
 from .recovery import _own, patient
 from .staff import current_doctor
 from .staff_recovery import StaffAddictionOut, _addiction_out
@@ -216,7 +216,7 @@ class ProfileIn(BaseModel):
 def _patient_addiction(
     db: Session, doctor: DoctorProfile, patient_id: uuid.UUID, addiction_id: uuid.UUID
 ) -> Addiction:
-    user = _own_patient(db, doctor, patient_id)
+    user = clinic_patient(db, doctor, patient_id)
     a = db.get(Addiction, addiction_id)
     if a is None or a.patient_id != user.id or not a.active:
         raise ApiError(404, "addiction_not_found")

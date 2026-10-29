@@ -161,12 +161,13 @@ export type Visit = {
   paid: boolean;
   method: 'edahabia' | 'cib' | 'clinic' | null;
   price_dzd: number;
-  /** Only ever true on the doctor's own visits. */
+  /** The doctor's own note, or a colleague's note its author shared. */
   has_note: boolean;
+  note_shared: boolean;
 };
 
-/** The doctor's private note after a visit; never shown to the patient or the AI. */
-export type Note = { text: string | null; updated_at: string | null };
+/** The doctor's note after a visit; private unless shared. Never shown to the patient or the AI. */
+export type Note = { text: string | null; updated_at: string | null; shared: boolean; mine: boolean };
 
 /** rate = completed / (completed + no_show); null before the first past visit. */
 export type VisitHistory = {
@@ -386,8 +387,8 @@ export const api = {
   payments: (from: string, to: string) => request<Payments>('GET', `v1/staff/payments?from=${from}&to=${to}`),
   note: (appointmentId: string) => request<Note>('GET', `v1/staff/appointments/${appointmentId}/note`),
   /** Empty text deletes the note. */
-  saveNote: (appointmentId: string, text: string) =>
-    request<Note>('PUT', `v1/staff/appointments/${appointmentId}/note`, { text }),
+  saveNote: (appointmentId: string, text: string, shared: boolean) =>
+    request<Note>('PUT', `v1/staff/appointments/${appointmentId}/note`, { text, shared }),
   patientAddictions: (patientId: string) =>
     request<PatientAddiction[]>('GET', `v1/staff/patients/${patientId}/addictions`),
   reviewAddiction: (patientId: string, addictionId: string, decision: 'confirm' | 'reject') =>

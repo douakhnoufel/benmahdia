@@ -37,6 +37,7 @@ const visit: Visit = {
   method: 'clinic',
   price_dzd: 2000,
   has_note: false,
+  note_shared: false,
 };
 
 const history: VisitHistory = {
@@ -101,10 +102,10 @@ describe('Patient file: appointments', () => {
   });
 });
 
-describe('Patient file: private notes', () => {
+describe('Patient file: notes', () => {
   const past: Visit = { ...visit, id: 'a9', start: '2026-10-12T08:00:00Z', status: 'completed', paid: true };
 
-  function backend(note: { text: string | null; updated_at: string | null }) {
+  function backend(note: { text: string | null; updated_at: string | null; shared?: boolean; mine?: boolean }) {
     const calls: { url: URL; init: RequestInit }[] = [];
     vi.stubGlobal(
       'fetch',
@@ -112,10 +113,13 @@ describe('Patient file: private notes', () => {
         calls.push({ url: input, init });
         if (input.pathname.endsWith('/note')) {
           if (init.method === 'PUT') {
-            const text = (JSON.parse(init.body as string).text as string).trim();
-            return new Response(JSON.stringify(text ? { text, updated_at: '2026-10-29T10:00:00Z' } : { text: null, updated_at: null }));
+            const body = JSON.parse(init.body as string) as { text: string; shared: boolean };
+            const text = body.text.trim();
+            return new Response(
+              JSON.stringify(text ? { text, updated_at: '2026-10-29T10:00:00Z', shared: body.shared, mine: true } : { text: null, updated_at: null, shared: false, mine: true }),
+            );
           }
-          return new Response(JSON.stringify(note));
+          return new Response(JSON.stringify({ shared: false, mine: true, ...note }));
         }
         const future = { ...visit, start: '2999-01-01T08:00:00Z' };
         const theirs = { ...past, id: 'a8', mine: false, doctor_name_fr: 'Dr Autre' };
@@ -143,13 +147,13 @@ describe('Patient file: private notes', () => {
     renderIn();
     const region = await card();
     await userEvent.click(await within(region).findByRole('button', { name: 'Ajouter une note' }));
-    expect(await within(region).findByText('Visible par vous seul. Jamais montrée au patient ni à l’assistant IA.')).toBeInTheDocument();
-    await userEvent.type(within(region).getByLabelText('Note privée'), 'Revoir le sommeil');
+    expect(await within(region).findByText('Privée : visible par vous seul. Jamais montrée au patient ni à l’assistant IA.')).toBeInTheDocument();
+    await userEvent.type(within(region).getByLabelText('Note'), 'Revoir le sommeil');
     await userEvent.click(within(region).getByRole('button', { name: 'Enregistrer' }));
     expect(await within(region).findByRole('status')).toHaveTextContent('Enregistré.');
     const put = calls.find((c) => c.init.method === 'PUT')!;
     expect(put.url.pathname).toBe('/v1/staff/appointments/a9/note');
-    expect(JSON.parse(put.init.body as string)).toEqual({ text: 'Revoir le sommeil' });
+    expect(JSON.parse(put.init.body as string)).toEqual({ text: 'Revoir le sommeil', shared: false });
     await userEvent.click(within(region).getByRole('button', { name: 'Fermer' }));
     expect(within(region).getByRole('button', { name: 'Voir la note' })).toBeInTheDocument();
   });
@@ -161,7 +165,7 @@ describe('Patient file: private notes', () => {
     const row = within(region).getAllByRole('listitem')[1];
     expect(row).toHaveTextContent('Voir la note');
     await userEvent.click(within(row).getByRole('button', { name: 'Voir la note' }));
-    const box = await within(region).findByLabelText('Note privée');
+    const box = await within(region).findByLabelText('Note');
     expect(box).toHaveValue('Sevrage bien toléré');
     expect(within(region).getByText(/Modifiée le 12 octobre 2026/)).toBeInTheDocument();
     await userEvent.clear(box);
@@ -171,19 +175,51 @@ describe('Patient file: private notes', () => {
     expect(within(row).getByRole('button', { name: 'Ajouter une note' })).toBeInTheDocument();
   });
 
+  it('shares a note with the clinic’s doctors when the box is ticked', async () => {
+    const calls = backend({ text: null, updated_at: null });
+    renderIn();
+    const region = await card();
+    await userEvent.click(await within(region).findByRole('button', { name: 'Ajouter une note' }));
+    await userEvent.type(await within(region).findByLabelText('Note'), 'Revoir le sommeil');
+    await userEvent.click(within(region).getByRole('checkbox', { name: 'Partager avec les médecins de la clinique' }));
+    expect(within(region).getByText(/^Partagée : visible par tous les médecins/)).toBeInTheDocument();
+    await userEvent.click(within(region).getByRole('button', { name: 'Enregistrer' }));
+    await within(region).findByRole('status');
+    const put = calls.find((c) => c.init.method === 'PUT')!;
+    expect(JSON.parse(put.init.body as string)).toEqual({ text: 'Revoir le sommeil', shared: true });
+  });
+
+  it('shows a colleague’s shared note read only', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: URL) => {
+        if (input.pathname.endsWith('/note'))
+          return new Response(JSON.stringify({ text: 'Bonne réponse au traitement', updated_at: '2026-10-12T10:00:00Z', shared: true, mine: false }));
+        const theirs = { ...past, id: 'a8', mine: false, doctor_name_fr: 'Dr Autre', has_note: true, note_shared: true };
+        return new Response(JSON.stringify({ attendance: { completed: 1, no_show: 0, rate: 1 }, appointments: [theirs] }));
+      }),
+    );
+    renderIn();
+    const region = await card();
+    await userEvent.click(await within(region).findByRole('button', { name: 'Lire la note' }));
+    expect(await within(region).findByText('Bonne réponse au traitement')).toBeInTheDocument();
+    expect(within(region).getByText('Note partagée par un confrère : lecture seule.')).toBeInTheDocument();
+    expect(within(region).queryByRole('button', { name: 'Enregistrer' })).toBeNull();
+  });
+
   it('says when saving failed', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async (input: URL, init: RequestInit) => {
         if (init.method === 'PUT') return new Response(JSON.stringify({ detail: { code: 'not_started' } }), { status: 409 });
-        if (input.pathname.endsWith('/note')) return new Response(JSON.stringify({ text: null, updated_at: null }));
+        if (input.pathname.endsWith('/note')) return new Response(JSON.stringify({ text: null, updated_at: null, shared: false, mine: true }));
         return new Response(JSON.stringify({ attendance: { completed: 1, no_show: 0, rate: 1 }, appointments: [past] }));
       }),
     );
     renderIn();
     const region = await card();
     await userEvent.click(await within(region).findByRole('button', { name: 'Ajouter une note' }));
-    await userEvent.type(await within(region).findByLabelText('Note privée'), 'x');
+    await userEvent.type(await within(region).findByLabelText('Note'), 'x');
     await userEvent.click(within(region).getByRole('button', { name: 'Enregistrer' }));
     expect(await within(region).findByRole('alert')).toHaveTextContent('Enregistrement impossible. Réessayez.');
   });

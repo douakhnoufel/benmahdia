@@ -8,7 +8,7 @@ Six features are missing, plus one bug found while reading the code.
 Rules that apply to every step (CLAUDE.md):
 
 - Arabic RTL + French for every new string; colors, fonts and spacing only from design tokens.
-- Schedule data (who has a visit when) is clinic-wide. Clinical data (notes) only for the doctor's own patients. Enforced in the API.
+- Schedule data (who has a visit when) is clinic-wide. Clinical data is clinic-wide too (decision of 2026-10-29); a note is private to its author unless shared. Enforced in the API.
 - No medical content in alerts, logs or the audit log (audit stores row ids only).
 - Tests for every new endpoint, including the isolation cases (other doctor, patient token, no token).
 - One small commit per step.
@@ -114,7 +114,7 @@ agenda hides them on purpose.
 ## Step 5 — Appointment history + attendance in the patient file (PRD 4.3: "doctor sees attendance rate per patient")
 
 - Backend: `GET /v1/staff/patients/{id}/appointments` → all of the patient's appointments in the clinic (schedule data), newest first: time, doctor, status, paid, method, price, `mine`, `has_note` (own appointments only). Plus `attendance`: completed, no-shows, rate = completed / (completed + no-shows), `null` when there are none.
-- Only for the doctor's own patients (same rule as the rest of the patient file), else 404.
+- Any doctor of the clinic opens the patient file; a note is private to its author unless the author shares it (then read only for the others).
 - Dashboard: "Appointments" card in `PatientDetail` with the attendance rate on top and the list below.
 - Tests: rate math, other doctor's patient → 404, holds not listed.
 

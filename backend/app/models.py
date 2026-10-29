@@ -18,6 +18,7 @@ from sqlalchemy import (
     UniqueConstraint,
     Uuid,
     event,
+    false,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -324,9 +325,10 @@ class Appointment(Base):
 
 
 class AppointmentNote(Base):
-    """The doctor's private note after a visit (PRD 4.3). Encrypted at rest
-    with its own key; only the visit's own doctor reads it. Never shown to
-    the patient or the AI, never logged."""
+    """The doctor's note after a visit (PRD 4.3). Encrypted at rest with its
+    own key. Private by default: only the visit's own doctor reads it; the
+    author may share it with the clinic's other doctors. Never shown to the
+    patient or the AI, never logged."""
 
     __tablename__ = "appointment_notes"
 
@@ -338,6 +340,8 @@ class AppointmentNote(Base):
         ForeignKey("doctor_profiles.user_id", ondelete="CASCADE"), index=True
     )
     text_enc: Mapped[bytes] = mapped_column(LargeBinary)
+    # False: only the author reads it. True: every doctor of the clinic does.
+    shared: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 

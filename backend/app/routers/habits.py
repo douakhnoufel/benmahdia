@@ -19,7 +19,7 @@ from ..habits import HABITS
 from ..models import DoctorProfile, Habit, HabitKind, HabitLog, User
 from .addiction_checks import TextOut, _text
 from .checkins import _HHMM, DAYS_AHEAD, DAYS_BACK, LIST_DAYS
-from .medications import _own_patient
+from .medications import clinic_patient
 from .recovery import patient
 from .staff import current_doctor
 
@@ -237,7 +237,7 @@ def patient_habits(
     db: Session = Depends(get_db),
 ) -> list[HabitSummaryOut]:
     """Each active habit with the days it was done in the last [days]."""
-    user = _own_patient(db, doctor, patient_id)
+    user = clinic_patient(db, doctor, patient_id)
     today = _today()
     start = today - timedelta(days=days - 1)
     result = []

@@ -169,7 +169,7 @@ def test_card_payments_are_set_only_by_chargily(client, sms):
 # --- patients -----------------------------------------------------------------------
 
 
-def test_patients_are_only_those_who_booked_with_me(client, sms):
+def test_patients_are_everyone_with_a_visit_in_the_clinic(client, sms):
     doc = doctor_with_password()
     other = other_doctor()
     verified_patient(client, sms, "0661111111")
@@ -178,8 +178,9 @@ def test_patients_are_only_those_who_booked_with_me(client, sms):
                     status=AppointmentStatus.completed)
     add_appointment(doc.user_id, user_id("0661111111"), MONDAY_9)
     add_appointment(other, user_id("0662222222"), MONDAY_9)
-    [p] = client.get("/v1/staff/patients", headers=doc_headers(client)).json()
-    assert p["phone"] == "+213661111111"
+    rows = {p["phone"]: p for p in client.get("/v1/staff/patients", headers=doc_headers(client)).json()}
+    assert set(rows) == {"+213661111111", "+213662222222"}
+    p = rows["+213661111111"]
     assert (p["visits"], p["last_visit"], p["next_visit"]) == (1, "2026-09-01T08:00:00Z", "2026-10-19T08:00:00Z")
 
 

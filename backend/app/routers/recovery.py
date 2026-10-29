@@ -243,7 +243,7 @@ def set_goal(
 def _doctor_of(db: Session, patient_id: uuid.UUID) -> uuid.UUID | None:
     """The doctor the patient last booked with. Patients have no other link
     to a doctor yet; with none, nobody is alerted. An unpaid hold does not
-    count, as in _own_patient: that doctor cannot see the patient's file."""
+    count, as in clinic_patient: it does not make someone a clinic patient."""
     return db.scalar(
         select(Appointment.doctor_id)
         .where(

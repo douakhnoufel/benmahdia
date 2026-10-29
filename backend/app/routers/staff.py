@@ -1,6 +1,6 @@
 """Doctor dashboard API (PRD 7, MVP). Every doctor sees the clinic-wide
-agenda (booking data only, no clinical fields); patients and clinical data stay
-per doctor (PRD 3). No 2FA yet: to add before launch (PRD 4.1)."""
+agenda and every clinic patient's file (PRD 3: one clinic, shared files).
+No 2FA yet: to add before launch (PRD 4.1)."""
 
 import uuid
 from datetime import date, datetime, timedelta, timezone
@@ -370,13 +370,11 @@ def set_paid(
 def patients(
     doctor: DoctorProfile = Depends(current_doctor), db: Session = Depends(get_db)
 ) -> list[PatientOut]:
-    """Patients who booked with this doctor, most recent activity first."""
+    """The clinic's patients (a booked visit with any doctor), most recent
+    activity first."""
     now = clock.now()
     rows = db.scalars(
-        select(Appointment).where(
-            Appointment.doctor_id == doctor.user_id,
-            Appointment.status != AppointmentStatus.awaiting_payment,
-        )
+        select(Appointment).where(Appointment.status != AppointmentStatus.awaiting_payment)
     ).all()
     by_patient: dict[uuid.UUID, list[Appointment]] = {}
     for a in rows:

@@ -198,19 +198,21 @@ def test_doctor_sees_days_done_out_of_30(client, sms):
     ]
 
 
-def test_other_doctor_cannot_see_habits(client, sms):
+def test_other_doctor_of_the_clinic_sees_habits(client, sms):
     _, s = setup(client, sms)
     habit(client, s)
     other_doctor()
     other = login(client, "other@example.invalid").json()
     url = f"/v1/staff/patients/{s['user']['id']}/habits"
-    assert client.get(url, headers=bearer(other)).status_code == 404
+    assert client.get(url, headers=bearer(other)).status_code == 200
     assert client.get(url, headers=bearer(s)).status_code == 403
     assert client.get(url).status_code == 401
 
 
-def test_unknown_patient_habits_not_found(client, sms):
+def test_clinic_patient_habits_open_and_unknown_not_found(client, sms):
     doc, _ = setup(client, sms)
-    stranger = unlocked(client, sms, "0771234567")  # booked with another doctor
+    stranger = unlocked(client, sms, "0771234567")  # booked with another doctor: a clinic patient
     r = client.get(f"/v1/staff/patients/{stranger['user']['id']}/habits", headers=bearer(doc))
+    assert r.status_code == 200
+    r = client.get("/v1/staff/patients/00000000-0000-0000-0000-000000000000/habits", headers=bearer(doc))
     assert r.status_code == 404

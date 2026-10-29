@@ -163,8 +163,7 @@ def test_relapse_alerts_the_patients_doctor_without_medical_content(client, sms)
 
 
 def test_relapse_alert_skips_a_doctor_the_patient_only_holds_a_slot_with(client, sms):
-    # An unpaid hold does not make someone the patient's doctor (as in
-    # _own_patient), so the alert goes to the doctor of the paid visit.
+    # An unpaid hold does not make someone the patient's doctor, so the alert goes to the doctor of the paid visit.
     from app.models import AppointmentStatus
 
     from .test_staff import other_doctor
