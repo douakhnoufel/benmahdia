@@ -533,7 +533,6 @@ def test_a_failing_job_logs_no_medical_content(client, sms, caplog, monkeypatch)
         assert word not in caplog.text, word
 
 
-@pytest.mark.xfail(strict=True, reason="QA ALERT-02: a database error on a recovery write carries the answers into the server log")
 def test_a_database_error_on_a_check_does_not_put_answers_in_the_log(client, sms):
     # Two first saves of one check at the same moment (R-54): the other
     # request's row lands between this one's lookup and its insert. uvicorn
@@ -553,16 +552,20 @@ def test_a_database_error_on_a_check_does_not_put_answers_in_the_log(client, sms
             created_at=START, updated_at=START,
         ))
 
+    # Kept out of the call line: Python 3.13 tracebacks quote the whole
+    # call, so a literal there would show up in this test's own frame.
+    answers = dict(zip(("irritability", "restlessness"), (5, 4)))
     event.listen(Session, "before_flush", other_request_wins)
     try:
         with pytest.raises(Exception) as err:
-            check(client, s, a, craving=5, used=True, signals={"irritability": 5, "restlessness": 4})
+            check(client, s, a, craving=5, used=True, signals=answers)
     finally:
         event.remove(Session, "before_flush", other_request_wins)
     assert raced
     logged = logging.Formatter().formatException((err.type, err.value, err.tb))
     assert "IntegrityError" in logged  # the race really happened
-    assert '"irritability": 5' not in logged
+    # Both spellings: SQLite binds the JSON as a string, psycopg as Json({...}).
+    assert '"irritability": 5' not in logged and "'irritability': 5" not in logged
 
 
 def test_no_recovery_event_sends_an_sms(client, sms):

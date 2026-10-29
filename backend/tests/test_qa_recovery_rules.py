@@ -900,7 +900,6 @@ def test_a_double_tap_is_not_a_server_error(client, sms, kind):
     assert r.status_code in (200, 204, 409), (kind, r.status_code)
 
 
-@pytest.mark.xfail(strict=True, reason="QA API-05: the 500 of a duplicate daily check carries the craving and signal answers, and uvicorn logs it with its traceback")
 def test_a_failed_check_save_keeps_the_answers_out_of_the_error(client, sms):
     """What uvicorn writes to the server log for an unhandled error is the
     exception with its traceback (h11_impl.py: logger.error(..., exc_info))."""
@@ -911,7 +910,10 @@ def test_a_failed_check_save_keeps_the_answers_out_of_the_error(client, sms):
             client.request(method, url, json=body, headers=headers)
         except Exception as exc:  # noqa: BLE001 - this is what the server would log
             logged = "".join(traceback.format_exception(exc))
-    assert '"irritability": 4' not in logged and '"restlessness": 5' not in logged, logged[-600:]
+    # Both spellings: SQLite binds the JSON as a string ("..."), psycopg as
+    # Json({...}) whose repr uses single quotes ('...').
+    for answer in ('"irritability": 4', '"restlessness": 5', "'irritability': 4", "'restlessness': 5"):
+        assert answer not in logged, logged[-600:]
 
 
 ON_POSTGRES = engine.dialect.name == "postgresql"
