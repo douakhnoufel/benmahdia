@@ -443,7 +443,6 @@ def test_r37_doctor_can_book_for_a_patient(client):
     assert any(p.rstrip("/").endswith("appointments") for p in _staff_routes("POST", "appointments"))
 
 
-@pytest.mark.xfail(strict=True, reason="QA API-06: no route for a doctor to set availability, holidays or slot length")
 def test_r38_doctor_can_set_availability(client):
     assert _staff_routes("PUT", "availab") or _staff_routes("POST", "availab")
 

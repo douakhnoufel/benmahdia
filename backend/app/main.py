@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import get_settings
 from .routers import (
     addiction_checks,
+    admin,
     appointments,
     auth,
     checkins,
@@ -17,7 +18,10 @@ from .routers import (
     payments,
     recovery,
     staff,
+    staff_appointments,
+    staff_availability,
     staff_identity,
+    staff_payments,
     staff_recovery,
 )
 
@@ -53,10 +57,14 @@ def create_app() -> FastAPI:
     app.include_router(appointments.router)
     app.include_router(payments.router)
     app.include_router(staff.router)
+    app.include_router(staff_availability.router)
+    app.include_router(staff_appointments.router)
+    app.include_router(staff_payments.router)
     app.include_router(staff_recovery.router)
     app.include_router(addiction_checks.staff_router)
     app.include_router(habits.staff_router)
     app.include_router(staff_identity.router)
+    app.include_router(admin.router)
 
     @app.get("/health", tags=["health"])
     def health() -> dict[str, str]:

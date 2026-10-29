@@ -93,6 +93,7 @@ function defaults(url: URL, init: RequestInit): { status: number; body?: unknown
   if (p.endsWith('/checks')) return { status: 200, body: checks };
   if (p.endsWith('/habits')) return { status: 200, body: habits };
   if (p.endsWith('/medications')) return { status: 200, body: [] };
+  if (p.endsWith('/appointments')) return { status: 200, body: { attendance: { completed: 0, no_show: 0, rate: null }, appointments: [] } };
   if (p === '/v1/staff/alerts') {
     const base = { id: 'al1', patient_id: 'p1', patient_phone: '+213661234567', read: false, priority: 'normal', created_at: '2026-10-17T10:00:00Z' };
     return {

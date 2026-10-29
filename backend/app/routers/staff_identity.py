@@ -39,7 +39,7 @@ class IdentityView(BaseModel):
 
 def reviewable(db: Session, doctor: DoctorProfile, user_id: uuid.UUID) -> IdDeclaration:
     """The declaration of a patient this doctor may look at: someone waiting in
-    the sign-up queue, or a patient who booked with this doctor."""
+    the sign-up queue, or a clinic patient (a booked visit with any doctor)."""
     user = db.get(User, user_id)
     if user is None or user.role != Role.patient or user.deleted_at is not None:
         raise ApiError(404, "identity_not_found")
@@ -49,7 +49,7 @@ def reviewable(db: Session, doctor: DoctorProfile, user_id: uuid.UUID) -> IdDecl
     if user.status != AccountStatus.pending_verification:
         booked = db.scalar(
             select(Appointment.id)
-            .where(Appointment.patient_id == user.id, Appointment.doctor_id == doctor.user_id)
+            .where(Appointment.patient_id == user.id)
             .limit(1)
         )
         if booked is None:

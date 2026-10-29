@@ -241,7 +241,7 @@ def test_only_doctors_see_it(client, sms):
         assert client.get(path, headers=bearer(s)).status_code == 403
 
 
-def test_an_approved_patient_is_visible_only_to_their_own_doctor(client, sms):
+def test_an_approved_patient_is_visible_to_every_doctor_once_they_have_a_visit(client, sms):
     doc = doctor_with_password()
     other = other_doctor()
     s = register(client, sms)
@@ -249,12 +249,12 @@ def test_an_approved_patient_is_visible_only_to_their_own_doctor(client, sms):
     uid = user_id()
     h = doc_headers(client)
     assert client.post(f"/v1/staff/signups/{uid}/approve", headers=h).status_code == 200
-    assert client.get(f"/v1/staff/signups/{uid}/identity", headers=h).status_code == 404   # not their patient
+    assert client.get(f"/v1/staff/signups/{uid}/identity", headers=h).status_code == 404   # no visit yet: not a clinic patient
     add_appointment(doc.user_id, uid, datetime(2026, 10, 19, 8, 0))
     assert client.get(f"/v1/staff/signups/{uid}/identity", headers=h).status_code == 200
     from .test_staff import PASSWORD, login
     h2 = bearer(login(client, "other@example.invalid", PASSWORD).json())
-    assert client.get(f"/v1/staff/signups/{uid}/identity", headers=h2).status_code == 404
+    assert client.get(f"/v1/staff/signups/{uid}/identity", headers=h2).status_code == 200
     assert other is not None
 
 

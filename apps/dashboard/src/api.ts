@@ -110,6 +110,9 @@ async function requestBlob(path: string): Promise<Blob> {
   return res.blob();
 }
 
+/** Who is signed in. The super admin is also a doctor (PRD 3). */
+export type Me = { id: string; role: 'doctor' | 'super_admin'; name_ar: string; name_fr: string };
+
 export type AppointmentStatus = 'awaiting_payment' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
 
 export type AgendaItem = {
@@ -124,6 +127,88 @@ export type AgendaItem = {
   paid: boolean;
   /** When the front desk accepted the patient's booking code, if it did. */
   checked_in_at?: string | null;
+  /** Whose visit it is: the agenda is clinic-wide, only the visit's own doctor can act on it. */
+  doctor_name_ar: string;
+  doctor_name_fr: string;
+  mine: boolean;
+};
+
+/** A slot held while the patient pays: a booking request, not a visit yet. */
+export type HoldItem = {
+  id: string;
+  patient_id: string;
+  patient_phone: string | null;
+  start: string;
+  end: string;
+  doctor_name_ar: string;
+  doctor_name_fr: string;
+  mine: boolean;
+  /** The slot is given back at this time if still unpaid. */
+  expires_at: string;
+  /** The card chosen at Chargily's checkout, once the patient opened it. */
+  paying_by: 'edahabia' | 'cib' | 'clinic' | null;
+};
+
+/** One of a patient's visits in the clinic, as their doctor sees it. */
+export type Visit = {
+  id: string;
+  start: string;
+  end: string;
+  status: AppointmentStatus;
+  doctor_name_ar: string;
+  doctor_name_fr: string;
+  mine: boolean;
+  paid: boolean;
+  method: 'edahabia' | 'cib' | 'clinic' | null;
+  price_dzd: number;
+  /** The doctor's own note, or a colleague's note its author shared. */
+  has_note: boolean;
+  note_shared: boolean;
+};
+
+/** The doctor's note after a visit; private unless shared. Never shown to the patient or the AI. */
+export type Note = { text: string | null; updated_at: string | null; shared: boolean; mine: boolean };
+
+/** rate = completed / (completed + no_show); null before the first past visit. */
+export type VisitHistory = {
+  attendance: { completed: number; no_show: number; rate: number | null };
+  appointments: Visit[];
+};
+
+export type PaymentMethod = 'edahabia' | 'cib' | 'clinic';
+
+/** Proof of payment of a paid appointment (PRD 4.4): not a tax invoice, no medical content. */
+export type Receipt = {
+  number: string;
+  appointment_id: string;
+  doctor_name_ar: string;
+  doctor_name_fr: string;
+  start: string;
+  amount_dzd: number;
+  method: PaymentMethod;
+  paid_at: string;
+  /** Chargily's payment id for a card; null when paid at the clinic. */
+  payment_ref: string | null;
+};
+
+export type PaymentRow = {
+  id: string;
+  start: string;
+  doctor_name_ar: string;
+  doctor_name_fr: string;
+  mine: boolean;
+  patient_phone: string | null;
+  status: AppointmentStatus;
+  method: PaymentMethod | null;
+  price_dzd: number;
+  paid: boolean;
+  paid_at: string | null;
+};
+
+/** Unpaid counts only what is owed: a cancelled visit owes nothing. */
+export type Payments = {
+  rows: PaymentRow[];
+  totals: { paid_count: number; paid_dzd: number; unpaid_count: number; unpaid_dzd: number };
 };
 
 export type Patient = {
@@ -241,12 +326,50 @@ export type Alert = {
   created_at: string;
 };
 
+/** One weekly period of consultations. Monday = 0 ... Sunday = 6; minutes after midnight, clinic time. */
+export type Window = { weekday: number; start_minute: number; end_minute: number };
+
+export type BlockedDay = { id: string; day: string; reason: string | null };
+
+/** A booked visit the current hours no longer cover. It is never moved or cancelled. */
+export type Conflict = {
+  appointment_id: string;
+  start: string;
+  patient_phone: string | null;
+  reason: 'blocked_day' | 'outside_hours';
+};
+
+export type SlotMinutes = 5 | 10 | 15;
+
+export type Availability = {
+  slot_minutes: SlotMinutes;
+  notice_hours: number;
+  windows: Window[];
+  blocked_days: BlockedDay[];
+  conflicts: Conflict[];
+};
+
+/** A doctor as the super admin sets their price (PRD 4.4). */
+export type AdminDoctor = { id: string; name_ar: string; name_fr: string; price_dzd: number; slot_minutes: number };
+
 export const api = {
   async login(email: string, password: string) {
     const res = await raw('POST', 'v1/staff/login', { email, password });
     setSession(await parse<Session>(res));
   },
+  me: () => request<Me>('GET', 'v1/staff/me'),
+  availability: () => request<Availability>('GET', 'v1/staff/availability'),
+  saveWindows: (windows: Window[]) => request<Availability>('PUT', 'v1/staff/availability/windows', { windows }),
+  saveBookingSettings: (slot_minutes: SlotMinutes, notice_hours: number) =>
+    request<Availability>('PUT', 'v1/staff/availability/settings', { slot_minutes, notice_hours }),
+  blockDay: (day: string, reason: string | null) =>
+    request<Availability>('POST', 'v1/staff/availability/blocked-days', { day, reason }),
+  adminDoctors: () => request<AdminDoctor[]>('GET', 'v1/admin/doctors'),
+  setPrice: (doctorId: string, price_dzd: number) =>
+    request<AdminDoctor>('PUT', `v1/admin/doctors/${doctorId}/price`, { price_dzd }),
+  unblockDay: (id: string) => request<Availability>('DELETE', `v1/staff/availability/blocked-days/${id}`),
   agenda: (day: string) => request<AgendaItem[]>('GET', `v1/staff/agenda?day=${day}`),
+  holds: (day: string) => request<HoldItem[]>('GET', `v1/staff/holds?day=${day}`),
   setStatus: (id: string, status: 'completed' | 'no_show') =>
     request<AgendaItem>('POST', `v1/staff/appointments/${id}/status`, { status }),
   setPaid: (id: string, paid: boolean) => request<AgendaItem>('POST', `v1/staff/appointments/${id}/paid`, { paid }),
@@ -257,6 +380,15 @@ export const api = {
   reject: (id: string, reason?: string) =>
     request<Signup>('POST', `v1/staff/signups/${id}/reject`, reason ? { reason } : undefined),
   identity: (id: string) => request<Identity>('GET', `v1/staff/signups/${id}/identity`),
+  patientAppointments: (patientId: string) =>
+    request<VisitHistory>('GET', `v1/staff/patients/${patientId}/appointments`),
+  receipt: (appointmentId: string) => request<Receipt>('GET', `v1/staff/appointments/${appointmentId}/receipt`),
+  /** Clinic days, both included, at most 92 days. */
+  payments: (from: string, to: string) => request<Payments>('GET', `v1/staff/payments?from=${from}&to=${to}`),
+  note: (appointmentId: string) => request<Note>('GET', `v1/staff/appointments/${appointmentId}/note`),
+  /** Empty text deletes the note. */
+  saveNote: (appointmentId: string, text: string, shared: boolean) =>
+    request<Note>('PUT', `v1/staff/appointments/${appointmentId}/note`, { text, shared }),
   patientAddictions: (patientId: string) =>
     request<PatientAddiction[]>('GET', `v1/staff/patients/${patientId}/addictions`),
   reviewAddiction: (patientId: string, addictionId: string, decision: 'confirm' | 'reject') =>

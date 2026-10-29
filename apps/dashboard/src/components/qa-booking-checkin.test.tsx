@@ -33,6 +33,9 @@ const visit: AgendaItem = {
   status: 'confirmed',
   method: 'clinic',
   price_dzd: 2000,
+  doctor_name_ar: 'د. بن مهدية',
+  doctor_name_fr: 'Dr Benmahdia',
+  mine: true,
   paid: false,
   checked_in_at: '2026-10-19T07:55:00Z',
 };

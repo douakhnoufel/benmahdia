@@ -1,6 +1,6 @@
 """Doctor dashboard API (PRD 7, MVP). Every doctor sees the clinic-wide
-agenda (booking data only, no clinical fields); patients and clinical data stay
-per doctor (PRD 3). No 2FA yet: to add before launch (PRD 4.1)."""
+agenda and every clinic patient's file (PRD 3: one clinic, shared files).
+No 2FA yet: to add before launch (PRD 4.1)."""
 
 import uuid
 from datetime import date, datetime, timedelta, timezone
@@ -24,7 +24,9 @@ from ..models import (
     AuditLog,
     DoctorProfile,
     IdStatus,
+    Payment,
     PaymentMethod,
+    PaymentStatus,
     Role,
     User,
 )
@@ -50,6 +52,36 @@ class AgendaItem(BaseModel):
     paid: bool
     # When the front desk accepted the patient's booking code, if it did.
     checked_in_at: str | None = None
+    # Whose visit it is: the agenda is clinic-wide, but only the visit's own
+    # doctor can act on it.
+    doctor_name_ar: str = ""
+    doctor_name_fr: str = ""
+    mine: bool = False
+
+
+class HoldItem(BaseModel):
+    """A slot held while the patient pays: a booking request, not a visit yet."""
+
+    id: uuid.UUID
+    patient_id: uuid.UUID
+    patient_phone: str | None
+    start: str
+    end: str
+    doctor_name_ar: str
+    doctor_name_fr: str
+    mine: bool
+    # The slot is given back at this time if still unpaid.
+    expires_at: str
+    # The card chosen at Chargily's checkout, once the patient opened it.
+    paying_by: PaymentMethod | None = None
+
+
+class MeOut(BaseModel):
+    id: uuid.UUID
+    # "doctor" or "super_admin" (who is also a doctor, PRD 3).
+    role: Role
+    name_ar: str
+    name_fr: str
 
 
 class CheckinIn(BaseModel):
@@ -129,6 +161,14 @@ def staff_login(
     return session
 
 
+@router.get("/me", response_model=MeOut)
+def me(doctor: DoctorProfile = Depends(current_doctor), db: Session = Depends(get_db)) -> MeOut:
+    """Who is signed in to the dashboard, to show the pages their role allows.
+    The API still checks the role on every route."""
+    user = db.get(User, doctor.user_id)
+    return MeOut(id=doctor.user_id, role=user.role, name_ar=doctor.name_ar, name_fr=doctor.name_fr)
+
+
 def _own(db: Session, doctor: DoctorProfile, appointment_id: uuid.UUID) -> Appointment:
     a = db.get(Appointment, appointment_id)
     if a is None or a.doctor_id != doctor.user_id:
@@ -136,8 +176,10 @@ def _own(db: Session, doctor: DoctorProfile, appointment_id: uuid.UUID) -> Appoi
     return a
 
 
-def _item(db: Session, a: Appointment) -> AgendaItem:
+def _item(db: Session, a: Appointment, doctor: DoctorProfile) -> AgendaItem:
+    """[a] as one agenda row, seen by [doctor]."""
     patient = db.get(User, a.patient_id)
+    owner = doctor if a.doctor_id == doctor.user_id else db.get(DoctorProfile, a.doctor_id)
     return AgendaItem(
         id=a.id,
         patient_id=a.patient_id,
@@ -149,13 +191,16 @@ def _item(db: Session, a: Appointment) -> AgendaItem:
         price_dzd=a.price_dzd,
         paid=a.paid_at is not None,
         checked_in_at=utc_iso(a.checked_in_at) if a.checked_in_at else None,
+        doctor_name_ar=owner.name_ar if owner else "",
+        doctor_name_fr=owner.name_fr if owner else "",
+        mine=a.doctor_id == doctor.user_id,
     )
 
 
 @router.get("/agenda", response_model=list[AgendaItem])
 def agenda(
     day: date | None = None,
-    _: DoctorProfile = Depends(current_doctor),
+    doctor: DoctorProfile = Depends(current_doctor),
     db: Session = Depends(get_db),
 ) -> list[AgendaItem]:
     """Every doctor's booked visits of one clinic day (default: today): the
@@ -172,7 +217,56 @@ def agenda(
         )
         .order_by(Appointment.start_utc)
     ).all()
-    return [_item(db, a) for a in rows]
+    return [_item(db, a, doctor) for a in rows]
+
+
+@router.get("/holds", response_model=list[HoldItem])
+def holds(
+    day: date | None = None,
+    doctor: DoctorProfile = Depends(current_doctor),
+    db: Session = Depends(get_db),
+) -> list[HoldItem]:
+    """The clinic's open holds of one day (default: today): the pending
+    booking requests of the Today page (PRD 7). Read only: a card hold is
+    confirmed only by Chargily's signed webhook, a pay-at-clinic hold only by
+    the patient. A hold that ran out is left out: its slot is free again."""
+    now = clock.now()
+    day = day or scheduling.clinic_today(now)
+    first, last = scheduling.to_utc(day, 0), scheduling.to_utc(day + timedelta(days=1), 0)
+    rows = db.scalars(
+        select(Appointment)
+        .where(
+            Appointment.start_utc >= first,
+            Appointment.start_utc < last,
+            Appointment.status == AppointmentStatus.awaiting_payment,
+            Appointment.hold_expires_at > now,
+        )
+        .order_by(Appointment.start_utc)
+    ).all()
+    out = []
+    for a in rows:
+        row = _item(db, a, doctor)
+        paying_by = db.scalar(
+            select(Payment.method)
+            .where(Payment.appointment_id == a.id, Payment.status == PaymentStatus.pending)
+            .order_by(Payment.created_at.desc())
+            .limit(1)
+        )
+        out.append(
+            HoldItem(
+                id=a.id,
+                patient_id=a.patient_id,
+                patient_phone=row.patient_phone,
+                start=row.start,
+                end=row.end,
+                doctor_name_ar=row.doctor_name_ar,
+                doctor_name_fr=row.doctor_name_fr,
+                mine=row.mine,
+                expires_at=utc_iso(a.hold_expires_at),
+                paying_by=paying_by,
+            )
+        )
+    return out
 
 
 @router.post("/checkin", response_model=AgendaItem)
@@ -228,7 +322,7 @@ def check_in(
         a.checked_in_at = now
         audit.record(db, "appointment.checked_in", actor_id=doctor.user_id, target=str(a.id), request=request)
         db.commit()
-    return _item(db, a)
+    return _item(db, a, doctor)
 
 
 @router.post("/appointments/{appointment_id}/status", response_model=AgendaItem)
@@ -248,7 +342,7 @@ def set_status(
     a.status = AppointmentStatus(body.status)
     audit.record(db, f"appointment.{body.status}", actor_id=doctor.user_id, target=str(a.id), request=request)
     db.commit()
-    return _item(db, a)
+    return _item(db, a, doctor)
 
 
 @router.post("/appointments/{appointment_id}/paid", response_model=AgendaItem)
@@ -269,20 +363,18 @@ def set_paid(
     audit.record(db, "appointment.paid" if body.paid else "appointment.unpaid",
                  actor_id=doctor.user_id, target=str(a.id), request=request)
     db.commit()
-    return _item(db, a)
+    return _item(db, a, doctor)
 
 
 @router.get("/patients", response_model=list[PatientOut])
 def patients(
     doctor: DoctorProfile = Depends(current_doctor), db: Session = Depends(get_db)
 ) -> list[PatientOut]:
-    """Patients who booked with this doctor, most recent activity first."""
+    """The clinic's patients (a booked visit with any doctor), most recent
+    activity first."""
     now = clock.now()
     rows = db.scalars(
-        select(Appointment).where(
-            Appointment.doctor_id == doctor.user_id,
-            Appointment.status != AppointmentStatus.awaiting_payment,
-        )
+        select(Appointment).where(Appointment.status != AppointmentStatus.awaiting_payment)
     ).all()
     by_patient: dict[uuid.UUID, list[Appointment]] = {}
     for a in rows:

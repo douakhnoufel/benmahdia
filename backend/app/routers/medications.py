@@ -1,9 +1,10 @@
 """Medications and doses (PRD 5.3) and the quote of the day (PRD 5.2).
 
 The doctor prescribes; the patient answers each dose. A patient reaches only
-their own rows and a doctor only their own patients' (a patient who booked
-with them). The phone schedules reminders locally with neutral text, so the
-drug name is never sent through a push service."""
+their own rows; any doctor of the clinic reaches a clinic patient's rows (a
+patient with a booked visit, with any doctor). The phone schedules
+reminders locally with neutral text, so the drug name is never sent through
+a push service."""
 
 import re
 import uuid
@@ -107,12 +108,13 @@ def _med_out(m: Medication) -> MedicationOut:
     )
 
 
-def _own_patient(db: Session, doctor: DoctorProfile, patient_id: uuid.UUID) -> User:
-    """A patient who booked with this doctor; anyone else looks unknown."""
+def clinic_patient(db: Session, doctor: DoctorProfile, patient_id: uuid.UUID) -> User:
+    """A patient of the clinic: someone with a booked visit, with any doctor.
+    Every doctor of the clinic opens their file; anyone else looks unknown.
+    [doctor] is the signed-in doctor, kept so callers prove one is signed in."""
     booked = db.scalar(
         select(Appointment.id)
         .where(
-            Appointment.doctor_id == doctor.user_id,
             Appointment.patient_id == patient_id,
             Appointment.status != AppointmentStatus.awaiting_payment,
         )
@@ -121,6 +123,19 @@ def _own_patient(db: Session, doctor: DoctorProfile, patient_id: uuid.UUID) -> U
     user = db.get(User, patient_id)
     if booked is None or user is None or not user.active:
         raise ApiError(404, "patient_not_found")
+    mine = db.scalar(
+        select(Appointment.id)
+        .where(
+            Appointment.patient_id == patient_id,
+            Appointment.doctor_id == doctor.user_id,
+            Appointment.status != AppointmentStatus.awaiting_payment,
+        )
+        .limit(1)
+    )
+    if mine is None:
+        # A colleague's patient: keep a trace of who opened the file (ids only).
+        audit.record(db, "patient_file.opened", actor_id=doctor.user_id, target=str(patient_id))
+        db.commit()
     return user
 
 
@@ -132,7 +147,7 @@ def prescribe(
     doctor: DoctorProfile = Depends(current_doctor),
     db: Session = Depends(get_db),
 ) -> MedicationOut:
-    user = _own_patient(db, doctor, patient_id)
+    user = clinic_patient(db, doctor, patient_id)
     m = Medication(
         patient_id=user.id,
         prescribed_by=doctor.user_id,
@@ -158,7 +173,7 @@ def list_medications(
     doctor: DoctorProfile = Depends(current_doctor),
     db: Session = Depends(get_db),
 ) -> list[MedicationOut]:
-    user = _own_patient(db, doctor, patient_id)
+    user = clinic_patient(db, doctor, patient_id)
     rows = db.scalars(
         select(Medication)
         .where(Medication.patient_id == user.id, Medication.active.is_(True))
@@ -176,7 +191,7 @@ def stop_medication(
     db: Session = Depends(get_db),
 ) -> Response:
     """Stops a medicine: it leaves the patient's list, past answers stay."""
-    user = _own_patient(db, doctor, patient_id)
+    user = clinic_patient(db, doctor, patient_id)
     m = db.get(Medication, medication_id)
     if m is None or m.patient_id != user.id or not m.active:
         raise ApiError(404, "medication_not_found")

@@ -254,14 +254,14 @@ def test_profile_list_includes_profile_for_doctor(client, sms):
     assert row["profile"] == "buprenorphine"
 
 
-def test_other_doctor_reaches_neither_chart_nor_profile(client, sms):
+def test_other_doctor_of_the_clinic_reaches_chart_and_profile(client, sms):
     _, s = setup(client, sms)
     a = add(client, s).json()
     other_doctor()
     other = login(client, "other@example.invalid").json()
     base = f"/v1/staff/patients/{s['user']['id']}/addictions/{a['id']}"
-    assert client.get(f"{base}/checks", headers=bearer(other)).status_code == 404
-    assert client.put(f"{base}/profile", json={"profile": "thc"}, headers=bearer(other)).status_code == 404
+    assert client.get(f"{base}/checks", headers=bearer(other)).status_code == 200
+    assert client.put(f"{base}/profile", json={"profile": "thc"}, headers=bearer(other)).status_code == 200
 
 
 def test_doctor_routes_need_a_doctor(client, sms):
@@ -278,9 +278,9 @@ def test_another_patients_addiction_is_not_found(client, sms):
     a = add(client, s).json()
     other = unlocked(client, sms, "0771234567")  # booked with another doctor
     b = add(client, other).json()
-    # Another doctor's patient, and this patient's addiction under the wrong patient.
+    # A clinic patient of another doctor is open; an addiction under the wrong patient is not.
     url = f"/v1/staff/patients/{other['user']['id']}/addictions/{b['id']}/checks"
-    assert client.get(url, headers=bearer(doc)).status_code == 404
+    assert client.get(url, headers=bearer(doc)).status_code == 200
     url = f"/v1/staff/patients/{s['user']['id']}/addictions/{b['id']}/checks"
     assert client.get(url, headers=bearer(doc)).status_code == 404
 

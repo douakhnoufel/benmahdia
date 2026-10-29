@@ -63,15 +63,17 @@ def test_rejected_addiction_leaves_the_patients_list(client, sms):
     assert client.post(f"{url}/confirm", headers=bearer(doc)).json()["review_status"] == "confirmed"
 
 
-def test_doctor_only_reaches_own_patients(client, sms):
+def test_doctor_reaches_any_clinic_patient(client, sms):
     _, doc, _ = setup(client, sms)
     stranger = verified_patient(client, sms, "0771234567")
     # Booked with another doctor only, so their recovery is open (PRD 5).
     add_appointment(other_doctor(), uuid.UUID(stranger["user"]["id"]), clock.now() - timedelta(days=3))
     a = add_addiction(client, stranger)
     url = f"/v1/staff/patients/{stranger['user']['id']}/addictions"
-    assert client.get(url, headers=bearer(doc)).status_code == 404
-    assert client.post(f"{url}/{a['id']}/confirm", headers=bearer(doc)).status_code == 404
+    assert client.get(url, headers=bearer(doc)).status_code == 200
+    assert client.post(f"{url}/{a['id']}/confirm", headers=bearer(doc)).status_code == 200
+    unknown = "/v1/staff/patients/00000000-0000-0000-0000-000000000000/addictions"
+    assert client.get(unknown, headers=bearer(doc)).status_code == 404
 
 
 def test_addiction_of_another_patient_is_not_found(client, sms):
@@ -98,7 +100,7 @@ def test_relapse_alert_reaches_the_doctor_and_can_be_read(client, sms):
     assert len(client.get("/v1/staff/alerts", headers=bearer(doc)).json()) == 1
 
 
-def test_a_doctor_sees_only_their_own_alerts(client, sms):
+def test_every_doctor_sees_every_alert(client, sms):
     _, doc, s = setup(client, sms)
     a = add_addiction(client, s)
     relapse(client, s, a)
@@ -117,8 +119,10 @@ def test_a_doctor_sees_only_their_own_alerts(client, sms):
         db.commit()
     other_doc = client.post("/v1/staff/login",
                             json={"email": "autre@example.invalid", "password": "autre-pass-2026"}).json()
-    assert client.get("/v1/staff/alerts", headers=bearer(other_doc)).json() == []
-    assert client.post(f"/v1/staff/alerts/{alert_id}/read", headers=bearer(other_doc)).status_code == 404
+    assert [a["id"] for a in client.get("/v1/staff/alerts", headers=bearer(other_doc)).json()] == [alert_id]
+    assert client.post(f"/v1/staff/alerts/{alert_id}/read", headers=bearer(other_doc)).status_code == 200
+    unknown = "/v1/staff/alerts/00000000-0000-0000-0000-000000000000/read"
+    assert client.post(unknown, headers=bearer(other_doc)).status_code == 404
 
 
 def _two_missed_days(client, sms):

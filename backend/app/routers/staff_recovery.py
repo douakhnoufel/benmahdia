@@ -1,7 +1,7 @@
 """What a doctor sees of their patients' recovery (PRD 7): the addictions a
 patient entered, to confirm or reject (PRD 3), and the alerts raised for
-them. A doctor reaches only their own patients (those who booked with them)
-and their own alerts; anyone else looks unknown. Alerts carry a kind of event
+them. Every doctor of the clinic reaches every clinic patient (someone with
+a booked visit) and every alert; anyone else looks unknown. Alerts carry a kind of event
 and a patient, never medical content."""
 
 import uuid
@@ -18,7 +18,7 @@ from ..db import get_db
 from ..errors import ApiError
 from ..models import Addiction, Alert, DoctorProfile, Relapse, ReviewStatus, User
 from .doctors import utc_iso
-from .medications import _own_patient
+from .medications import clinic_patient
 from .recovery import AddictionOut, out
 from .staff import current_doctor
 
@@ -60,7 +60,7 @@ def patient_addictions(
     doctor: DoctorProfile = Depends(current_doctor),
     db: Session = Depends(get_db),
 ) -> list[StaffAddictionOut]:
-    user = _own_patient(db, doctor, patient_id)
+    user = clinic_patient(db, doctor, patient_id)
     rows = db.scalars(
         select(Addiction)
         .where(Addiction.patient_id == user.id, Addiction.active.is_(True))
@@ -77,7 +77,7 @@ def _review(
     addiction_id: uuid.UUID,
     status: ReviewStatus,
 ) -> StaffAddictionOut:
-    user = _own_patient(db, doctor, patient_id)
+    user = clinic_patient(db, doctor, patient_id)
     a = db.get(Addiction, addiction_id)
     if a is None or a.patient_id != user.id or not a.active:
         raise ApiError(404, "addiction_not_found")
@@ -131,8 +131,8 @@ def alerts(
     doctor: DoctorProfile = Depends(current_doctor),
     db: Session = Depends(get_db),
 ) -> list[AlertOut]:
-    """This doctor's alerts, newest first."""
-    query = select(Alert).where(Alert.doctor_id == doctor.user_id)
+    """The clinic's alerts, newest first: every doctor sees every alert."""
+    query = select(Alert)
     if unread:
         query = query.where(Alert.read.is_(False))
     return [_alert_out(db, a) for a in db.scalars(query.order_by(Alert.created_at.desc()))]
@@ -145,7 +145,7 @@ def mark_read(
     db: Session = Depends(get_db),
 ) -> AlertOut:
     alert = db.get(Alert, alert_id)
-    if alert is None or alert.doctor_id != doctor.user_id:
+    if alert is None:
         raise ApiError(404, "alert_not_found")
     alert.read = True
     db.commit()

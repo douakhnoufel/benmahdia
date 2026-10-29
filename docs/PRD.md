@@ -52,19 +52,19 @@ The MVP succeeds if one clinic runs its addiction patients on the app for 3 mont
 
 ## 3. Users and roles
 
-Four roles, with each patient belonging to one primary doctor and seeing only their own data.
+Four roles. A patient sees only their own data; every doctor of the clinic sees every clinic patient's file.
 
 | Role | Who | Can do | Cannot do |
 | --- | --- | --- | --- |
 | Super admin | One of the 3 doctors (also holds the Doctor role) | Create and deactivate doctor accounts, approve new patient accounts, view platform stats, manage quotes library, configure AI settings | Read other doctors' patient conversations or notes through admin screens |
 | Clinic staff | Reception / front desk | Review ID declarations the app could not approve automatically, approve or reject any declaration (including overturning an automatic approval) with a reason | See clinical data, conversations, notes or medications |
-| Doctor (admin) | Psychiatrist | Manage their own patients, set availability, manage appointments (and see every doctor's appointments and agenda in the clinic), prescribe medication schedules, set addiction profiles, review AI alerts and summaries | See other doctors' patients' clinical data — notes, medications, addictions, AI chats and flags (unless shared) |
+| Doctor (admin) | Psychiatrist | Manage the clinic's patients, set availability, manage appointments (and see every doctor's appointments and agenda in the clinic), prescribe medication schedules, set addiction profiles, review AI alerts and summaries | See a colleague's private visit notes (unless the author shares them) |
 | Patient | Person in treatment | Book, pay for and cancel appointments, enter their addictions, track sobriety, confirm medications, read articles, chat with the AI companion, delete their account | See other patients, edit their medications, delete relapse history |
 
 **Multi-doctor rules**
 
-- Pilot setup: BenMahdia clinic with 3 doctors, one of whom is also super admin. Doctors share one platform; appointments and agendas are visible to every doctor in the clinic, clinical data is isolated per doctor by default.
-- A patient has one primary doctor; a doctor can transfer a patient to another doctor.
+- Pilot setup: BenMahdia clinic with 3 doctors, one of whom is also super admin. Doctors share one platform; appointments and agendas are visible to every doctor in the clinic, clinical data (medications, addictions, alerts, AI chats) is shared by every doctor of the clinic. Opening a colleague's patient file is written to the audit log (ids only). A visit note is private to its author unless the author shares it with the clinic's doctors.
+- Alerts (missed doses, relapse) go to every doctor of the clinic. A "clinic patient" is anyone with a booked visit (not an unpaid hold) with any doctor.
 - Optional later: a clinic grouping so several doctors share a patient list.
 
 **Each patient has their own addiction profile**

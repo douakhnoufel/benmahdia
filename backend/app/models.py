@@ -18,6 +18,7 @@ from sqlalchemy import (
     UniqueConstraint,
     Uuid,
     event,
+    false,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -321,6 +322,28 @@ class Appointment(Base):
     # Set when the doctor's dashboard accepted the code on the day.
     checked_in_at: Mapped[datetime | None] = mapped_column(DateTime)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class AppointmentNote(Base):
+    """The doctor's note after a visit (PRD 4.3). Encrypted at rest with its
+    own key. Private by default: only the visit's own doctor reads it; the
+    author may share it with the clinic's other doctors. Never shown to the
+    patient or the AI, never logged."""
+
+    __tablename__ = "appointment_notes"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    appointment_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("appointments.id", ondelete="CASCADE"), unique=True
+    )
+    doctor_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("doctor_profiles.user_id", ondelete="CASCADE"), index=True
+    )
+    text_enc: Mapped[bytes] = mapped_column(LargeBinary)
+    # False: only the author reads it. True: every doctor of the clinic does.
+    shared: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
 class PaymentStatus(str, enum.Enum):

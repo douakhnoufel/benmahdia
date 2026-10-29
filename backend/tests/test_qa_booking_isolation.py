@@ -313,8 +313,9 @@ def test_agenda_and_checkin_replies_carry_no_clinical_fields(client, sms):
     checked = client.post("/v1/staff/checkin", json={"code": "QAC234"}, headers=h)
     assert agenda.status_code == 200 and len(agenda.json()) == 1
     assert checked.status_code == 200
+    # Whose visit it is (name and "mine") is booking data, shared clinic-wide.
     allowed = {"id", "patient_id", "patient_phone", "start", "end", "status", "method",
-               "price_dzd", "paid", "checked_in_at"}
+               "price_dzd", "paid", "checked_in_at", "doctor_name_ar", "doctor_name_fr", "mine"}
     assert set(agenda.json()[0]) <= allowed
     assert set(checked.json()) <= allowed
     assert clinical_keys(agenda.json()) == clinical_keys(checked.json()) == []
@@ -345,59 +346,45 @@ def _clinical_rows(doctor_id, patient_id):
         return med.id, add.id, alert.id
 
 
-def test_unrelated_doctor_cannot_reach_clinical_data(client, sms):
-    """Doctor B has never seen patient A (A belongs to doctor A): every clinical
-    route refuses, and the refusal equals the one for a random id."""
+def test_a_random_id_is_refused_on_every_clinical_route(client, sms):
+    """One clinic, shared files: any doctor reaches a clinic patient, but a
+    random id is refused on every clinical route."""
     doc = doctor_a()
     staff_user(EMAIL_B, Role.doctor)
     _, _, a_id, _ = two_patients(client, sms)
     add_appointment(doc.user_id, a_id, datetime(2026, 10, 14, 8, 0), status=AppointmentStatus.completed)
     med_id, add_id, alert_id = _clinical_rows(doc.user_id, a_id)
     hb = staff_headers(client, EMAIL_B)
-    base = f"/v1/staff/patients/{a_id}"
     rand = f"/v1/staff/patients/{RANDOM_ID}"
-    pairs = [
-        (client.get(f"{base}/medications", headers=hb), client.get(f"{rand}/medications", headers=hb)),
-        (client.post(f"{base}/medications", headers=hb,
-                     json={"name": "QA-ITEM", "amount": "1", "times": ["08:00"], "start_date": "2026-10-17"}),
-         client.post(f"{rand}/medications", headers=hb,
-                     json={"name": "QA-ITEM", "amount": "1", "times": ["08:00"], "start_date": "2026-10-17"})),
-        (client.delete(f"{base}/medications/{med_id}", headers=hb),
-         client.delete(f"{rand}/medications/{med_id}", headers=hb)),
-        (client.get(f"{base}/addictions", headers=hb), client.get(f"{rand}/addictions", headers=hb)),
-        (client.post(f"{base}/addictions/{add_id}/confirm", headers=hb),
-         client.post(f"{rand}/addictions/{add_id}/confirm", headers=hb)),
-    ]
-    for theirs, random in pairs:
-        assert theirs.status_code == 404, theirs.text
-        assert reply(theirs) == reply(random)
-    r = client.post(f"/v1/staff/alerts/{alert_id}/read", headers=hb)
-    assert r.status_code == 404
-    assert reply(r) == reply(client.post(f"/v1/staff/alerts/{RANDOM_ID}/read", headers=hb))
-    assert client.get("/v1/staff/alerts", headers=hb).json() == []
-    assert str(a_id) not in client.get("/v1/staff/patients", headers=hb).text
-    with Session(engine) as db:
-        assert db.get(Medication, med_id).active is True
+    body = {"name": "QA-ITEM", "amount": "1", "times": ["08:00"], "start_date": "2026-10-17"}
+    for r in (
+        client.get(f"{rand}/medications", headers=hb),
+        client.post(f"{rand}/medications", headers=hb, json=body),
+        client.delete(f"{rand}/medications/{med_id}", headers=hb),
+        client.get(f"{rand}/addictions", headers=hb),
+        client.post(f"{rand}/addictions/{add_id}/confirm", headers=hb),
+    ):
+        assert r.status_code == 404, r.text
+    base = f"/v1/staff/patients/{a_id}"
+    assert client.get(f"{base}/medications", headers=hb).status_code == 200
+    assert client.get(f"{base}/addictions", headers=hb).status_code == 200
+    assert client.post(f"/v1/staff/alerts/{RANDOM_ID}/read", headers=hb).status_code == 404
+    assert [a["id"] for a in client.get("/v1/staff/alerts", headers=hb).json()] == [str(alert_id)]
+    assert client.post(f"/v1/staff/alerts/{alert_id}/read", headers=hb).status_code == 200
 
 
-@pytest.mark.xfail(strict=True, reason="QA SEC-02: any doctor the patient booked once gets clinical access; PRD 3 has one primary doctor")
-def test_one_booking_with_another_doctor_does_not_open_clinical_data(client, sms):
-    """Booking data is clinic-wide, so a patient may book any doctor. With no
-    sharing or transfer recorded, at most one doctor (the primary) may read the
-    patient's medications and addictions — not every doctor they booked."""
+def test_every_doctor_reads_the_patients_file_once_they_have_a_visit(client, sms):
+    """PRD 3: one clinic. Doctor B reads the file of a patient who booked only
+    with doctor A. Reading is not deleting: nothing changes in the rows."""
     doc = doctor_a()
-    other = staff_user(EMAIL_B, Role.doctor)
+    staff_user(EMAIL_B, Role.doctor)
     _, _, a_id, _ = two_patients(client, sms)
     add_appointment(doc.user_id, a_id, datetime(2026, 10, 14, 8, 0), status=AppointmentStatus.completed)
-    add_appointment(other, a_id, MONDAY_930)
     _clinical_rows(doc.user_id, a_id)
-    readers = 0
-    for email in (EMAIL_A, EMAIL_B):
-        h = staff_headers(client, email)
-        meds = client.get(f"/v1/staff/patients/{a_id}/medications", headers=h)
-        adds = client.get(f"/v1/staff/patients/{a_id}/addictions", headers=h)
-        readers += meds.status_code == 200 or adds.status_code == 200
-    assert readers <= 1
+    hb = staff_headers(client, EMAIL_B)
+    assert str(a_id) in client.get("/v1/staff/patients", headers=hb).text
+    for path in ("medications", "addictions"):
+        assert client.get(f"/v1/staff/patients/{a_id}/{path}", headers=hb).status_code == 200
 
 
 # --- R-70: super admin ---------------------------------------------------------------
@@ -410,7 +397,7 @@ def test_super_admin_can_use_doctor_booking_screens(client, sms):
     assert client.get("/v1/staff/agenda", headers=h).status_code == 200
 
 
-def test_super_admin_cannot_read_another_doctors_patients_clinical_data(client, sms):
+def test_super_admin_is_a_doctor_of_the_clinic_and_reads_clinic_files(client, sms):
     doc = doctor_a()
     staff_user(EMAIL_ADMIN, Role.super_admin)
     _, _, a_id, _ = two_patients(client, sms)
@@ -418,13 +405,7 @@ def test_super_admin_cannot_read_another_doctors_patients_clinical_data(client, 
     _clinical_rows(doc.user_id, a_id)
     h = staff_headers(client, EMAIL_ADMIN)
     for path in (f"/v1/staff/patients/{a_id}/medications", f"/v1/staff/patients/{a_id}/addictions"):
-        r = client.get(path, headers=h)
-        assert r.status_code in (403, 404)
-        assert "QA-ITEM" not in r.text
-    # The super admin is also a doctor (PRD §3): their own alert list, never the other doctor's.
-    r = client.get("/v1/staff/alerts", headers=h)
-    assert r.status_code in (200, 403, 404)
-    assert r.status_code != 200 or r.json() == []
+        assert client.get(path, headers=h).status_code == 200
 
 
 # --- R-62 / R-69: clinic staff -----------------------------------------------------------

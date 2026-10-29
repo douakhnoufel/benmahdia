@@ -1,10 +1,12 @@
-import { useState } from 'react';
-import { api, type AgendaItem } from '../api';
+import { Fragment, useState } from 'react';
+import { api, type AgendaItem, type HoldItem } from '../api';
 import { useI18n } from '../i18n';
 import { CheckinBox } from '../components/CheckinBox';
+import { ReceiptPanel } from '../components/ReceiptPanel';
 import { Badge, Button, Card } from '../components/ui';
 import { useLoad } from '../useLoad';
 import { Failed, Loading } from './Status';
+import { fill } from './Tracking';
 
 /** Today's date in clinic time, YYYY-MM-DD. */
 export function clinicToday(now = new Date()): string {
@@ -19,10 +21,22 @@ function shift(day: string, by: number): string {
 
 const statusTone = { confirmed: 'info', completed: 'success', no_show: 'danger', cancelled: 'neutral', awaiting_payment: 'warning' } as const;
 
-export function Today({ initialDay }: { initialDay?: string }) {
+export function Today({
+  initialDay,
+  unread = 0,
+  onOpenAlerts,
+}: {
+  initialDay?: string;
+  /** Unread alerts, shown with a link to the Alerts page (PRD 7). */
+  unread?: number;
+  onOpenAlerts?: () => void;
+}) {
   const { t, date, time } = useI18n();
   const [day, setDay] = useState(initialDay ?? clinicToday());
   const { load, reload, setLoad } = useLoad(() => api.agenda(day), [day]);
+  const requests = useLoad(() => api.holds(day), [day]);
+  // The paid visit whose receipt is open under its row.
+  const [receipt, setReceipt] = useState<string | null>(null);
 
   function replace(item: AgendaItem) {
     if (load.state !== 'ready') return;
@@ -40,7 +54,18 @@ export function Today({ initialDay }: { initialDay?: string }) {
           ›
         </Button>
       </div>
+      {unread > 0 && (
+        <Card className="flex flex-wrap items-center gap-md">
+          <span className="text-body-lg text-ink-strong">{fill(t('unreadAlertsCount'), { n: unread })}</span>
+          {onOpenAlerts && (
+            <Button variant="secondary" className="ms-auto" onClick={onOpenAlerts}>
+              {t('openAlerts')}
+            </Button>
+          )}
+        </Card>
+      )}
       <CheckinBox onCheckedIn={replace} />
+      {requests.load.state === 'ready' && <Requests holds={requests.load.data} />}
       <Card className="overflow-x-auto p-0">
         {load.state === 'loading' && <Loading />}
         {load.state === 'error' && <Failed onRetry={reload} />}
@@ -51,6 +76,7 @@ export function Today({ initialDay }: { initialDay?: string }) {
               <tr>
                 <th className="p-md text-start">{t('time')}</th>
                 <th className="p-md text-start">{t('patient')}</th>
+                <th className="p-md text-start">{t('doctor')}</th>
                 <th className="p-md text-start">{t('status')}</th>
                 <th className="p-md text-start">{t('payment')}</th>
                 <th className="p-md text-start">{t('actions')}</th>
@@ -58,7 +84,22 @@ export function Today({ initialDay }: { initialDay?: string }) {
             </thead>
             <tbody>
               {load.data.map((a) => (
-                <Row key={a.id} item={a} onChange={replace} timeOf={time} />
+                <Fragment key={a.id}>
+                  <Row
+                    item={a}
+                    onChange={replace}
+                    timeOf={time}
+                    receiptOpen={receipt === a.id}
+                    onReceipt={() => setReceipt(receipt === a.id ? null : a.id)}
+                  />
+                  {receipt === a.id && (
+                    <tr className="border-b border-border">
+                      <td colSpan={6} className="p-md">
+                        <ReceiptPanel appointmentId={a.id} onClose={() => setReceipt(null)} />
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>
@@ -68,11 +109,52 @@ export function Today({ initialDay }: { initialDay?: string }) {
   );
 }
 
-function Row({ item, onChange, timeOf }: { item: AgendaItem; onChange: (a: AgendaItem) => void; timeOf: (iso: string) => string }) {
-  const { t } = useI18n();
+/** Slots held while the patient pays (PRD 7: "pending booking requests").
+ * Read only: payment confirms them, not the desk. Hidden when there are none. */
+function Requests({ holds }: { holds: HoldItem[] }) {
+  const { t, lang, time } = useI18n();
+  const open = holds.filter((h) => new Date(h.expires_at).getTime() > Date.now());
+  if (open.length === 0) return null;
+  return (
+    <section aria-labelledby="requests">
+      <Card className="flex flex-col gap-md">
+        <h3 id="requests" className="text-h3 text-ink-strong">{t('pendingRequests')}</h3>
+        <ul className="flex flex-col">
+          {open.map((h) => (
+            <li key={h.id} className="flex flex-wrap items-center gap-md border-b border-border py-sm last:border-0">
+              <span className="text-ink-strong" dir="ltr">{time(h.start)}</span>
+              <span className="text-ink-body" dir="ltr">{h.patient_phone ?? '—'}</span>
+              <span className="text-ink-body">{lang === 'ar' ? h.doctor_name_ar : h.doctor_name_fr}</span>
+              <Badge tone="warning">{h.paying_by && h.paying_by !== 'clinic' ? t(PAYING[h.paying_by]) : t('awaiting_payment')}</Badge>
+              <span className="text-caption text-ink-muted">{fill(t('holdUntil'), { time: time(h.expires_at) })}</span>
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </section>
+  );
+}
+
+const PAYING = { cib: 'payingCib', edahabia: 'payingEdahabia' } as const;
+
+function Row({
+  item,
+  onChange,
+  timeOf,
+  receiptOpen,
+  onReceipt,
+}: {
+  item: AgendaItem;
+  onChange: (a: AgendaItem) => void;
+  timeOf: (iso: string) => string;
+  receiptOpen: boolean;
+  onReceipt: () => void;
+}) {
+  const { t, lang } = useI18n();
   const [busy, setBusy] = useState(false);
   const started = new Date(item.start).getTime() <= Date.now();
-  const markable = started && ['confirmed', 'completed', 'no_show'].includes(item.status);
+  // Another doctor's visit is shown for the shared agenda, without actions.
+  const markable = item.mine && started && ['confirmed', 'completed', 'no_show'].includes(item.status);
 
   async function act(run: () => Promise<AgendaItem>) {
     setBusy(true);
@@ -93,6 +175,7 @@ function Row({ item, onChange, timeOf }: { item: AgendaItem; onChange: (a: Agend
       <td className="p-md" dir="ltr">
         {item.patient_phone ?? '—'}
       </td>
+      <td className="p-md text-ink-body">{lang === 'ar' ? item.doctor_name_ar : item.doctor_name_fr}</td>
       <td className="p-md">
         <div className="flex flex-wrap items-center gap-sm">
           <Badge tone={statusTone[item.status]}>{t(item.status)}</Badge>
@@ -109,7 +192,7 @@ function Row({ item, onChange, timeOf }: { item: AgendaItem; onChange: (a: Agend
       </td>
       <td className="p-md">
         <div className="flex flex-wrap gap-sm">
-          {item.method === 'clinic' && item.status !== 'cancelled' && (
+          {item.mine && item.method === 'clinic' && item.status !== 'cancelled' && (
             <Button variant="secondary" disabled={busy} onClick={() => act(() => api.setPaid(item.id, !item.paid))}>
               {t(item.paid ? 'markUnpaid' : 'markPaid')}
             </Button>
@@ -122,6 +205,11 @@ function Row({ item, onChange, timeOf }: { item: AgendaItem; onChange: (a: Agend
           {markable && item.status !== 'no_show' && (
             <Button variant="danger" disabled={busy} onClick={() => act(() => api.setStatus(item.id, 'no_show'))}>
               {t('markNoShow')}
+            </Button>
+          )}
+          {item.mine && item.paid && (
+            <Button variant="ghost" aria-expanded={receiptOpen} onClick={onReceipt}>
+              {t(receiptOpen ? 'close' : 'receipt')}
             </Button>
           )}
         </div>

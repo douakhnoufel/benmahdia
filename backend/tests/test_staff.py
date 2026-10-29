@@ -96,6 +96,23 @@ def test_agenda_shows_every_doctors_booked_visits_of_the_day(client, sms):
     assert (item["status"], item["paid"]) == ("confirmed", False)
 
 
+def test_agenda_rows_say_whose_visit_it_is(client, sms):
+    # Only the visit's own doctor can act on it, so the row must say so.
+    doc = doctor_with_password()
+    other = other_doctor()
+    verified_patient(client, sms)
+    me = user_id()
+    add_appointment(doc.user_id, me, MONDAY_9)
+    add_appointment(other, me, datetime(2026, 10, 19, 8, 30))
+    mine, theirs = client.get("/v1/staff/agenda?day=2026-10-19", headers=doc_headers(client)).json()
+    assert (mine["mine"], mine["doctor_name_fr"]) == (True, "Dr Benmahdia Hocine")
+    assert (theirs["mine"], theirs["doctor_name_fr"]) == (False, "Dr Autre")
+    mine, theirs = client.get(
+        "/v1/staff/agenda?day=2026-10-19", headers=doc_headers(client, "other@example.invalid")
+    ).json()
+    assert (mine["mine"], theirs["mine"]) == (False, True)
+
+
 def test_agenda_needs_a_login(client):
     assert client.get("/v1/staff/agenda").status_code == 401
 
@@ -152,7 +169,7 @@ def test_card_payments_are_set_only_by_chargily(client, sms):
 # --- patients -----------------------------------------------------------------------
 
 
-def test_patients_are_only_those_who_booked_with_me(client, sms):
+def test_patients_are_everyone_with_a_visit_in_the_clinic(client, sms):
     doc = doctor_with_password()
     other = other_doctor()
     verified_patient(client, sms, "0661111111")
@@ -161,8 +178,9 @@ def test_patients_are_only_those_who_booked_with_me(client, sms):
                     status=AppointmentStatus.completed)
     add_appointment(doc.user_id, user_id("0661111111"), MONDAY_9)
     add_appointment(other, user_id("0662222222"), MONDAY_9)
-    [p] = client.get("/v1/staff/patients", headers=doc_headers(client)).json()
-    assert p["phone"] == "+213661111111"
+    rows = {p["phone"]: p for p in client.get("/v1/staff/patients", headers=doc_headers(client)).json()}
+    assert set(rows) == {"+213661111111", "+213662222222"}
+    p = rows["+213661111111"]
     assert (p["visits"], p["last_visit"], p["next_visit"]) == (1, "2026-09-01T08:00:00Z", "2026-10-19T08:00:00Z")
 
 
@@ -205,3 +223,79 @@ def test_approved_patient_can_then_book(client, sms):
     client.post(f"/v1/staff/signups/{s['id']}/approve", headers=h)
     r = client.get("/v1/doctors", headers=bearer(session))
     assert r.status_code == 200 and r.json()[0]["id"] == str(doc.user_id)
+
+
+# --- me -----------------------------------------------------------------------
+
+
+def make_super_admin(email="admin@example.invalid"):
+    with Session(engine) as db:
+        user = User(role=Role.super_admin, email=email, password_hash=security.hash_password(PASSWORD))
+        db.add(user)
+        db.flush()
+        db.add(DoctorProfile(user_id=user.id, name_ar="د. مدير", name_fr="Dr Admin", price_dzd=2500))
+        db.commit()
+        return user.id
+
+
+def test_me_says_who_is_signed_in(client):
+    doc = doctor_with_password()
+    r = client.get("/v1/staff/me", headers=doc_headers(client))
+    assert r.status_code == 200
+    assert r.json() == {"id": str(doc.user_id), "role": "doctor",
+                        "name_ar": "د. بن مهدية حسين", "name_fr": "Dr Benmahdia Hocine"}
+
+
+def test_me_for_the_super_admin(client):
+    admin = make_super_admin()
+    r = client.get("/v1/staff/me", headers=doc_headers(client, "admin@example.invalid"))
+    assert (r.json()["id"], r.json()["role"]) == (str(admin), "super_admin")
+
+
+def test_me_is_for_staff_only(client, sms):
+    assert client.get("/v1/staff/me").status_code == 401
+    session = verified_patient(client, sms)
+    assert client.get("/v1/staff/me", headers=bearer(session)).status_code == 403
+
+
+# --- holds (pending booking requests) ------------------------------------------
+
+
+def test_holds_list_the_open_booking_requests_of_the_day(client, sms):
+    from datetime import timedelta
+
+    from app.clock import clock
+    from app.models import Payment
+
+    doc = doctor_with_password()
+    other = other_doctor()
+    verified_patient(client, sms)
+    me = user_id()
+    soon = clock.now() + timedelta(minutes=10)
+    mine = add_appointment(doc.user_id, me, MONDAY_9, status=AppointmentStatus.awaiting_payment,
+                           hold_expires_at=soon, method=None)
+    add_appointment(other, me, datetime(2026, 10, 19, 8, 30), status=AppointmentStatus.awaiting_payment,
+                    hold_expires_at=soon, method=None)
+    # Ran out, already a visit, or another day: not requests of Monday.
+    add_appointment(doc.user_id, me, datetime(2026, 10, 19, 9, 0), status=AppointmentStatus.awaiting_payment,
+                    hold_expires_at=clock.now() - timedelta(minutes=1), method=None)
+    add_appointment(doc.user_id, me, datetime(2026, 10, 19, 9, 15))
+    add_appointment(doc.user_id, me, datetime(2026, 10, 20, 8, 0), status=AppointmentStatus.awaiting_payment,
+                    hold_expires_at=soon, method=None)
+    with Session(engine) as db:
+        db.add(Payment(appointment_id=mine.id, patient_id=me, amount_dzd=2000,
+                       method=PaymentMethod.edahabia, chargily_id="ch_test_1"))
+        db.commit()
+    r = client.get("/v1/staff/holds?day=2026-10-19", headers=doc_headers(client))
+    assert r.status_code == 200
+    first, second = r.json()
+    assert first["id"] == str(mine.id)
+    assert (first["mine"], first["paying_by"], first["patient_phone"]) == (True, "edahabia", "+213661234567")
+    assert first["expires_at"] == soon.isoformat(timespec="seconds") + "Z"
+    assert (second["mine"], second["doctor_name_fr"], second["paying_by"]) == (False, "Dr Autre", None)
+
+
+def test_holds_are_for_staff_only(client, sms):
+    assert client.get("/v1/staff/holds").status_code == 401
+    session = verified_patient(client, sms)
+    assert client.get("/v1/staff/holds", headers=bearer(session)).status_code == 403
