@@ -110,6 +110,9 @@ async function requestBlob(path: string): Promise<Blob> {
   return res.blob();
 }
 
+/** Who is signed in. The super admin is also a doctor (PRD 3). */
+export type Me = { id: string; role: 'doctor' | 'super_admin'; name_ar: string; name_fr: string };
+
 export type AppointmentStatus = 'awaiting_payment' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
 
 export type AgendaItem = {
@@ -250,6 +253,7 @@ export const api = {
     const res = await raw('POST', 'v1/staff/login', { email, password });
     setSession(await parse<Session>(res));
   },
+  me: () => request<Me>('GET', 'v1/staff/me'),
   agenda: (day: string) => request<AgendaItem[]>('GET', `v1/staff/agenda?day=${day}`),
   setStatus: (id: string, status: 'completed' | 'no_show') =>
     request<AgendaItem>('POST', `v1/staff/appointments/${id}/status`, { status }),

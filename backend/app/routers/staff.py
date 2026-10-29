@@ -57,6 +57,14 @@ class AgendaItem(BaseModel):
     mine: bool = False
 
 
+class MeOut(BaseModel):
+    id: uuid.UUID
+    # "doctor" or "super_admin" (who is also a doctor, PRD 3).
+    role: Role
+    name_ar: str
+    name_fr: str
+
+
 class CheckinIn(BaseModel):
     code: str = Field(min_length=1, max_length=32)
 
@@ -132,6 +140,14 @@ def staff_login(
     session = tokens.issue(db, user)
     db.commit()
     return session
+
+
+@router.get("/me", response_model=MeOut)
+def me(doctor: DoctorProfile = Depends(current_doctor), db: Session = Depends(get_db)) -> MeOut:
+    """Who is signed in to the dashboard, to show the pages their role allows.
+    The API still checks the role on every route."""
+    user = db.get(User, doctor.user_id)
+    return MeOut(id=doctor.user_id, role=user.role, name_ar=doctor.name_ar, name_fr=doctor.name_fr)
 
 
 def _own(db: Session, doctor: DoctorProfile, appointment_id: uuid.UUID) -> Appointment:

@@ -222,3 +222,36 @@ def test_approved_patient_can_then_book(client, sms):
     client.post(f"/v1/staff/signups/{s['id']}/approve", headers=h)
     r = client.get("/v1/doctors", headers=bearer(session))
     assert r.status_code == 200 and r.json()[0]["id"] == str(doc.user_id)
+
+
+# --- me -----------------------------------------------------------------------
+
+
+def make_super_admin(email="admin@example.invalid"):
+    with Session(engine) as db:
+        user = User(role=Role.super_admin, email=email, password_hash=security.hash_password(PASSWORD))
+        db.add(user)
+        db.flush()
+        db.add(DoctorProfile(user_id=user.id, name_ar="د. مدير", name_fr="Dr Admin", price_dzd=2500))
+        db.commit()
+        return user.id
+
+
+def test_me_says_who_is_signed_in(client):
+    doc = doctor_with_password()
+    r = client.get("/v1/staff/me", headers=doc_headers(client))
+    assert r.status_code == 200
+    assert r.json() == {"id": str(doc.user_id), "role": "doctor",
+                        "name_ar": "د. بن مهدية حسين", "name_fr": "Dr Benmahdia Hocine"}
+
+
+def test_me_for_the_super_admin(client):
+    admin = make_super_admin()
+    r = client.get("/v1/staff/me", headers=doc_headers(client, "admin@example.invalid"))
+    assert (r.json()["id"], r.json()["role"]) == (str(admin), "super_admin")
+
+
+def test_me_is_for_staff_only(client, sms):
+    assert client.get("/v1/staff/me").status_code == 401
+    session = verified_patient(client, sms)
+    assert client.get("/v1/staff/me", headers=bearer(session)).status_code == 403
