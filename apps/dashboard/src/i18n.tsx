@@ -209,6 +209,12 @@ const strings = {
     attendance: 'الحضور: {rate}% ({done} حضور، {missed} غياب)',
     noAttendance: 'لا يوجد موعد سابق بعد.',
     noAppointments: 'لا توجد مواعيد.',
+    noteAdd: 'إضافة ملاحظة',
+    noteOpen: 'عرض الملاحظة',
+    noteLabel: 'ملاحظة خاصة',
+    notePrivacy: 'لا يراها إلا أنت. لا تُعرض أبدا على المريض ولا على المساعد الذكي.',
+    noteEmptyDeletes: 'اترك النص فارغا لحذف الملاحظة.',
+    noteUpdated: 'آخر تعديل: {date}',
   },
   fr: {
     appName: 'BenMahdia — Espace médecin',
@@ -415,6 +421,12 @@ const strings = {
     attendance: 'Assiduité : {rate} % ({done} effectués, {missed} absences)',
     noAttendance: 'Pas encore de rendez-vous passé.',
     noAppointments: 'Aucun rendez-vous.',
+    noteAdd: 'Ajouter une note',
+    noteOpen: 'Voir la note',
+    noteLabel: 'Note privée',
+    notePrivacy: 'Visible par vous seul. Jamais montrée au patient ni à l’assistant IA.',
+    noteEmptyDeletes: 'Videz le texte pour supprimer la note.',
+    noteUpdated: 'Modifiée le {date}',
   },
 } as const;
 

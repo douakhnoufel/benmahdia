@@ -44,7 +44,7 @@ def test_lists_every_visit_newest_first_with_attendance(client, patient):
     assert visits[0] == {
         "id": str(upcoming.id), "start": "2026-10-20T08:00:00Z", "end": "2026-10-20T08:15:00Z",
         "status": "confirmed", "doctor_name_ar": "د. بن مهدية حسين", "doctor_name_fr": "Dr Benmahdia Hocine",
-        "mine": True, "paid": False, "method": "clinic", "price_dzd": 2000,
+        "mine": True, "paid": False, "method": "clinic", "price_dzd": 2000, "has_note": False,
     }
     assert (visits[2]["mine"], visits[2]["doctor_name_fr"], visits[2]["method"]) == (False, "Dr Autre", "cib")
 

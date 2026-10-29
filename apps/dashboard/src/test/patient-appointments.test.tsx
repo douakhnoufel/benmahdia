@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { signOut, type Visit, type VisitHistory } from '../api';
 import { I18nProvider, type Lang } from '../i18n';
@@ -35,6 +36,7 @@ const visit: Visit = {
   paid: false,
   method: 'clinic',
   price_dzd: 2000,
+  has_note: false,
 };
 
 const history: VisitHistory = {
@@ -96,5 +98,92 @@ describe('Patient file: appointments', () => {
     renderIn('ar');
     const region = await screen.findByRole('region', { name: 'المواعيد' });
     expect(await within(region).findByText('الحضور: 67% (2 حضور، 1 غياب)')).toBeInTheDocument();
+  });
+});
+
+describe('Patient file: private notes', () => {
+  const past: Visit = { ...visit, id: 'a9', start: '2026-10-12T08:00:00Z', status: 'completed', paid: true };
+
+  function backend(note: { text: string | null; updated_at: string | null }) {
+    const calls: { url: URL; init: RequestInit }[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: URL, init: RequestInit) => {
+        calls.push({ url: input, init });
+        if (input.pathname.endsWith('/note')) {
+          if (init.method === 'PUT') {
+            const text = (JSON.parse(init.body as string).text as string).trim();
+            return new Response(JSON.stringify(text ? { text, updated_at: '2026-10-29T10:00:00Z' } : { text: null, updated_at: null }));
+          }
+          return new Response(JSON.stringify(note));
+        }
+        const future = { ...visit, start: '2999-01-01T08:00:00Z' };
+        const theirs = { ...past, id: 'a8', mine: false, doctor_name_fr: 'Dr Autre' };
+        const cancelled = { ...past, id: 'a7', status: 'cancelled' };
+        const own = { ...past, has_note: note.text !== null };
+        return new Response(JSON.stringify({ attendance: { completed: 1, no_show: 0, rate: 1 }, appointments: [future, own, theirs, cancelled] }));
+      }),
+    );
+    return calls;
+  }
+
+  it('is offered only on the doctor’s own visits that took place', async () => {
+    backend({ text: null, updated_at: null });
+    renderIn();
+    const rows = within(await card()).getAllByRole('listitem');
+    await within(rows[1]).findByRole('button', { name: 'Ajouter une note' });
+    expect(within(rows[0]).queryByRole('button')).toBeNull();
+    expect(within(rows[2]).queryByRole('button')).toBeNull();
+    expect(within(rows[3]).queryByRole('button')).toBeNull();
+  });
+
+  it('writes a note and says it is private', async () => {
+    const calls = backend({ text: null, updated_at: null });
+    renderIn();
+    const region = await card();
+    await userEvent.click(await within(region).findByRole('button', { name: 'Ajouter une note' }));
+    expect(await within(region).findByText('Visible par vous seul. Jamais montrée au patient ni à l’assistant IA.')).toBeInTheDocument();
+    await userEvent.type(within(region).getByLabelText('Note privée'), 'Revoir le sommeil');
+    await userEvent.click(within(region).getByRole('button', { name: 'Enregistrer' }));
+    expect(await within(region).findByRole('status')).toHaveTextContent('Enregistré.');
+    const put = calls.find((c) => c.init.method === 'PUT')!;
+    expect(put.url.pathname).toBe('/v1/staff/appointments/a9/note');
+    expect(JSON.parse(put.init.body as string)).toEqual({ text: 'Revoir le sommeil' });
+    await userEvent.click(within(region).getByRole('button', { name: 'Fermer' }));
+    expect(within(region).getByRole('button', { name: 'Voir la note' })).toBeInTheDocument();
+  });
+
+  it('opens the saved note and deletes it when emptied', async () => {
+    backend({ text: 'Sevrage bien toléré', updated_at: '2026-10-12T10:00:00Z' });
+    renderIn();
+    const region = await card();
+    const row = within(region).getAllByRole('listitem')[1];
+    expect(row).toHaveTextContent('Voir la note');
+    await userEvent.click(within(row).getByRole('button', { name: 'Voir la note' }));
+    const box = await within(region).findByLabelText('Note privée');
+    expect(box).toHaveValue('Sevrage bien toléré');
+    expect(within(region).getByText(/Modifiée le 12 octobre 2026/)).toBeInTheDocument();
+    await userEvent.clear(box);
+    await userEvent.click(within(region).getByRole('button', { name: 'Enregistrer' }));
+    await within(region).findByRole('status');
+    await userEvent.click(within(region).getByRole('button', { name: 'Fermer' }));
+    expect(within(row).getByRole('button', { name: 'Ajouter une note' })).toBeInTheDocument();
+  });
+
+  it('says when saving failed', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: URL, init: RequestInit) => {
+        if (init.method === 'PUT') return new Response(JSON.stringify({ detail: { code: 'not_started' } }), { status: 409 });
+        if (input.pathname.endsWith('/note')) return new Response(JSON.stringify({ text: null, updated_at: null }));
+        return new Response(JSON.stringify({ attendance: { completed: 1, no_show: 0, rate: 1 }, appointments: [past] }));
+      }),
+    );
+    renderIn();
+    const region = await card();
+    await userEvent.click(await within(region).findByRole('button', { name: 'Ajouter une note' }));
+    await userEvent.type(await within(region).findByLabelText('Note privée'), 'x');
+    await userEvent.click(within(region).getByRole('button', { name: 'Enregistrer' }));
+    expect(await within(region).findByRole('alert')).toHaveTextContent('Enregistrement impossible. Réessayez.');
   });
 });

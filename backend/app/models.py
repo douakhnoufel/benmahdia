@@ -323,6 +323,25 @@ class Appointment(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
+class AppointmentNote(Base):
+    """The doctor's private note after a visit (PRD 4.3). Encrypted at rest
+    with its own key; only the visit's own doctor reads it. Never shown to
+    the patient or the AI, never logged."""
+
+    __tablename__ = "appointment_notes"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    appointment_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("appointments.id", ondelete="CASCADE"), unique=True
+    )
+    doctor_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("doctor_profiles.user_id", ondelete="CASCADE"), index=True
+    )
+    text_enc: Mapped[bytes] = mapped_column(LargeBinary)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
 class PaymentStatus(str, enum.Enum):
     pending = "pending"
     paid = "paid"

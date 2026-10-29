@@ -161,7 +161,12 @@ export type Visit = {
   paid: boolean;
   method: 'edahabia' | 'cib' | 'clinic' | null;
   price_dzd: number;
+  /** Only ever true on the doctor's own visits. */
+  has_note: boolean;
 };
+
+/** The doctor's private note after a visit; never shown to the patient or the AI. */
+export type Note = { text: string | null; updated_at: string | null };
 
 /** rate = completed / (completed + no_show); null before the first past visit. */
 export type VisitHistory = {
@@ -340,6 +345,10 @@ export const api = {
   identity: (id: string) => request<Identity>('GET', `v1/staff/signups/${id}/identity`),
   patientAppointments: (patientId: string) =>
     request<VisitHistory>('GET', `v1/staff/patients/${patientId}/appointments`),
+  note: (appointmentId: string) => request<Note>('GET', `v1/staff/appointments/${appointmentId}/note`),
+  /** Empty text deletes the note. */
+  saveNote: (appointmentId: string, text: string) =>
+    request<Note>('PUT', `v1/staff/appointments/${appointmentId}/note`, { text }),
   patientAddictions: (patientId: string) =>
     request<PatientAddiction[]>('GET', `v1/staff/patients/${patientId}/addictions`),
   reviewAddiction: (patientId: string, addictionId: string, decision: 'confirm' | 'reject') =>

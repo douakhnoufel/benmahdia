@@ -1,4 +1,5 @@
-"""Keyed hashing and encryption for the ID declaration (PRD 4.2).
+"""Keyed hashing and encryption for the ID declaration (PRD 4.2) and the
+doctors' private notes (PRD 4.3).
 
 Everything here uses secrets from the server's .env, never from the app or the
 database. Each secret is stretched into its own 256-bit key with HKDF, so the
@@ -68,4 +69,6 @@ def _box(kind: str) -> AESGCM:
     settings = get_settings()
     if kind == "selfie":
         return _aead(settings.selfie_key, "benmahdia/selfie")
+    if kind == "note":
+        return _aead(settings.notes_key, "benmahdia/notes")
     return _aead(settings.id_data_key, "benmahdia/id-data")

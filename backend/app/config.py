@@ -46,6 +46,8 @@ class Settings(BaseSettings):
     id_hmac_key: str = "change-me-dev-only-id-hmac-key-0000000000000"
     id_data_key: str = "change-me-dev-only-id-data-key-0000000000000"
     selfie_key: str = "change-me-dev-only-selfie-key-00000000000000"
+    # The doctors' private notes after a visit (PRD 4.3), encrypted at rest.
+    notes_key: str = "change-me-dev-only-notes-key-000000000000000"
     # Where encrypted selfie files live (a private folder, never served).
     selfie_dir: str = "./data/selfies"
     selfie_max_bytes: int = 2_097_152
@@ -90,7 +92,7 @@ class Settings(BaseSettings):
                 raise ValueError("SMS_PROVIDER=console is for development only")
             if self.chargily_secret_key.startswith("test_") or "/test/" in self.chargily_api_url:
                 raise ValueError("Chargily test mode is for development only")
-            for name in ("jwt_secret", "otp_secret", "id_hmac_key", "id_data_key", "selfie_key"):
+            for name in ("jwt_secret", "otp_secret", "id_hmac_key", "id_data_key", "selfie_key", "notes_key"):
                 value = getattr(self, name)
                 if value.startswith(_DEV_SECRET_PREFIX) or len(value) < 32:
                     raise ValueError(f"{name.upper()} must be a long random secret")
