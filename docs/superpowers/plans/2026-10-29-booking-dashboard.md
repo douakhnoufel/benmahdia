@@ -54,8 +54,8 @@ Needed to show the super-admin pages and the doctor's own settings.
 | `GET /v1/staff/availability` | slot length, notice hours, weekly windows, blocked days from today on |
 | `PUT /v1/staff/availability/windows` | replaces the whole weekly schedule in one transaction |
 | `PUT /v1/staff/availability/settings` | `slot_minutes` ∈ {5, 10, 15}, `notice_hours` 0–168 |
-| `POST /v1/staff/availability/exceptions` | blocks a day (`day`, optional `reason` ≤ 120 chars) |
-| `DELETE /v1/staff/availability/exceptions/{id}` | unblocks it (own only, else 404) |
+| `POST /v1/staff/availability/blocked-days` | blocks a day (`day`, optional `reason` ≤ 120 chars) |
+| `DELETE /v1/staff/availability/blocked-days/{id}` | unblocks it (own only, else 404) |
 
 Validation: weekday 0–6, minutes on a 5-minute grid, start < end, no two windows
 overlapping on the same day, at most 6 windows per day; a blocked day cannot be

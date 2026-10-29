@@ -17,6 +17,7 @@ from .routers import (
     payments,
     recovery,
     staff,
+    staff_availability,
     staff_identity,
     staff_recovery,
 )
@@ -53,6 +54,7 @@ def create_app() -> FastAPI:
     app.include_router(appointments.router)
     app.include_router(payments.router)
     app.include_router(staff.router)
+    app.include_router(staff_availability.router)
     app.include_router(staff_recovery.router)
     app.include_router(addiction_checks.staff_router)
     app.include_router(habits.staff_router)

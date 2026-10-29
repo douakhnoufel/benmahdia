@@ -4,13 +4,14 @@ import { useI18n, type StringKey } from './i18n';
 import { api } from './api';
 import { Button } from './components/ui';
 import { Alerts } from './pages/Alerts';
+import { AvailabilityPage } from './pages/Availability';
 import { Login } from './pages/Login';
 import { Patients } from './pages/Patients';
 import { Signups } from './pages/Signups';
 import { Today } from './pages/Today';
 
-type Page = 'today' | 'patients' | 'signups' | 'alerts';
-const pages: Page[] = ['today', 'patients', 'signups', 'alerts'];
+type Page = 'today' | 'patients' | 'signups' | 'alerts' | 'availability';
+const pages: Page[] = ['today', 'patients', 'signups', 'alerts', 'availability'];
 
 export function App() {
   const { t, lang, setLang } = useI18n();
@@ -68,6 +69,7 @@ export function App() {
         {page === 'today' && <Today />}
         {page === 'patients' && <Patients open={opened} onClose={() => setOpened(null)} />}
         {page === 'signups' && <Signups />}
+        {page === 'availability' && <AvailabilityPage />}
         {page === 'alerts' && (
           <Alerts
             onChange={countUnread}

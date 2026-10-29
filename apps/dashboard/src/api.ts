@@ -248,12 +248,42 @@ export type Alert = {
   created_at: string;
 };
 
+/** One weekly period of consultations. Monday = 0 ... Sunday = 6; minutes after midnight, clinic time. */
+export type Window = { weekday: number; start_minute: number; end_minute: number };
+
+export type BlockedDay = { id: string; day: string; reason: string | null };
+
+/** A booked visit the current hours no longer cover. It is never moved or cancelled. */
+export type Conflict = {
+  appointment_id: string;
+  start: string;
+  patient_phone: string | null;
+  reason: 'blocked_day' | 'outside_hours';
+};
+
+export type SlotMinutes = 5 | 10 | 15;
+
+export type Availability = {
+  slot_minutes: SlotMinutes;
+  notice_hours: number;
+  windows: Window[];
+  blocked_days: BlockedDay[];
+  conflicts: Conflict[];
+};
+
 export const api = {
   async login(email: string, password: string) {
     const res = await raw('POST', 'v1/staff/login', { email, password });
     setSession(await parse<Session>(res));
   },
   me: () => request<Me>('GET', 'v1/staff/me'),
+  availability: () => request<Availability>('GET', 'v1/staff/availability'),
+  saveWindows: (windows: Window[]) => request<Availability>('PUT', 'v1/staff/availability/windows', { windows }),
+  saveBookingSettings: (slot_minutes: SlotMinutes, notice_hours: number) =>
+    request<Availability>('PUT', 'v1/staff/availability/settings', { slot_minutes, notice_hours }),
+  blockDay: (day: string, reason: string | null) =>
+    request<Availability>('POST', 'v1/staff/availability/blocked-days', { day, reason }),
+  unblockDay: (id: string) => request<Availability>('DELETE', `v1/staff/availability/blocked-days/${id}`),
   agenda: (day: string) => request<AgendaItem[]>('GET', `v1/staff/agenda?day=${day}`),
   setStatus: (id: string, status: 'completed' | 'no_show') =>
     request<AgendaItem>('POST', `v1/staff/appointments/${id}/status`, { status }),
