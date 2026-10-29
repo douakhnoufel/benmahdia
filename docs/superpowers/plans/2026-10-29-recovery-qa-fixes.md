@@ -81,6 +81,38 @@ Remove the xfail.
 Reproduce with the QA test, root-cause, fix in alerts_job so a day checked after the nightly run
 still counts toward the run. Remove the xfail.
 
+## Task 9: Data integrity — keys, constraints, indexes
+
+Audit (2026-10-29, PostgreSQL): `alembic check` reports no drift between models and migrations;
+all patient-owned tables already have FKs with indexes. One migration `0017_integrity.py`
+(PostgreSQL + SQLite batch mode), with matching model changes and tests:
+
+1. Missing foreign keys (ON DELETE RESTRICT: a clinical record keeps who wrote it):
+   `medications.prescribed_by` → doctor_profiles.user_id, `articles.author_id` → doctor_profiles.user_id,
+   `addictions.reviewed_by` → doctor_profiles.user_id (nullable). `audit_log.actor_id` stays without
+   an FK on purpose: the audit trail must outlive the account.
+2. Wrong cascade: `appointment_notes.doctor_id` is ON DELETE CASCADE, so removing a doctor's profile
+   silently deletes their clinical notes. Change to RESTRICT.
+3. Check constraints (the API already validates these; the database becomes the last line):
+   appointments `price_dzd >= 0`; payments `amount_dzd > 0`; addiction_checks `craving BETWEEN 1 AND 5`;
+   addictions `goal_days > 0`, `milestone_seen >= 0`, `milestone_alerted >= 0`, `longest_past_days >= 0`,
+   `past_days >= 0`; medications `end_date IS NULL OR end_date >= start_date`;
+   articles `language IN ('ar','fr')`, `published = false OR published_at IS NOT NULL`;
+   alerts `priority IN ('normal','high')`; dose_logs `time`, habits `reminder_time`: on PostgreSQL a
+   regex check `^([01][0-9]|2[0-3]):[0-5][0-9]$`.
+   Before adding each check the migration counts violating rows and aborts with a clear message
+   naming the table and constraint (never the row content) instead of deleting or rewriting data.
+4. Indexes for the queries the dashboard runs: `appointments(start_utc)` (clinic-wide day lists across
+   doctors; the existing (doctor_id, start_utc) index cannot serve them),
+   `appointments(status, hold_expires_at)` (hold expiry), `alerts(created_at)` (newest-first list),
+   `audit_log(action, created_at)`, `articles(published, published_at)`.
+5. Tests: one test per constraint proving the database refuses a bad row (IntegrityError), the FK
+   RESTRICT tests, and `alembic upgrade head` / `downgrade -1` / `upgrade head` on PostgreSQL.
+
+Out of scope (PRD question, PRD §16 open item "data retention"): users → appointments/payments are
+ON DELETE CASCADE, so hard-deleting a patient erases visit and payment records. The PRD says those
+follow a retention policy not yet agreed with the clinic; do not change these cascades.
+
 ## Task 8: Mobile QA failures
 
 Run `flutter test`; for each failing test in qa_recovery_flow_test.dart (and any other), decide:
