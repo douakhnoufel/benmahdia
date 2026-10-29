@@ -313,8 +313,9 @@ def test_agenda_and_checkin_replies_carry_no_clinical_fields(client, sms):
     checked = client.post("/v1/staff/checkin", json={"code": "QAC234"}, headers=h)
     assert agenda.status_code == 200 and len(agenda.json()) == 1
     assert checked.status_code == 200
+    # Whose visit it is (name and "mine") is booking data, shared clinic-wide.
     allowed = {"id", "patient_id", "patient_phone", "start", "end", "status", "method",
-               "price_dzd", "paid", "checked_in_at"}
+               "price_dzd", "paid", "checked_in_at", "doctor_name_ar", "doctor_name_fr", "mine"}
     assert set(agenda.json()[0]) <= allowed
     assert set(checked.json()) <= allowed
     assert clinical_keys(agenda.json()) == clinical_keys(checked.json()) == []
