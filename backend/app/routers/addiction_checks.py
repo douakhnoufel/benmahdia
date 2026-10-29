@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .. import audit
+from .. import audit, scheduling
 from ..clock import clock
 from ..db import get_db
 from ..errors import ApiError
@@ -106,7 +106,7 @@ def _check_out(c: AddictionCheck) -> CheckOut:
 
 
 def _today() -> date:
-    return clock.now().date()
+    return scheduling.clinic_today(clock.now())
 
 
 def _tracked(db: Session, patient_id: uuid.UUID) -> list[Addiction]:
@@ -155,7 +155,7 @@ def save_check(
     if check is None:
         check = AddictionCheck(addiction_id=a.id, day=day, created_at=now)
         db.add(check)
-    elif check.created_at.date() != now.date():
+    elif scheduling.clinic_today(check.created_at) != scheduling.clinic_today(now):
         raise ApiError(409, "check_locked")
     check.used = body.used
     check.craving = body.craving
@@ -193,7 +193,7 @@ def list_checks(
         checked.setdefault(c.day, set()).add(c.addiction_id)
     done = []
     for day, ids in sorted(checked.items()):
-        due = {a.id for a in tracked if a.created_at.date() <= day}
+        due = {a.id for a in tracked if scheduling.clinic_today(a.created_at) <= day}
         if due <= ids:
             done.append(day)
     return ChecksOut(checks=[_check_out(c) for c in rows], done_days=done)

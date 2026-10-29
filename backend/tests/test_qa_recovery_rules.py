@@ -499,7 +499,6 @@ def test_late_answers_are_editable_the_day_they_are_given_only(client, sms):
     assert check(client, s, a, day="2026-10-18").status_code == 204
 
 
-@pytest.mark.xfail(strict=True, reason="QA API-01: the same-day edit window follows the UTC date, so a check saved after midnight in Algiers locks at 01:00")
 def test_a_check_saved_after_midnight_in_algiers_stays_editable_that_day(client, sms):
     """R-46 (PRD 5.6 "editable the same day"). The phone sends its own
     (Algiers) day. Saved at 00:30 on 10-18 in Algiers, edited at 01:10 the
@@ -527,7 +526,6 @@ def test_the_week_strip_counts_only_addictions_that_existed_that_day(client, sms
     assert checks(client, s).json()["done_days"] == ["2026-10-16", TODAY]
 
 
-@pytest.mark.xfail(strict=True, reason="QA API-03: the week strip dates a new addiction by its UTC day, so one added after midnight in Algiers undoes the day before")
 def test_adding_an_addiction_after_midnight_in_algiers_keeps_yesterday_done(client, sms):
     """R-47, R-49. 10-17 (Algiers) is fully checked; at 00:30 on 10-18
     Algiers the patient adds a second addiction; 10-17 must stay done."""
@@ -793,7 +791,6 @@ def test_doses_and_ticks_follow_the_algiers_day_after_midnight(client, sms):
     assert client.put(f"/v1/me/habits/{h['id']}/days/2026-10-18", headers=bearer(s)).status_code == 204
 
 
-@pytest.mark.xfail(strict=True, reason="QA API-03: the doctor's chart and habit summary end at the UTC date and miss the patient's day from 00:00 to 01:00 Algiers")
 def test_the_doctor_sees_the_patients_day_right_after_midnight_in_algiers(client, sms):
     """R-118, R-63."""
     doc, s = doctor_and_patient(client, sms)

@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from .. import audit
+from .. import audit, scheduling
 from ..clock import clock
 from ..db import get_db
 from ..errors import ApiError
@@ -85,7 +85,7 @@ class HabitOut(BaseModel):
 
 
 def _today() -> date:
-    return clock.now().date()
+    return scheduling.clinic_today(clock.now())
 
 
 def _days(db: Session, habit_id: uuid.UUID, since: date) -> list[date]:

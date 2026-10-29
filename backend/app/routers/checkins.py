@@ -10,6 +10,7 @@ from pydantic import BaseModel, field_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from .. import scheduling
 from ..clock import clock
 from ..db import get_db
 from ..errors import ApiError
@@ -29,7 +30,7 @@ _HHMM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
 def _today() -> date:
-    return clock.now().date()
+    return scheduling.clinic_today(clock.now())
 
 
 @router.get("/checkins", response_model=list[date])
