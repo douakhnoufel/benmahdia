@@ -4,6 +4,7 @@ The database stores UTC; consultation windows are kept as minutes after
 midnight in clinic time. Algeria has no daylight saving, but the conversion
 still goes through the zone so a rule change cannot silently shift slots."""
 
+import re
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -11,6 +12,15 @@ from zoneinfo import ZoneInfo
 from .models import Appointment, Availability, AvailabilityException, DoctorProfile
 
 CLINIC_TZ = ZoneInfo("Africa/Algiers")
+
+_HHMM = re.compile(r"([01][0-9]|2[0-3]):[0-5][0-9]")
+
+
+def is_hhmm(value: str) -> bool:
+    """Exactly "HH:MM", 24 hours, ASCII digits. fullmatch (not match with $)
+    so a trailing newline is refused; [0-9] (not \\d) so Arabic-Indic digits
+    are refused. Both would overflow varchar(5)."""
+    return _HHMM.fullmatch(value) is not None
 
 
 def to_utc(day: date, minute: int) -> datetime:

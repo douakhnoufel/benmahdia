@@ -18,7 +18,7 @@ from ..errors import ApiError
 from ..habits import HABITS
 from ..models import DoctorProfile, Habit, HabitKind, HabitLog, User
 from .addiction_checks import TextOut, _text
-from .checkins import _HHMM, DAYS_AHEAD, DAYS_BACK, LIST_DAYS
+from .checkins import DAYS_AHEAD, DAYS_BACK, LIST_DAYS
 from .medications import clinic_patient
 from .recovery import patient
 from .staff import current_doctor
@@ -31,7 +31,7 @@ SUMMARY_DAYS = 30
 
 
 def _valid_time(v: str | None) -> str | None:
-    if v is not None and not _HHMM.match(v):
+    if v is not None and not scheduling.is_hhmm(v):
         raise ValueError("time must be HH:MM, 24 h")
     return v
 

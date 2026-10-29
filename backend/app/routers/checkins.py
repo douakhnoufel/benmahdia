@@ -2,7 +2,6 @@
 their own days. The server never sees what the reminder says: the phone
 schedules it locally, with neutral text."""
 
-import re
 import uuid
 from datetime import date, timedelta
 
@@ -27,7 +26,6 @@ DAYS_AHEAD = 1
 # How far back the list goes by default (covers the week view and more).
 LIST_DAYS = 60
 
-_HHMM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
 def _today() -> date:
@@ -77,7 +75,7 @@ class ReminderBody(BaseModel):
     @field_validator("time")
     @classmethod
     def _valid(cls, v: str | None) -> str | None:
-        if v is not None and not _HHMM.match(v):
+        if v is not None and not scheduling.is_hhmm(v):
             raise ValueError("time must be HH:MM, 24 h")
         return v
 

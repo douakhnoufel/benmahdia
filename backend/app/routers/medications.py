@@ -6,7 +6,6 @@ patient with a booked visit, with any doctor). The phone schedules
 reminders locally with neutral text, so the drug name is never sent through
 a push service."""
 
-import re
 import uuid
 from datetime import date, timedelta
 from typing import Literal
@@ -37,7 +36,6 @@ from .staff import current_doctor
 router = APIRouter(prefix="/v1/me", tags=["recovery"])
 staff_router = APIRouter(prefix="/v1/staff/patients", tags=["staff"])
 
-_HHMM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 MAX_TIMES = 6
 # Same window as the daily check: a late answer or a phone already past midnight.
 DAYS_BACK = 2
@@ -75,7 +73,7 @@ class MedicationIn(BaseModel):
     @field_validator("times")
     @classmethod
     def _times(cls, v: list[str]) -> list[str]:
-        if any(not _HHMM.match(t) for t in v) or len(set(v)) != len(v):
+        if any(not scheduling.is_hhmm(t) for t in v) or len(set(v)) != len(v):
             raise ValueError("times must be distinct HH:MM, 24 h")
         return sorted(v)
 
@@ -224,7 +222,7 @@ class DoseIn(BaseModel):
     @field_validator("time")
     @classmethod
     def _time(cls, v: str) -> str:
-        if not _HHMM.match(v):
+        if not scheduling.is_hhmm(v):
             raise ValueError("time must be HH:MM, 24 h")
         return v
 

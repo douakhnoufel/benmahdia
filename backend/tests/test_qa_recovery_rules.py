@@ -617,7 +617,6 @@ def test_reminder_times_refuse_anything_else(client, sms, bad):
     assert prescribe(client, doc, s, **COURSE | {"times": [bad]}).status_code == 422
 
 
-@pytest.mark.xfail(strict=True, reason="QA API-06: the HH:MM check accepts a trailing newline and non-ASCII digits (6 chars overflow varchar(5) on PostgreSQL)")
 @pytest.mark.parametrize("bad", ["21:30\n", "1١:3٠"])
 def test_reminder_times_are_plain_ascii_hh_mm(client, sms, bad):
     """R-40, R-60, R-65. "1١:3٠" mixes in Arabic-Indic digits."""
@@ -906,7 +905,12 @@ def test_a_failed_check_save_keeps_the_answers_out_of_the_error(client, sms):
     logged = ""
     with another_request_saves_first(model, twin):
         try:
-            client.request(method, url, json=body, headers=headers)
+            r = client.request(method, url, json=body, headers=headers)
+            # Handled: the replayed save is the same answer, so the route says
+            # 204. A pass with no status check would hide a regression.
+            assert r.status_code == 204, r.status_code
+        except AssertionError:
+            raise
         except Exception as exc:  # noqa: BLE001 - this is what the server would log
             logged = "".join(traceback.format_exception(exc))
     # Both spellings: SQLite binds the JSON as a string ("..."), psycopg as

@@ -27,7 +27,7 @@ from .doctors import utc_iso
 router = APIRouter(prefix="/v1/me/identity", tags=["identity"])
 
 _JPEG_START = b"\xff\xd8\xff"
-_ID_NUMBER = re.compile(r"^[A-Z0-9]{6,30}$")
+_ID_NUMBER = re.compile(r"[A-Z0-9]{6,30}")
 
 
 class IdentityIn(BaseModel):
@@ -122,7 +122,7 @@ def declare(
             raise ApiError(403, "too_many_submissions")
 
     number = idcrypto.normalize_id_number(body.id_number)
-    if not _ID_NUMBER.match(number):
+    if not _ID_NUMBER.fullmatch(number):
         raise ApiError(422, "invalid_id_number")
     name = _clean_name(body.full_name)
     birth = _clean_birth(body.birth_date)
