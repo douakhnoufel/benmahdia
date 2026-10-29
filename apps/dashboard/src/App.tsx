@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react';
 import { isSignedIn, onSessionChange, signOut } from './api';
 import { useI18n, type StringKey } from './i18n';
-import { api } from './api';
+import { api, type Me } from './api';
 import { Button } from './components/ui';
 import { Alerts } from './pages/Alerts';
 import { AvailabilityPage } from './pages/Availability';
 import { Login } from './pages/Login';
 import { Patients } from './pages/Patients';
+import { Prices } from './pages/Prices';
 import { Signups } from './pages/Signups';
 import { Today } from './pages/Today';
 
-type Page = 'today' | 'patients' | 'signups' | 'alerts' | 'availability';
-const pages: Page[] = ['today', 'patients', 'signups', 'alerts', 'availability'];
+type Page = 'today' | 'patients' | 'signups' | 'alerts' | 'availability' | 'prices';
+const doctorPages: Page[] = ['today', 'patients', 'signups', 'alerts', 'availability'];
 
 export function App() {
   const { t, lang, setLang } = useI18n();
@@ -20,6 +21,10 @@ export function App() {
   // A patient opened from an alert; the patient list shows their file.
   const [opened, setOpened] = useState<{ id: string; phone: string | null } | null>(null);
   const [unread, setUnread] = useState(0);
+  // Who is signed in: the super admin also sees the Prices page. The API
+  // checks the role on every route either way.
+  const [me, setMe] = useState<Me | null>(null);
+  const pages: Page[] = me?.role === 'super_admin' ? [...doctorPages, 'prices'] : doctorPages;
   const countUnread = () => {
     api.alerts(true).then((a) => setUnread(a.length), () => undefined);
   };
@@ -29,6 +34,18 @@ export function App() {
       off();
     };
   }, []);
+
+  useEffect(() => {
+    if (!signedIn) {
+      setMe(null);
+      return;
+    }
+    let live = true;
+    api.me().then((m) => live && setMe(m), () => undefined);
+    return () => {
+      live = false;
+    };
+  }, [signedIn]);
 
   // The badge counts what is still unread, refreshed whenever the doctor changes page.
   useEffect(() => {
@@ -70,6 +87,7 @@ export function App() {
         {page === 'patients' && <Patients open={opened} onClose={() => setOpened(null)} />}
         {page === 'signups' && <Signups />}
         {page === 'availability' && <AvailabilityPage />}
+        {page === 'prices' && <Prices />}
         {page === 'alerts' && (
           <Alerts
             onChange={countUnread}

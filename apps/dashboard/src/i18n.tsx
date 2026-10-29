@@ -195,6 +195,10 @@ const strings = {
     conflictsNotice: 'هذه المواعيد لم تُلغَ ولم تُنقل. اتصل بالمرضى لتغيير مواعيدهم.',
     conflictBlockedDay: 'يوم مغلق',
     conflictOutsideHours: 'خارج الساعات',
+    prices: 'الأسعار',
+    pricesNotice: 'السعر الجديد يطبق على الحجوزات الجديدة فقط. المواعيد المحجوزة تحتفظ بسعرها.',
+    priceDzd: 'السعر (دج)',
+    errPrice: 'يجب أن يكون السعر بين 0 و100000 دج.',
   },
   fr: {
     appName: 'BenMahdia — Espace médecin',
@@ -387,6 +391,10 @@ const strings = {
     conflictsNotice: 'Ces rendez-vous n’ont été ni annulés ni déplacés. Appelez les patients pour les changer.',
     conflictBlockedDay: 'Jour fermé',
     conflictOutsideHours: 'Hors horaires',
+    prices: 'Tarifs',
+    pricesNotice: 'Le nouveau prix s’applique aux nouvelles réservations. Les rendez-vous déjà réservés gardent leur prix.',
+    priceDzd: 'Prix (DA)',
+    errPrice: 'Le prix doit être entre 0 et 100 000 DA.',
   },
 } as const;
 

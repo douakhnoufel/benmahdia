@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import get_settings
 from .routers import (
     addiction_checks,
+    admin,
     appointments,
     auth,
     checkins,
@@ -59,6 +60,7 @@ def create_app() -> FastAPI:
     app.include_router(addiction_checks.staff_router)
     app.include_router(habits.staff_router)
     app.include_router(staff_identity.router)
+    app.include_router(admin.router)
 
     @app.get("/health", tags=["health"])
     def health() -> dict[str, str]:

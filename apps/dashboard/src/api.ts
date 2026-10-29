@@ -271,6 +271,9 @@ export type Availability = {
   conflicts: Conflict[];
 };
 
+/** A doctor as the super admin sets their price (PRD 4.4). */
+export type AdminDoctor = { id: string; name_ar: string; name_fr: string; price_dzd: number; slot_minutes: number };
+
 export const api = {
   async login(email: string, password: string) {
     const res = await raw('POST', 'v1/staff/login', { email, password });
@@ -283,6 +286,9 @@ export const api = {
     request<Availability>('PUT', 'v1/staff/availability/settings', { slot_minutes, notice_hours }),
   blockDay: (day: string, reason: string | null) =>
     request<Availability>('POST', 'v1/staff/availability/blocked-days', { day, reason }),
+  adminDoctors: () => request<AdminDoctor[]>('GET', 'v1/admin/doctors'),
+  setPrice: (doctorId: string, price_dzd: number) =>
+    request<AdminDoctor>('PUT', `v1/admin/doctors/${doctorId}/price`, { price_dzd }),
   unblockDay: (id: string) => request<Availability>('DELETE', `v1/staff/availability/blocked-days/${id}`),
   agenda: (day: string) => request<AgendaItem[]>('GET', `v1/staff/agenda?day=${day}`),
   setStatus: (id: string, status: 'completed' | 'no_show') =>
