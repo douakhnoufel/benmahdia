@@ -149,6 +149,26 @@ export type HoldItem = {
   paying_by: 'edahabia' | 'cib' | 'clinic' | null;
 };
 
+/** One of a patient's visits in the clinic, as their doctor sees it. */
+export type Visit = {
+  id: string;
+  start: string;
+  end: string;
+  status: AppointmentStatus;
+  doctor_name_ar: string;
+  doctor_name_fr: string;
+  mine: boolean;
+  paid: boolean;
+  method: 'edahabia' | 'cib' | 'clinic' | null;
+  price_dzd: number;
+};
+
+/** rate = completed / (completed + no_show); null before the first past visit. */
+export type VisitHistory = {
+  attendance: { completed: number; no_show: number; rate: number | null };
+  appointments: Visit[];
+};
+
 export type Patient = {
   id: string;
   phone: string | null;
@@ -318,6 +338,8 @@ export const api = {
   reject: (id: string, reason?: string) =>
     request<Signup>('POST', `v1/staff/signups/${id}/reject`, reason ? { reason } : undefined),
   identity: (id: string) => request<Identity>('GET', `v1/staff/signups/${id}/identity`),
+  patientAppointments: (patientId: string) =>
+    request<VisitHistory>('GET', `v1/staff/patients/${patientId}/appointments`),
   patientAddictions: (patientId: string) =>
     request<PatientAddiction[]>('GET', `v1/staff/patients/${patientId}/addictions`),
   reviewAddiction: (patientId: string, addictionId: string, decision: 'confirm' | 'reject') =>

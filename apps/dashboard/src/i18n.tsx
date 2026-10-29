@@ -205,6 +205,10 @@ const strings = {
     payingEdahabia: 'الدفع ببطاقة الذهبية جارٍ',
     unreadAlertsCount: 'تنبيهات غير مقروءة: {n}',
     openAlerts: 'عرض التنبيهات',
+    appointmentsTitle: 'المواعيد',
+    attendance: 'الحضور: {rate}% ({done} حضور، {missed} غياب)',
+    noAttendance: 'لا يوجد موعد سابق بعد.',
+    noAppointments: 'لا توجد مواعيد.',
   },
   fr: {
     appName: 'BenMahdia — Espace médecin',
@@ -407,6 +411,10 @@ const strings = {
     payingEdahabia: 'Paiement Edahabia en cours',
     unreadAlertsCount: 'Alertes non lues : {n}',
     openAlerts: 'Voir les alertes',
+    appointmentsTitle: 'Rendez-vous',
+    attendance: 'Assiduité : {rate} % ({done} effectués, {missed} absences)',
+    noAttendance: 'Pas encore de rendez-vous passé.',
+    noAppointments: 'Aucun rendez-vous.',
   },
 } as const;
 

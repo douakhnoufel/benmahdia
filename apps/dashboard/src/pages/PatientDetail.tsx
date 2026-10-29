@@ -12,6 +12,7 @@ import { useI18n, type StringKey } from '../i18n';
 import { Badge, Button, Card, Input, Notice } from '../components/ui';
 import { useLoad } from '../useLoad';
 import { Failed, Loading } from './Status';
+import { PatientAppointments } from './PatientAppointments';
 import { clinicToday } from './Today';
 import { CheckChart, Habits, PROFILE_KEY, fill } from './Tracking';
 
@@ -43,6 +44,7 @@ export function PatientDetail({ patient, onBack }: { patient: Pick<Patient, 'id'
         <Button variant="ghost" onClick={onBack}>{t('back')}</Button>
         <h2 className="text-h3 text-ink-strong" dir="ltr">{patient.phone ?? '—'}</h2>
       </div>
+      <PatientAppointments patientId={patient.id} />
       <Addictions patientId={patient.id} />
       <Habits patientId={patient.id} />
       <Medications patientId={patient.id} />

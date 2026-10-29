@@ -61,6 +61,7 @@ function defaults(url: URL, init: RequestInit): { status: number; body?: unknown
   const method = init.method ?? 'GET';
   if (p.endsWith('/addictions') && method === 'GET') return { status: 200, body: [addiction] };
   if (p === '/v1/staff/recovery/profiles') return { status: 200, body: [] };
+  if (p.endsWith('/appointments')) return { status: 200, body: { attendance: { completed: 0, no_show: 0, rate: null }, appointments: [] } };
   if (p.endsWith('/checks')) return { status: 200, body: { days: 30, checked_days: 0, checks: [] } };
   if (p.endsWith('/habits')) return { status: 200, body: [] };
   if (p.endsWith('/confirm')) return { status: 200, body: { ...addiction, review_status: 'confirmed' } };
