@@ -40,3 +40,4 @@ backend/data/
 
 # Local check runs
 checks.log
+*.tsbuildinfo
