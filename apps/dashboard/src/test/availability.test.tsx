@@ -75,7 +75,7 @@ describe('Availability page', () => {
     const week = await screen.findByRole('region', { name: 'Horaires de la semaine' });
     const days = within(week).getAllByRole('heading', { level: 4 }).map((h) => h.textContent);
     expect(days).toEqual(['samedi', 'dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi']);
-    expect(within(week).getAllByText('20 créneaux')).toHaveLength(6);
+    expect(within(week).getAllByText('Créneaux : 20')).toHaveLength(6);
     expect(within(week).getAllByText('Pause 12:00–14:00')).toHaveLength(6);
     expect(within(week).getByText('Fermé')).toBeInTheDocument();
     expect(within(week).getByLabelText('De · lundi 1')).toHaveValue('09:00');
@@ -107,7 +107,7 @@ describe('Availability page', () => {
     await userEvent.click(within(friday).getByRole('button', { name: 'Ajouter une plage' }));
     expect(within(friday).getByLabelText('De · vendredi 1')).toHaveValue('09:00');
     expect(within(friday).getByLabelText('À · vendredi 1')).toHaveValue('10:00');
-    expect(within(friday).getByText('4 créneaux')).toBeInTheDocument();
+    expect(within(friday).getByText('Créneaux : 4')).toBeInTheDocument();
     await userEvent.click(within(week).getByRole('button', { name: 'Enregistrer les horaires' }));
     const { windows } = JSON.parse(calls.find((c) => c.init.method === 'PUT')!.init.body as string);
     expect(windows).toContainEqual({ weekday: 4, start_minute: 540, end_minute: 600 });
@@ -150,7 +150,7 @@ describe('Availability page', () => {
     expect(put.url.pathname).toBe('/v1/staff/availability/settings');
     expect(JSON.parse(put.init.body as string)).toEqual({ slot_minutes: 10, notice_hours: 48 });
     // The week now counts 10-minute slots.
-    expect(within(region('Horaires de la semaine')).getAllByText('30 créneaux')).toHaveLength(6);
+    expect(within(region('Horaires de la semaine')).getAllByText('Créneaux : 30')).toHaveLength(6);
   });
 
   it('refuses a notice above a week', async () => {

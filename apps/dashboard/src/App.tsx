@@ -61,7 +61,7 @@ export function App() {
       <header className="border-b border-border bg-surface">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-lg px-xl py-md">
           <h1 className="text-h3 text-ink-strong">{t('appName')}</h1>
-          <nav className="flex gap-sm">
+          <nav className="flex flex-wrap gap-sm">
             {pages.map((p) => (
               <Button key={p} variant={p === page ? 'primary' : 'ghost'} aria-current={p === page ? 'page' : undefined}
                 onClick={() => {

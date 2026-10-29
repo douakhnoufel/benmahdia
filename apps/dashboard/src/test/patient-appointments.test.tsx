@@ -61,7 +61,7 @@ describe('Patient file: appointments', () => {
     const calls = mockFetch(history);
     renderIn();
     const region = await card();
-    expect(await within(region).findByText('Assiduité : 67 % (2 effectués, 1 absences)')).toBeInTheDocument();
+    expect(await within(region).findByText('Assiduité : 67 % — effectués : 2, absences : 1')).toBeInTheDocument();
     const rows = within(region).getAllByRole('listitem');
     expect(rows).toHaveLength(4);
     expect(rows[0]).toHaveTextContent('09:00');
@@ -97,7 +97,7 @@ describe('Patient file: appointments', () => {
     mockFetch(history);
     renderIn('ar');
     const region = await screen.findByRole('region', { name: 'المواعيد' });
-    expect(await within(region).findByText('الحضور: 67% (2 حضور، 1 غياب)')).toBeInTheDocument();
+    expect(await within(region).findByText('الحضور: 67% — حضر: 2، غاب: 1')).toBeInTheDocument();
   });
 });
 

@@ -1,6 +1,6 @@
 # Booking dashboard — implementation plan
 
-Oct 29, 2026 · Status: approved (Oct 29)
+Oct 29, 2026 · Status: done (Oct 29), on branch `claude/booking-dashboard`
 
 Goal: finish the doctor dashboard for the booking system (PRD 4.3, 4.4, 7).
 Six features are missing, plus one bug found while reading the code.
@@ -145,3 +145,10 @@ agenda hides them on purpose.
 2. Notes are always private in v1: no "share with the AI" toggle.
 3. The Availability page starts the week on Saturday.
 4. "Needs refund" payments: later, once the clinic sets its refund rules.
+
+## Follow-ups found while building
+
+- **No super admin in the seed.** `app/seed.py` creates one plain doctor, so nobody can open the Prices page until an account's role is set to `super_admin` in the database. Which pilot doctor is the super admin is the clinic's call.
+- **Time fields follow the browser's locale.** The Availability page uses the browser's time picker: 24-hour on a French or Arabic computer, AM/PM on an English one.
+- **Patient-file access is still "any doctor the patient booked once"** (QA SEC-02, still a strict xfail). The new history card uses the same rule; notes are stricter (the visit's own doctor only).
+- **Refunds** for card payments that arrive after their slot was released are still to be decided with the clinic.
