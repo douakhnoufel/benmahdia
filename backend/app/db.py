@@ -1,6 +1,8 @@
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
+from typing import TypeVar
 
 from sqlalchemy import create_engine
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from .config import get_settings
@@ -36,3 +38,24 @@ def get_db() -> Iterator[Session]:
     with SessionLocal() as session:
         yield session
 
+
+T = TypeVar("T")
+
+
+def insert_once(db: Session, row: T, stored: Callable[[], T | None]) -> tuple[T, bool]:
+    """Inserts [row], a once-a-day row with a unique key (a check, a tick, a
+    dose answer). When another request saved the same key first (a double
+    tap, two phones), the insert is rolled back to a savepoint and the row
+    that request stored, read by [stored], is returned instead.
+
+    Returns (the row, whether this call inserted it). Re-raises the
+    IntegrityError when no stored row explains it."""
+    try:
+        with db.begin_nested():
+            db.add(row)
+        return row, True
+    except IntegrityError:
+        existing = stored()
+        if existing is None:
+            raise
+        return existing, False

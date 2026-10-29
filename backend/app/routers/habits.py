@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from .. import audit, scheduling
 from ..clock import clock
-from ..db import get_db
+from ..db import get_db, insert_once
 from ..errors import ApiError
 from ..habits import HABITS
 from ..models import DoctorProfile, Habit, HabitKind, HabitLog, User
@@ -197,9 +197,12 @@ def mark_done(
     """Ticks the habit done for [day]; ticking twice changes nothing."""
     h = _own(db, user, habit_id)
     _check_day(day)
-    exists = db.scalar(select(HabitLog.id).where(HabitLog.habit_id == h.id, HabitLog.day == day))
-    if exists is None:
-        db.add(HabitLog(habit_id=h.id, day=day))
+
+    def stored() -> uuid.UUID | None:
+        return db.scalar(select(HabitLog.id).where(HabitLog.habit_id == h.id, HabitLog.day == day))
+
+    if stored() is None:
+        insert_once(db, HabitLog(habit_id=h.id, day=day), stored)
         db.commit()
     return Response(status_code=204)
 

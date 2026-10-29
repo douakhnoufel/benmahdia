@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from .. import audit, scheduling
 from ..clock import clock
-from ..db import get_db
+from ..db import get_db, insert_once
 from ..errors import ApiError
 from ..models import (
     Addiction,
@@ -290,15 +290,21 @@ def answer_dose(
         raise ApiError(422, "dose_day_out_of_range")
     if not _runs_on(m, body.day) or body.time not in m.times:
         raise ApiError(422, "dose_not_scheduled")
-    log = db.scalar(
-        select(DoseLog).where(
-            DoseLog.medication_id == m.id, DoseLog.day == body.day, DoseLog.time == body.time
+
+    def stored() -> DoseLog | None:
+        return db.scalar(
+            select(DoseLog).where(
+                DoseLog.medication_id == m.id, DoseLog.day == body.day, DoseLog.time == body.time
+            )
         )
-    )
+
+    log = stored()
+    inserted = False
     if log is None:
-        log = DoseLog(medication_id=m.id, day=body.day, time=body.time, status=body.status)
-        db.add(log)
-    else:
+        log, inserted = insert_once(
+            db, DoseLog(medication_id=m.id, day=body.day, time=body.time, status=body.status), stored
+        )
+    if not inserted:  # answering again (or losing the race) replaces the answer
         log.status = body.status
         log.logged_at = clock.now()
     db.commit()

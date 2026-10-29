@@ -817,8 +817,6 @@ def test_opening_a_colleagues_patient_file_is_audited_with_ids_only(client, sms)
 # --- R-54: two first saves of one check at the same time ------------------------------------
 
 
-@pytest.mark.xfail(strict=True, raises=IntegrityError,
-                   reason="QA SEC-07: a second simultaneous first save of one check is an unhandled IntegrityError (500) whose text, logged by the server, carries the answers")
 def test_a_second_simultaneous_first_save_of_a_check_is_not_a_500(client, sms, monkeypatch):
     """Two phones (or a double tap) save the first check of one addiction and
     day at the same moment. Deterministic on any database: the other save
@@ -849,8 +847,6 @@ def test_a_second_simultaneous_first_save_of_a_check_is_not_a_500(client, sms, m
 
 
 @pytest.mark.skipif(engine.dialect.name != "postgresql", reason="needs PostgreSQL: two requests really in parallel")
-@pytest.mark.xfail(strict=True, raises=IntegrityError,
-                   reason="QA SEC-07: two real simultaneous first saves of one check end in an unhandled IntegrityError (500)")
 def test_two_real_simultaneous_first_saves_of_a_check_are_not_a_500(client, sms):
     """The same race as above without any injection: two threads send the
     first save of one addiction and day at the same moment, on every free

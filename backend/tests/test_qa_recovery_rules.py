@@ -889,7 +889,6 @@ def _double_tap_case(client, sms, kind):
     return DoseLog, twin, ("PUT", "/v1/me/doses", body, h)
 
 
-@pytest.mark.xfail(strict=True, reason="QA API-04: a duplicate same-day save (check, habit tick, v1 tick, dose) that loses the race is a 500, not an idempotent answer")
 @pytest.mark.parametrize("kind", ["check", "habit", "tick", "dose"])
 def test_a_double_tap_is_not_a_server_error(client, sms, kind):
     model, twin, (method, url, body, headers) = _double_tap_case(client, sms, kind)
@@ -920,7 +919,6 @@ ON_POSTGRES = engine.dialect.name == "postgresql"
 
 
 @pytest.mark.skipif(not ON_POSTGRES, reason="needs PostgreSQL (real concurrent transactions)")
-@pytest.mark.xfail(strict=True, reason="QA API-04: parallel duplicate same-day saves on PostgreSQL end in 500s")
 def test_parallel_duplicate_saves_on_postgresql(client, sms):
     """R-54, R-58 for real: 8 identical requests at once, for several days
     and rows. Relapses are counted too (no unique rule, see API-15)."""

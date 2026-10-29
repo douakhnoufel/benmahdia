@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from .. import audit, scheduling
 from ..clock import clock
-from ..db import get_db
+from ..db import get_db, insert_once
 from ..errors import ApiError
 from ..models import (
     Addiction,
@@ -147,15 +147,30 @@ def save_check(
     if set(body.signals) != set(expected) or any(not 1 <= v <= 5 for v in body.signals.values()):
         raise ApiError(422, "signals_mismatch")
     now = clock.now()
-    check = db.scalar(
-        select(AddictionCheck).where(
-            AddictionCheck.addiction_id == a.id, AddictionCheck.day == day
+
+    def stored() -> AddictionCheck | None:
+        return db.scalar(
+            select(AddictionCheck).where(
+                AddictionCheck.addiction_id == a.id, AddictionCheck.day == day
+            )
         )
-    )
+
+    check = stored()
     if check is None:
-        check = AddictionCheck(addiction_id=a.id, day=day, created_at=now)
-        db.add(check)
-    elif scheduling.clinic_today(check.created_at) != scheduling.clinic_today(now):
+        check, inserted = insert_once(
+            db,
+            AddictionCheck(
+                addiction_id=a.id, day=day, used=body.used, craving=body.craving,
+                signals=dict(body.signals), created_at=now, updated_at=now,
+            ),
+            stored,
+        )
+        if inserted:
+            db.commit()
+            return Response(status_code=204)
+    # A second save (or a first one that lost the race): it changes the
+    # answers the day the check was first saved, later it is locked.
+    if scheduling.clinic_today(check.created_at) != scheduling.clinic_today(now):
         raise ApiError(409, "check_locked")
     check.used = body.used
     check.craving = body.craving

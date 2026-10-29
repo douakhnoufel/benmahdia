@@ -3,6 +3,7 @@ their own days. The server never sees what the reminder says: the phone
 schedules it locally, with neutral text."""
 
 import re
+import uuid
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, Response
@@ -12,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from .. import scheduling
 from ..clock import clock
-from ..db import get_db
+from ..db import get_db, insert_once
 from ..errors import ApiError
 from ..models import DailyCheck, User
 from .recovery import patient
@@ -57,11 +58,14 @@ def tick(
     today = _today()
     if not today - timedelta(days=DAYS_BACK) <= day <= today + timedelta(days=DAYS_AHEAD):
         raise ApiError(422, "checkin_day_out_of_range")
-    exists = db.scalar(
-        select(DailyCheck.id).where(DailyCheck.patient_id == user.id, DailyCheck.day == day)
-    )
-    if exists is None:
-        db.add(DailyCheck(patient_id=user.id, day=day))
+
+    def stored() -> uuid.UUID | None:
+        return db.scalar(
+            select(DailyCheck.id).where(DailyCheck.patient_id == user.id, DailyCheck.day == day)
+        )
+
+    if stored() is None:
+        insert_once(db, DailyCheck(patient_id=user.id, day=day), stored)
         db.commit()
     return Response(status_code=204)
 
