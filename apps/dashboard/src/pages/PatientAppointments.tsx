@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { api, type Visit } from '../api';
 import { useI18n } from '../i18n';
+import { ReceiptPanel } from '../components/ReceiptPanel';
 import { Badge, Button, Card, Notice } from '../components/ui';
 import { useLoad } from '../useLoad';
 import { Failed, Loading } from './Status';
@@ -65,6 +66,7 @@ function Attendance({ completed, no_show, rate }: { completed: number; no_show: 
 function VisitRow({ visit, onNoted }: { visit: Visit; onNoted: (has: boolean) => void }) {
   const { t, lang, date, time } = useI18n();
   const [editing, setEditing] = useState(false);
+  const [receipt, setReceipt] = useState(false);
   return (
     <li className="flex flex-col gap-sm border-b border-border py-sm last:border-0">
       <div className="flex flex-wrap items-center gap-md">
@@ -74,12 +76,20 @@ function VisitRow({ visit, onNoted }: { visit: Visit; onNoted: (has: boolean) =>
         <span className="text-ink-body">{lang === 'ar' ? visit.doctor_name_ar : visit.doctor_name_fr}</span>
         <Badge tone={statusTone[visit.status]}>{t(visit.status)}</Badge>
         {visit.status !== 'cancelled' && <Badge tone={visit.paid ? 'success' : 'warning'}>{t(visit.paid ? 'paid' : 'unpaid')}</Badge>}
-        {notable(visit) && !editing && (
-          <Button variant="secondary" className="ms-auto" onClick={() => setEditing(true)}>
-            {t(visit.has_note ? 'noteOpen' : 'noteAdd')}
-          </Button>
-        )}
+        <div className="ms-auto flex flex-wrap gap-sm">
+          {visit.mine && visit.paid && (
+            <Button variant="ghost" aria-expanded={receipt} onClick={() => setReceipt(!receipt)}>
+              {t(receipt ? 'close' : 'receipt')}
+            </Button>
+          )}
+          {notable(visit) && !editing && (
+            <Button variant="secondary" onClick={() => setEditing(true)}>
+              {t(visit.has_note ? 'noteOpen' : 'noteAdd')}
+            </Button>
+          )}
+        </div>
       </div>
+      {receipt && <ReceiptPanel appointmentId={visit.id} onClose={() => setReceipt(false)} />}
       {editing && <NoteEditor appointmentId={visit.id} onClose={() => setEditing(false)} onNoted={onNoted} />}
     </li>
   );

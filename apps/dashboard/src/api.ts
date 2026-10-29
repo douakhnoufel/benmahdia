@@ -174,6 +174,42 @@ export type VisitHistory = {
   appointments: Visit[];
 };
 
+export type PaymentMethod = 'edahabia' | 'cib' | 'clinic';
+
+/** Proof of payment of a paid appointment (PRD 4.4): not a tax invoice, no medical content. */
+export type Receipt = {
+  number: string;
+  appointment_id: string;
+  doctor_name_ar: string;
+  doctor_name_fr: string;
+  start: string;
+  amount_dzd: number;
+  method: PaymentMethod;
+  paid_at: string;
+  /** Chargily's payment id for a card; null when paid at the clinic. */
+  payment_ref: string | null;
+};
+
+export type PaymentRow = {
+  id: string;
+  start: string;
+  doctor_name_ar: string;
+  doctor_name_fr: string;
+  mine: boolean;
+  patient_phone: string | null;
+  status: AppointmentStatus;
+  method: PaymentMethod | null;
+  price_dzd: number;
+  paid: boolean;
+  paid_at: string | null;
+};
+
+/** Unpaid counts only what is owed: a cancelled visit owes nothing. */
+export type Payments = {
+  rows: PaymentRow[];
+  totals: { paid_count: number; paid_dzd: number; unpaid_count: number; unpaid_dzd: number };
+};
+
 export type Patient = {
   id: string;
   phone: string | null;
@@ -345,6 +381,9 @@ export const api = {
   identity: (id: string) => request<Identity>('GET', `v1/staff/signups/${id}/identity`),
   patientAppointments: (patientId: string) =>
     request<VisitHistory>('GET', `v1/staff/patients/${patientId}/appointments`),
+  receipt: (appointmentId: string) => request<Receipt>('GET', `v1/staff/appointments/${appointmentId}/receipt`),
+  /** Clinic days, both included, at most 92 days. */
+  payments: (from: string, to: string) => request<Payments>('GET', `v1/staff/payments?from=${from}&to=${to}`),
   note: (appointmentId: string) => request<Note>('GET', `v1/staff/appointments/${appointmentId}/note`),
   /** Empty text deletes the note. */
   saveNote: (appointmentId: string, text: string) =>

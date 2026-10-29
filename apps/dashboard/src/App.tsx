@@ -7,12 +7,13 @@ import { Alerts } from './pages/Alerts';
 import { AvailabilityPage } from './pages/Availability';
 import { Login } from './pages/Login';
 import { Patients } from './pages/Patients';
+import { Payments } from './pages/Payments';
 import { Prices } from './pages/Prices';
 import { Signups } from './pages/Signups';
 import { Today } from './pages/Today';
 
-type Page = 'today' | 'patients' | 'signups' | 'alerts' | 'availability' | 'prices';
-const doctorPages: Page[] = ['today', 'patients', 'signups', 'alerts', 'availability'];
+type Page = 'today' | 'patients' | 'signups' | 'alerts' | 'availability' | 'payments' | 'prices';
+const doctorPages: Page[] = ['today', 'patients', 'signups', 'alerts', 'availability', 'payments'];
 
 export function App() {
   const { t, lang, setLang } = useI18n();
@@ -87,6 +88,7 @@ export function App() {
         {page === 'patients' && <Patients open={opened} onClose={() => setOpened(null)} />}
         {page === 'signups' && <Signups />}
         {page === 'availability' && <AvailabilityPage />}
+        {page === 'payments' && <Payments />}
         {page === 'prices' && <Prices />}
         {page === 'alerts' && (
           <Alerts

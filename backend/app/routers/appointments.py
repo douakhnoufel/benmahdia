@@ -314,16 +314,10 @@ def follow_up(
     )
 
 
-@router.get("/{appointment_id}/receipt", response_model=ReceiptOut)
-def receipt(
-    appointment_id: uuid.UUID,
-    patient: User = Depends(verified_patient),
-    db: Session = Depends(get_db),
-) -> ReceiptOut:
-    """Proof of payment for one of the patient's own paid appointments
-    (PRD 4.4). It is a payment receipt, not a tax invoice, and carries no
-    medical content."""
-    a = _mine(db, patient, appointment_id)
+def build_receipt(db: Session, a: Appointment) -> ReceiptOut:
+    """Proof of payment for a paid appointment (PRD 4.4), the same for the
+    patient and the clinic. It is a payment receipt, not a tax invoice, and
+    carries no medical content."""
     if a.paid_at is None or a.method is None:
         raise ApiError(409, "not_paid")
     profile = db.get(DoctorProfile, a.doctor_id)
@@ -343,6 +337,16 @@ def receipt(
         paid_at=utc_iso(a.paid_at),
         payment_ref=ref,
     )
+
+
+@router.get("/{appointment_id}/receipt", response_model=ReceiptOut)
+def receipt(
+    appointment_id: uuid.UUID,
+    patient: User = Depends(verified_patient),
+    db: Session = Depends(get_db),
+) -> ReceiptOut:
+    """The receipt of one of the patient's own paid appointments."""
+    return build_receipt(db, _mine(db, patient, appointment_id))
 
 
 @router.post("/{appointment_id}/cancel", response_model=AppointmentOut)

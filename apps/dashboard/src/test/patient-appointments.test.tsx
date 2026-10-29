@@ -132,9 +132,10 @@ describe('Patient file: private notes', () => {
     renderIn();
     const rows = within(await card()).getAllByRole('listitem');
     await within(rows[1]).findByRole('button', { name: 'Ajouter une note' });
-    expect(within(rows[0]).queryByRole('button')).toBeNull();
-    expect(within(rows[2]).queryByRole('button')).toBeNull();
-    expect(within(rows[3]).queryByRole('button')).toBeNull();
+    const noteButton = { name: /note/i };
+    expect(within(rows[0]).queryByRole('button', noteButton)).toBeNull();
+    expect(within(rows[2]).queryByRole('button', noteButton)).toBeNull();
+    expect(within(rows[3]).queryByRole('button', noteButton)).toBeNull();
   });
 
   it('writes a note and says it is private', async () => {

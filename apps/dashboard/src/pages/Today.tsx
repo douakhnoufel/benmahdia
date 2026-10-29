@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { api, type AgendaItem, type HoldItem } from '../api';
 import { useI18n } from '../i18n';
 import { CheckinBox } from '../components/CheckinBox';
+import { ReceiptPanel } from '../components/ReceiptPanel';
 import { Badge, Button, Card } from '../components/ui';
 import { useLoad } from '../useLoad';
 import { Failed, Loading } from './Status';
@@ -34,6 +35,8 @@ export function Today({
   const [day, setDay] = useState(initialDay ?? clinicToday());
   const { load, reload, setLoad } = useLoad(() => api.agenda(day), [day]);
   const requests = useLoad(() => api.holds(day), [day]);
+  // The paid visit whose receipt is open under its row.
+  const [receipt, setReceipt] = useState<string | null>(null);
 
   function replace(item: AgendaItem) {
     if (load.state !== 'ready') return;
@@ -81,7 +84,22 @@ export function Today({
             </thead>
             <tbody>
               {load.data.map((a) => (
-                <Row key={a.id} item={a} onChange={replace} timeOf={time} />
+                <Fragment key={a.id}>
+                  <Row
+                    item={a}
+                    onChange={replace}
+                    timeOf={time}
+                    receiptOpen={receipt === a.id}
+                    onReceipt={() => setReceipt(receipt === a.id ? null : a.id)}
+                  />
+                  {receipt === a.id && (
+                    <tr className="border-b border-border">
+                      <td colSpan={6} className="p-md">
+                        <ReceiptPanel appointmentId={a.id} onClose={() => setReceipt(null)} />
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>
@@ -119,7 +137,19 @@ function Requests({ holds }: { holds: HoldItem[] }) {
 
 const PAYING = { cib: 'payingCib', edahabia: 'payingEdahabia' } as const;
 
-function Row({ item, onChange, timeOf }: { item: AgendaItem; onChange: (a: AgendaItem) => void; timeOf: (iso: string) => string }) {
+function Row({
+  item,
+  onChange,
+  timeOf,
+  receiptOpen,
+  onReceipt,
+}: {
+  item: AgendaItem;
+  onChange: (a: AgendaItem) => void;
+  timeOf: (iso: string) => string;
+  receiptOpen: boolean;
+  onReceipt: () => void;
+}) {
   const { t, lang } = useI18n();
   const [busy, setBusy] = useState(false);
   const started = new Date(item.start).getTime() <= Date.now();
@@ -175,6 +205,11 @@ function Row({ item, onChange, timeOf }: { item: AgendaItem; onChange: (a: Agend
           {markable && item.status !== 'no_show' && (
             <Button variant="danger" disabled={busy} onClick={() => act(() => api.setStatus(item.id, 'no_show'))}>
               {t('markNoShow')}
+            </Button>
+          )}
+          {item.mine && item.paid && (
+            <Button variant="ghost" aria-expanded={receiptOpen} onClick={onReceipt}>
+              {t(receiptOpen ? 'close' : 'receipt')}
             </Button>
           )}
         </div>
