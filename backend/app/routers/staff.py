@@ -50,6 +50,11 @@ class AgendaItem(BaseModel):
     paid: bool
     # When the front desk accepted the patient's booking code, if it did.
     checked_in_at: str | None = None
+    # Whose visit it is: the agenda is clinic-wide, but only the visit's own
+    # doctor can act on it.
+    doctor_name_ar: str = ""
+    doctor_name_fr: str = ""
+    mine: bool = False
 
 
 class CheckinIn(BaseModel):
@@ -136,8 +141,10 @@ def _own(db: Session, doctor: DoctorProfile, appointment_id: uuid.UUID) -> Appoi
     return a
 
 
-def _item(db: Session, a: Appointment) -> AgendaItem:
+def _item(db: Session, a: Appointment, doctor: DoctorProfile) -> AgendaItem:
+    """[a] as one agenda row, seen by [doctor]."""
     patient = db.get(User, a.patient_id)
+    owner = doctor if a.doctor_id == doctor.user_id else db.get(DoctorProfile, a.doctor_id)
     return AgendaItem(
         id=a.id,
         patient_id=a.patient_id,
@@ -149,13 +156,16 @@ def _item(db: Session, a: Appointment) -> AgendaItem:
         price_dzd=a.price_dzd,
         paid=a.paid_at is not None,
         checked_in_at=utc_iso(a.checked_in_at) if a.checked_in_at else None,
+        doctor_name_ar=owner.name_ar if owner else "",
+        doctor_name_fr=owner.name_fr if owner else "",
+        mine=a.doctor_id == doctor.user_id,
     )
 
 
 @router.get("/agenda", response_model=list[AgendaItem])
 def agenda(
     day: date | None = None,
-    _: DoctorProfile = Depends(current_doctor),
+    doctor: DoctorProfile = Depends(current_doctor),
     db: Session = Depends(get_db),
 ) -> list[AgendaItem]:
     """Every doctor's booked visits of one clinic day (default: today): the
@@ -172,7 +182,7 @@ def agenda(
         )
         .order_by(Appointment.start_utc)
     ).all()
-    return [_item(db, a) for a in rows]
+    return [_item(db, a, doctor) for a in rows]
 
 
 @router.post("/checkin", response_model=AgendaItem)
@@ -228,7 +238,7 @@ def check_in(
         a.checked_in_at = now
         audit.record(db, "appointment.checked_in", actor_id=doctor.user_id, target=str(a.id), request=request)
         db.commit()
-    return _item(db, a)
+    return _item(db, a, doctor)
 
 
 @router.post("/appointments/{appointment_id}/status", response_model=AgendaItem)
@@ -248,7 +258,7 @@ def set_status(
     a.status = AppointmentStatus(body.status)
     audit.record(db, f"appointment.{body.status}", actor_id=doctor.user_id, target=str(a.id), request=request)
     db.commit()
-    return _item(db, a)
+    return _item(db, a, doctor)
 
 
 @router.post("/appointments/{appointment_id}/paid", response_model=AgendaItem)
@@ -269,7 +279,7 @@ def set_paid(
     audit.record(db, "appointment.paid" if body.paid else "appointment.unpaid",
                  actor_id=doctor.user_id, target=str(a.id), request=request)
     db.commit()
-    return _item(db, a)
+    return _item(db, a, doctor)
 
 
 @router.get("/patients", response_model=list[PatientOut])

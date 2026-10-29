@@ -96,6 +96,23 @@ def test_agenda_shows_every_doctors_booked_visits_of_the_day(client, sms):
     assert (item["status"], item["paid"]) == ("confirmed", False)
 
 
+def test_agenda_rows_say_whose_visit_it_is(client, sms):
+    # Only the visit's own doctor can act on it, so the row must say so.
+    doc = doctor_with_password()
+    other = other_doctor()
+    verified_patient(client, sms)
+    me = user_id()
+    add_appointment(doc.user_id, me, MONDAY_9)
+    add_appointment(other, me, datetime(2026, 10, 19, 8, 30))
+    mine, theirs = client.get("/v1/staff/agenda?day=2026-10-19", headers=doc_headers(client)).json()
+    assert (mine["mine"], mine["doctor_name_fr"]) == (True, "Dr Benmahdia Hocine")
+    assert (theirs["mine"], theirs["doctor_name_fr"]) == (False, "Dr Autre")
+    mine, theirs = client.get(
+        "/v1/staff/agenda?day=2026-10-19", headers=doc_headers(client, "other@example.invalid")
+    ).json()
+    assert (mine["mine"], theirs["mine"]) == (False, True)
+
+
 def test_agenda_needs_a_login(client):
     assert client.get("/v1/staff/agenda").status_code == 401
 

@@ -51,6 +51,7 @@ export function Today({ initialDay }: { initialDay?: string }) {
               <tr>
                 <th className="p-md text-start">{t('time')}</th>
                 <th className="p-md text-start">{t('patient')}</th>
+                <th className="p-md text-start">{t('doctor')}</th>
                 <th className="p-md text-start">{t('status')}</th>
                 <th className="p-md text-start">{t('payment')}</th>
                 <th className="p-md text-start">{t('actions')}</th>
@@ -69,10 +70,11 @@ export function Today({ initialDay }: { initialDay?: string }) {
 }
 
 function Row({ item, onChange, timeOf }: { item: AgendaItem; onChange: (a: AgendaItem) => void; timeOf: (iso: string) => string }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [busy, setBusy] = useState(false);
   const started = new Date(item.start).getTime() <= Date.now();
-  const markable = started && ['confirmed', 'completed', 'no_show'].includes(item.status);
+  // Another doctor's visit is shown for the shared agenda, without actions.
+  const markable = item.mine && started && ['confirmed', 'completed', 'no_show'].includes(item.status);
 
   async function act(run: () => Promise<AgendaItem>) {
     setBusy(true);
@@ -93,6 +95,7 @@ function Row({ item, onChange, timeOf }: { item: AgendaItem; onChange: (a: Agend
       <td className="p-md" dir="ltr">
         {item.patient_phone ?? '—'}
       </td>
+      <td className="p-md text-ink-body">{lang === 'ar' ? item.doctor_name_ar : item.doctor_name_fr}</td>
       <td className="p-md">
         <div className="flex flex-wrap items-center gap-sm">
           <Badge tone={statusTone[item.status]}>{t(item.status)}</Badge>
@@ -109,7 +112,7 @@ function Row({ item, onChange, timeOf }: { item: AgendaItem; onChange: (a: Agend
       </td>
       <td className="p-md">
         <div className="flex flex-wrap gap-sm">
-          {item.method === 'clinic' && item.status !== 'cancelled' && (
+          {item.mine && item.method === 'clinic' && item.status !== 'cancelled' && (
             <Button variant="secondary" disabled={busy} onClick={() => act(() => api.setPaid(item.id, !item.paid))}>
               {t(item.paid ? 'markUnpaid' : 'markPaid')}
             </Button>

@@ -38,6 +38,9 @@ const visit = {
   status: 'confirmed',
   method: 'clinic',
   price_dzd: 2000,
+  doctor_name_ar: 'د. بن مهدية',
+  doctor_name_fr: 'Dr Benmahdia',
+  mine: true,
   paid: false,
 };
 
@@ -96,6 +99,16 @@ describe('Today', () => {
     renderIn(<Today initialDay="2999-01-01" />);
     await screen.findByText('+213661234567');
     expect(screen.queryByRole('button', { name: 'Effectué' })).toBeNull();
+  });
+
+  it("shows another doctor's visit with their name and no actions", async () => {
+    const theirs = { ...visit, id: 'v2', doctor_name_fr: 'Dr Autre', mine: false };
+    mockFetch(() => ({ status: 200, body: [theirs] }));
+    renderIn(<Today initialDay="2026-10-19" />);
+    expect(await screen.findByText('Dr Autre')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Marquer payé' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Effectué' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Absent' })).toBeNull();
   });
 
   it('card payments cannot be marked by hand', async () => {

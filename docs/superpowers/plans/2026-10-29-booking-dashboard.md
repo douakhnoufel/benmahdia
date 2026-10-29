@@ -1,6 +1,6 @@
 # Booking dashboard — implementation plan
 
-Oct 29, 2026 · Status: waiting for approval
+Oct 29, 2026 · Status: approved (Oct 29)
 
 Goal: finish the doctor dashboard for the booking system (PRD 4.3, 4.4, 7).
 Six features are missing, plus one bug found while reading the code.
@@ -139,9 +139,9 @@ agenda hides them on purpose.
 
 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7, each step = backend + tests, then dashboard + tests, then one commit. After each step: `pytest`, dashboard `vitest` + `tsc` + lint.
 
-## Open questions (need your answer)
+## Decisions (Oct 29)
 
-1. **Doctor books for the patient** (PRD 4.3: "or the doctor books for the patient"). Also missing from the dashboard. Add it as Step 8 (pick patient + free slot, pay-at-clinic)?
-2. **Notes shared with the AI** (PRD 4.3: "unless the doctor chooses"). Plan keeps notes always private in v1, no share toggle. OK?
-3. **Week order** in the Availability page: start on Saturday (Algerian calendar) or Sunday?
-4. **Refunds / "needs refund"** payments (paid after the slot was lost): show them on the Payments page for the super admin, or leave for later? Refund rules are still "to decide with the clinic" in the PRD.
+1. Doctor books for the patient: not in this round.
+2. Notes are always private in v1: no "share with the AI" toggle.
+3. The Availability page starts the week on Saturday.
+4. "Needs refund" payments: later, once the clinic sets its refund rules.

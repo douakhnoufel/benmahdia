@@ -124,6 +124,10 @@ export type AgendaItem = {
   paid: boolean;
   /** When the front desk accepted the patient's booking code, if it did. */
   checked_in_at?: string | null;
+  /** Whose visit it is: the agenda is clinic-wide, only the visit's own doctor can act on it. */
+  doctor_name_ar: string;
+  doctor_name_fr: string;
+  mine: boolean;
 };
 
 export type Patient = {
