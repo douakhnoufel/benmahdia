@@ -32,7 +32,7 @@ from app.models import (
     DailyCheck,
 )
 
-from .booking_helpers import add_appointment
+from .booking_helpers import add_appointment, verified_patient
 from .conftest import START, bearer
 from .test_medications import prescribe, staff_session
 from .test_staff import doc_headers, other_doctor
@@ -605,12 +605,31 @@ def test_habits_never_raise_an_alert(client, sms):
     assert alerts() == []
 
 
-@pytest.mark.xfail(strict=True, reason="QA ALERT-04: deleting the account does not notify the doctor (PRD 12.5 step 2)")
 def test_the_doctor_is_told_when_a_patient_deletes_their_account(client, sms):
     doc, s = setup(client, sms)
     r = client.request("DELETE", "/v1/me", json={"password": "sobre2026"}, headers=bearer(s))
     assert r.status_code == 204, r.text
     assert [p for _, p, _ in alerts()] == [pid(s)]
+
+
+def test_the_deletion_alert_is_listed_for_every_doctor_and_carries_nothing_medical(client, sms):
+    doc, s = setup(client, sms)
+    other_doctor()
+    r = client.request("DELETE", "/v1/me", json={"password": "sobre2026"}, headers=bearer(s))
+    assert r.status_code == 204, r.text
+    for headers in (bearer(doc), doc_headers(client, "other@example.invalid")):
+        r = client.get("/v1/staff/alerts", headers=headers)
+        assert r.status_code == 200, r.text
+        [a] = r.json()
+        assert a["type"] == "account_deleted" and a["priority"] == "normal"
+        assert a["patient_id"] == str(pid(s)) and set(a) == ALERT_FIELDS
+
+
+def test_deleting_an_account_with_no_booked_visit_raises_no_alert(client, sms):
+    s = verified_patient(client, sms)  # no booked visit: not a clinic patient
+    r = client.request("DELETE", "/v1/me", json={"password": "sobre2026"}, headers=bearer(s))
+    assert r.status_code == 204, r.text
+    assert alerts() == []
 
 
 def test_question_nightly_alerts_continue_for_a_deleted_account(client, sms):

@@ -7,9 +7,10 @@ from ..clock import clock
 from ..db import get_db
 from ..deps import current_user
 from ..errors import ApiError
-from ..models import AccountStatus, OtpPurpose, Provider, User
+from ..models import AccountStatus, Alert, OtpPurpose, Provider, User
 from ..social import AppleTokens, get_apple_tokens
 from .auth import spend_proof
+from .recovery import _doctor_of
 
 router = APIRouter(prefix="/v1/me", tags=["me"])
 
@@ -62,7 +63,11 @@ def delete_account(
         if identity.provider is Provider.apple and identity.apple_refresh_token:
             apple_tokens.revoke(identity.apple_refresh_token)
             identity.apple_refresh_token = None
-    # TODO(dashboard): notify the patient's doctor once doctors are linked.
+    # PRD 12.5 step 2: the clinic is told. The alert names the event only;
+    # without a booked visit the patient is not a clinic patient, so no alert.
+    doctor_id = _doctor_of(db, user.id)
+    if doctor_id is not None:
+        db.add(Alert(doctor_id=doctor_id, patient_id=user.id, type="account_deleted", priority="normal"))
     audit.record(db, "account.deleted", actor_id=user.id, request=request)
     db.commit()
     return Response(status_code=204)

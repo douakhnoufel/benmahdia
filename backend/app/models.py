@@ -666,7 +666,7 @@ class Alert(Base):
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
     # "relapse", "missed_doses", "craving_high", "no_checkin", "milestone",
-    # "booking_confirmed", "booking_cancelled".
+    # "booking_confirmed", "booking_cancelled", "account_deleted".
     type: Mapped[str] = mapped_column(String(32))
     priority: Mapped[str] = mapped_column(String(8), default="normal")
     read: Mapped[bool] = mapped_column(Boolean, default=False)
