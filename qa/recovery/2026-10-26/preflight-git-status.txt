@@ -1,0 +1,9 @@
+ M apps/dashboard/src/i18n.tsx
+ M apps/dashboard/src/pages/Alerts.tsx
+ M apps/dashboard/src/test/booking-alerts.test.tsx
+?? .claude/worktrees/
+?? apps/dashboard/tsconfig.tsbuildinfo
+?? qa/booking/2026-10-25/apk-build.txt
+?? qa/booking/2026-10-25/final-backend.xml
+?? qa/recovery/
+?? run_checks.bat

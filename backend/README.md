@@ -41,12 +41,18 @@ Tests use an in-memory SQLite database and a frozen clock; no Docker needed.
 | DELETE | `/v1/me` | Delete the account (password required if it has one). Disabled at once; erased after 30 days by `python -m app.purge`. |
 | GET, POST | `/v1/me/addictions` | The patient's addictions (pending doctor review) / add one. |
 | POST | `/v1/me/addictions/{id}/relapses` | Log a relapse: restarts the counter, keeps past streaks, alerts the doctor. |
+| POST | `/v1/me/addictions/{id}/milestone/seen` | The app showed the celebration for the milestone reached now (`milestone` / `milestone_seen` in each addiction). |
 | GET | `/v1/me/checkins` | Days ticked "without use" (last 60 days, or `since`). |
 | PUT | `/v1/me/checkins/{day}` | Tick a day (today ± a small window). Idempotent. |
 | GET, PUT | `/v1/me/reminder` | Daily-check reminder time `HH:MM` or `null`. |
 | GET | `/v1/me/doses?day=` | The day's doses: due, taken, skipped or missed. |
 | PUT | `/v1/me/doses` | Answer a dose: taken or skipped. |
 | GET | `/v1/me/quote` | Quote of the day (ar + fr). |
+| GET | `/v1/me/articles?language=&topic=&addiction_type=&favourites=` | Published articles (any signed-in patient), newest first. |
+| GET | `/v1/me/articles/{id}` | Read one published article. |
+| PUT, DELETE | `/v1/me/articles/{id}/favourite` | Save / unsave an article. |
+| GET, POST | `/v1/staff/articles` | Doctor: every article with drafts / write one. |
+| GET, PUT | `/v1/staff/articles/{id}` | Doctor: read / edit, publish or unpublish. Plain text only, no HTML. |
 | GET, POST, DELETE | `/v1/staff/patients/{id}/medications` | Doctor: list, prescribe, stop a medicine. |
 | GET | `/v1/staff/patients/{id}/addictions` | Doctor: the patient's addictions with relapses. |
 | POST | `/v1/staff/patients/{id}/addictions/{aid}/confirm` or `/reject` | Doctor reviews what the patient entered. |

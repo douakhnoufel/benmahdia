@@ -1,0 +1,4 @@
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_identity.py::test_nothing_readable_is_stored - AssertionErr...
+1 failed, 479 passed, 47 skipped, 8 xfailed, 1 warning in 167.77s (0:02:47)

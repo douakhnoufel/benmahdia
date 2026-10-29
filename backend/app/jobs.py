@@ -12,7 +12,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 
 from . import scheduling
-from .alerts_job import craving_alerts, missed_dose_alerts, no_checkin_alerts
+from .alerts_job import craving_alerts, milestone_alerts, missed_dose_alerts, no_checkin_alerts
 from .clock import clock
 from .db import SessionLocal
 from .purge import purge
@@ -40,6 +40,7 @@ def run_once(db: Session) -> dict[str, int | None]:
         ("missed_dose_alerts", missed_dose_alerts),
         ("craving_alerts", craving_alerts),
         ("no_checkin_alerts", no_checkin_alerts),
+        ("milestone_alerts", milestone_alerts),
     ):
         try:
             results[name] = job(db)

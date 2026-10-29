@@ -16,7 +16,7 @@ import { PatientAppointments } from './PatientAppointments';
 import { clinicToday } from './Today';
 import { CheckChart, Habits, PROFILE_KEY, fill } from './Tracking';
 
-const TYPE_KEY: Record<AddictionType, StringKey> = {
+export const TYPE_KEY: Record<AddictionType, StringKey> = {
   opioids: 'typeOpioids',
   cannabis: 'typeCannabis',
   alcohol: 'typeAlcohol',

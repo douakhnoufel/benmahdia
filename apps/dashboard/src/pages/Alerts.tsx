@@ -12,6 +12,7 @@ const KIND: Record<string, StringKey> = {
   no_checkin: 'alertNoCheckin',
   booking_confirmed: 'alertBookingConfirmed',
   booking_cancelled: 'alertBookingCancelled',
+  milestone: 'alertMilestone',
 };
 
 /** The doctor's alerts. They name an event and a patient, nothing medical;

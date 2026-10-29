@@ -1,0 +1,59 @@
+........................................................................ [ 13%]
+.s.......................................F.............................. [ 27%]
+........................................................................ [ 41%]
+........................................................................ [ 55%]
+..x..xx..............x....................................ssssssssssssss [ 69%]
+ssssssssssssssssssssssssssssssss.......x..........................x..xx. [ 83%]
+........................................................................ [ 96%]
+................                                                         [100%]
+================================== FAILURES ===================================
+_______________________ test_nothing_readable_is_stored _______________________
+
+client = <starlette.testclient.TestClient object at 0x00000249C776D150>
+sms = <app.sms.ConsoleSmsSender object at 0x00000249C7711860>
+
+    def test_nothing_readable_is_stored(client, sms):
+        s = register(client, sms)
+        declare(client, s)
+        with Session(engine) as db:
+            d = db.get(IdDeclaration, user_id())
+            assert len(d.id_hmac) == 64 and d.id_hmac != ID_NUMBER
+            stored = d.name_enc + d.birth_enc + d.id_hmac.encode()
+            audit_text = " ".join(f"{a.action} {a.target}" for a in db.query(AuditLog))
+            dump = " ".join(str(row) for t in ("users", "audit_log")
+                            for row in db.execute(text(f"SELECT * FROM {t}")))
+        for secret in (ID_NUMBER, NAME, "Benali", BIRTH):
+            assert secret.encode() not in stored
+            assert secret not in audit_text and secret not in dump
+        [selfie_file] = files()
+        raw = selfie_file.read_bytes()
+        assert MARKER not in raw and not raw.startswith(b"\xff\xd8")     # encrypted, not a JPEG
+>       assert stat.S_IMODE(os.stat(selfie_file).st_mode) == 0o600
+E       AssertionError: assert 438 == 384
+E        +  where 438 = <built-in function S_IMODE>(33206)
+E        +    where <built-in function S_IMODE> = stat.S_IMODE
+E        +    and   33206 = os.stat_result(st_mode=33206, st_ino=10696049115217995, st_dev=17356551768495594466, st_nlink=1, st_uid=0, st_gid=0, st_size=234, st_atime=1793047506, st_mtime=1793047506, st_ctime=1793047506).st_mode
+E        +      where os.stat_result(st_mode=33206, st_ino=10696049115217995, st_dev=17356551768495594466, st_nlink=1, st_uid=0, st_gid=0, st_size=234, st_atime=1793047506, st_mtime=1793047506, st_ctime=1793047506) = <built-in function stat>(WindowsPath('C:/Users/noufe/AppData/Local/Temp/benmahdia-selfies-bcojh4lo/82d2571f592a4747b75e0855dcf424f7.bin'))
+E        +        where <built-in function stat> = os.stat
+
+tests\test_identity.py:96: AssertionError
+---------------------------- Captured stderr call -----------------------------
+WARNING:benmahdia.sms:DEV SMS to +213661234567: code 313863
+INFO:httpx:HTTP Request: POST http://testserver/v1/auth/otp/request "HTTP/1.1 202 Accepted"
+INFO:httpx:HTTP Request: POST http://testserver/v1/auth/otp/verify "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://testserver/v1/auth/register "HTTP/1.1 201 Created"
+INFO:httpx:HTTP Request: POST http://testserver/v1/me/identity "HTTP/1.1 201 Created"
+------------------------------ Captured log call ------------------------------
+WARNING  benmahdia.sms:sms.py:24 DEV SMS to +213661234567: code 313863
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/v1/auth/otp/request "HTTP/1.1 202 Accepted"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/v1/auth/otp/verify "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/v1/auth/register "HTTP/1.1 201 Created"
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/v1/me/identity "HTTP/1.1 201 Created"
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\Users\noufe\OneDrive\Desktop\benmahdia\backend\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_identity.py::test_nothing_readable_is_stored - AssertionErr...

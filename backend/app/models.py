@@ -15,6 +15,7 @@ from sqlalchemy import (
     Integer,
     LargeBinary,
     String,
+    Text,
     UniqueConstraint,
     Uuid,
     event,
@@ -430,6 +431,10 @@ class Addiction(Base):
     # The small goal the patient chose (PRD 5.6), in days of the current
     # streak; None lets the app pick the next step. A relapse clears it.
     goal_days: Mapped[int | None] = mapped_column(Integer)
+    # The highest milestone of the current streak (PRD 5.1) the app already
+    # celebrated, and the one the doctor was told about. A relapse resets both.
+    milestone_seen: Mapped[int] = mapped_column(Integer, default=0)
+    milestone_alerted: Mapped[int] = mapped_column(Integer, default=0)
     # The exact product, in the patient's words.
     substance: Mapped[str | None] = mapped_column(String(100))
     sobriety_start: Mapped[datetime] = mapped_column(DateTime)
@@ -598,6 +603,55 @@ class Quote(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
+class ArticleTopic(str, enum.Enum):
+    """The library's sections (PRD 5.5)."""
+
+    addiction = "addiction"
+    cravings = "cravings"
+    relapse = "relapse"
+    medication = "medication"
+    family = "family"
+    motivation = "motivation"
+
+
+class Article(Base):
+    """A short article the clinic's doctors write and publish from the
+    dashboard (PRD 5.5, 7), in one language. [body] is plain text with blank
+    lines between paragraphs: no HTML, so nothing in it can run in the app or
+    the dashboard. [addiction_type] is an AddictionType value, or None for
+    every patient."""
+
+    __tablename__ = "articles"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    author_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    title: Mapped[str] = mapped_column(String(160))
+    body: Mapped[str] = mapped_column(Text)
+    language: Mapped[str] = mapped_column(String(2))
+    topic: Mapped[ArticleTopic] = mapped_column(Enum(ArticleTopic, name="article_topic"))
+    addiction_type: Mapped[str | None] = mapped_column(String(16))
+    published: Mapped[bool] = mapped_column(Boolean, default=False)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class ArticleFavourite(Base):
+    """A patient saved [article_id] to read again."""
+
+    __tablename__ = "article_favourites"
+    __table_args__ = (UniqueConstraint("patient_id", "article_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    patient_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    article_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("articles.id", ondelete="CASCADE"), index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
 class Alert(Base):
     """A heads-up for a doctor's dashboard. It names a kind of event and a
     patient, never medical content (PRD 5, 9)."""
@@ -611,7 +665,8 @@ class Alert(Base):
     patient_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
-    # "relapse", "missed_doses", "craving_high", "no_checkin"; "milestone" later.
+    # "relapse", "missed_doses", "craving_high", "no_checkin", "milestone",
+    # "booking_confirmed", "booking_cancelled".
     type: Mapped[str] = mapped_column(String(32))
     priority: Mapped[str] = mapped_column(String(8), default="normal")
     read: Mapped[bool] = mapped_column(Boolean, default=False)

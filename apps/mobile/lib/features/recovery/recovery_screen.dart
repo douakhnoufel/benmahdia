@@ -9,12 +9,14 @@ import '../../l10n/app_localizations.dart';
 import '../../theme/app_tokens.dart';
 import '../../widgets/app_mark.dart';
 import '../../widgets/staggered_reveal.dart';
+import '../articles/articles_screen.dart';
 import '../booking/booking_models.dart';
 import '../booking/booking_repository.dart';
 import '../booking/booking_widgets.dart';
 import '../home/home_scope.dart';
 import 'addiction_form_screen.dart';
 import 'daily_check_screen.dart';
+import 'milestone_screen.dart';
 import 'recovery_models.dart';
 import 'recovery_reminders.dart';
 import 'recovery_repository.dart';
@@ -95,6 +97,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
         _locked = false;
       });
       unawaited(_syncReminders());
+      unawaited(_celebrate());
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -102,6 +105,37 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
         _failed = e is! RecoveryLocked;
         _locked = e is RecoveryLocked;
       });
+    }
+  }
+
+  /// Shows the celebration of each milestone reached since the last one
+  /// shown (PRD 5.1), one addiction after the other. Never throws: a "seen"
+  /// the server did not get shows the celebration again next time.
+  Future<void> _celebrate() async {
+    for (final a in List.of(_addictions)) {
+      final days = a.pendingMilestone(_repo.now());
+      if (days == null) continue;
+      if (!mounted) return;
+      await Navigator.of(context).push<void>(
+        appRoute(
+          MilestoneScreen(
+            days: days,
+            name: addictionName(context, a, _profiles),
+          ),
+          reduced: AppMotion.reduced(context),
+        ),
+      );
+      try {
+        final updated = await _repo.markMilestoneSeen(a);
+        if (!mounted) return;
+        setState(() {
+          _addictions = [
+            for (final x in _addictions) x.id == a.id ? updated : x,
+          ];
+        });
+      } catch (_) {
+        // Shown again on a later load.
+      }
     }
   }
 
@@ -526,6 +560,16 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  // Articles can be read at any time (PRD 5.5), so the
+                  // way in stays here even while tracking is locked.
+                  IconButton(
+                    onPressed: () => openArticles(context),
+                    tooltip: l10n.articlesTitle,
+                    icon: const Icon(
+                      Icons.menu_book_rounded,
+                      color: AppColors.teal700,
                     ),
                   ),
                 ],
