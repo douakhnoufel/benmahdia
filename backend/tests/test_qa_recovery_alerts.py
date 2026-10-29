@@ -6,8 +6,9 @@ Algiers day boundaries. Privacy (PRD 5.6 Privacy, 8.3): answers, relapse
 notes, substance and drug names never reach alerts, logs, SMS or the audit
 log. Every name below is a fake marker, never real patient data.
 
-Known open question carried, not re-reported: SEC-02 (no primary-doctor
-field; alerts follow the latest-starting non-hold appointment)."""
+SEC-02 is settled by the shared-clinic rule (PRD 3): every doctor of the
+clinic sees every alert; the stored doctor_id is only the doctor it was
+raised for."""
 
 import json
 import logging
@@ -34,7 +35,7 @@ from app.models import (
 from .booking_helpers import add_appointment
 from .conftest import START, bearer
 from .test_medications import prescribe, staff_session
-from .test_staff import other_doctor
+from .test_staff import doc_headers, other_doctor
 from .test_substance_tracking import add, check, setup
 
 # Fake markers: if one shows up somewhere it must not, the test says where.
@@ -402,18 +403,30 @@ def test_nightly_alerts_skip_a_doctor_the_patient_only_holds_a_slot_with(client,
     assert {d for d, _, _ in kinds} == {doc["doctor"].user_id}
 
 
-@pytest.mark.xfail(strict=True, reason="see SEC-02: alerts follow the latest-starting appointment, even a cancelled one with another doctor")
-def test_a_doctor_the_patient_cancelled_with_gets_no_alerts(client, sms):
+def _listed_to(client, headers) -> list[tuple]:
+    r = client.get("/v1/staff/alerts", headers=headers)
+    assert r.status_code == 200, r.text
+    return sorted((x["patient_id"], x["type"]) for x in r.json())
+
+
+def test_a_doctor_the_patient_cancelled_with_still_sees_the_alert(client, sms):
+    """QA SEC-02, re-baselined to the shared-clinic rule (PRD 3): alerts go
+    to every doctor of the clinic, so a doctor with only a cancelled visit
+    sees the relapse alert too. One alert row is stored, not one per doctor."""
     doc, s = setup(client, sms)
     other = other_doctor()
     add_appointment(other, pid(s), START + timedelta(days=5), status=AppointmentStatus.cancelled)
     a = add(client, s).json()
     client.post(f"/v1/me/addictions/{a['id']}/relapses", json={}, headers=bearer(s))
-    assert alerts("relapse") == [(doc["doctor"].user_id, pid(s), "relapse")]
+    assert [(p, k) for _, p, k in alerts("relapse")] == [(pid(s), "relapse")]
+    expected = [(str(pid(s)), "relapse")]
+    assert _listed_to(client, bearer(doc)) == expected
+    assert _listed_to(client, doc_headers(client, "other@example.invalid")) == expected
 
 
-@pytest.mark.xfail(strict=True, reason="see SEC-02: with two paid doctors, relapse goes to the latest booking, missed doses to the prescriber")
-def test_one_patients_alerts_reach_one_doctor(client, sms):
+def test_one_patients_alerts_reach_every_doctor_of_the_clinic(client, sms):
+    """QA SEC-02, re-baselined (PRD 3): with two paid doctors, the relapse
+    and the missed-dose alerts are listed to both of them, the same list."""
     doc, s = setup(client, sms)
     other = other_doctor()
     prescribe(client, doc, s)  # by the first doctor
@@ -421,7 +434,11 @@ def test_one_patients_alerts_reach_one_doctor(client, sms):
     a = add(client, s).json()
     client.post(f"/v1/me/addictions/{a['id']}/relapses", json={}, headers=bearer(s))
     run(missed_dose_alerts)
-    assert len({d for d, _, _ in alerts()}) == 1
+    first = _listed_to(client, bearer(doc))
+    second = _listed_to(client, doc_headers(client, "other@example.invalid"))
+    assert first == second
+    assert {k for _, k in first} >= {"relapse"}
+    assert {p for p, _ in first} == {str(pid(s))}
 
 
 # --- what an alert carries (R-96) ------------------------------------------
