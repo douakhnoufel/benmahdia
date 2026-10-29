@@ -255,3 +255,46 @@ def test_me_is_for_staff_only(client, sms):
     assert client.get("/v1/staff/me").status_code == 401
     session = verified_patient(client, sms)
     assert client.get("/v1/staff/me", headers=bearer(session)).status_code == 403
+
+
+# --- holds (pending booking requests) ------------------------------------------
+
+
+def test_holds_list_the_open_booking_requests_of_the_day(client, sms):
+    from datetime import timedelta
+
+    from app.clock import clock
+    from app.models import Payment
+
+    doc = doctor_with_password()
+    other = other_doctor()
+    verified_patient(client, sms)
+    me = user_id()
+    soon = clock.now() + timedelta(minutes=10)
+    mine = add_appointment(doc.user_id, me, MONDAY_9, status=AppointmentStatus.awaiting_payment,
+                           hold_expires_at=soon, method=None)
+    add_appointment(other, me, datetime(2026, 10, 19, 8, 30), status=AppointmentStatus.awaiting_payment,
+                    hold_expires_at=soon, method=None)
+    # Ran out, already a visit, or another day: not requests of Monday.
+    add_appointment(doc.user_id, me, datetime(2026, 10, 19, 9, 0), status=AppointmentStatus.awaiting_payment,
+                    hold_expires_at=clock.now() - timedelta(minutes=1), method=None)
+    add_appointment(doc.user_id, me, datetime(2026, 10, 19, 9, 15))
+    add_appointment(doc.user_id, me, datetime(2026, 10, 20, 8, 0), status=AppointmentStatus.awaiting_payment,
+                    hold_expires_at=soon, method=None)
+    with Session(engine) as db:
+        db.add(Payment(appointment_id=mine.id, patient_id=me, amount_dzd=2000,
+                       method=PaymentMethod.edahabia, chargily_id="ch_test_1"))
+        db.commit()
+    r = client.get("/v1/staff/holds?day=2026-10-19", headers=doc_headers(client))
+    assert r.status_code == 200
+    first, second = r.json()
+    assert first["id"] == str(mine.id)
+    assert (first["mine"], first["paying_by"], first["patient_phone"]) == (True, "edahabia", "+213661234567")
+    assert first["expires_at"] == soon.isoformat(timespec="seconds") + "Z"
+    assert (second["mine"], second["doctor_name_fr"], second["paying_by"]) == (False, "Dr Autre", None)
+
+
+def test_holds_are_for_staff_only(client, sms):
+    assert client.get("/v1/staff/holds").status_code == 401
+    session = verified_patient(client, sms)
+    assert client.get("/v1/staff/holds", headers=bearer(session)).status_code == 403

@@ -133,6 +133,22 @@ export type AgendaItem = {
   mine: boolean;
 };
 
+/** A slot held while the patient pays: a booking request, not a visit yet. */
+export type HoldItem = {
+  id: string;
+  patient_id: string;
+  patient_phone: string | null;
+  start: string;
+  end: string;
+  doctor_name_ar: string;
+  doctor_name_fr: string;
+  mine: boolean;
+  /** The slot is given back at this time if still unpaid. */
+  expires_at: string;
+  /** The card chosen at Chargily's checkout, once the patient opened it. */
+  paying_by: 'edahabia' | 'cib' | 'clinic' | null;
+};
+
 export type Patient = {
   id: string;
   phone: string | null;
@@ -291,6 +307,7 @@ export const api = {
     request<AdminDoctor>('PUT', `v1/admin/doctors/${doctorId}/price`, { price_dzd }),
   unblockDay: (id: string) => request<Availability>('DELETE', `v1/staff/availability/blocked-days/${id}`),
   agenda: (day: string) => request<AgendaItem[]>('GET', `v1/staff/agenda?day=${day}`),
+  holds: (day: string) => request<HoldItem[]>('GET', `v1/staff/holds?day=${day}`),
   setStatus: (id: string, status: 'completed' | 'no_show') =>
     request<AgendaItem>('POST', `v1/staff/appointments/${id}/status`, { status }),
   setPaid: (id: string, paid: boolean) => request<AgendaItem>('POST', `v1/staff/appointments/${id}/paid`, { paid }),

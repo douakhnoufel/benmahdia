@@ -83,7 +83,7 @@ export function App() {
         </div>
       </header>
       <main className="mx-auto max-w-6xl p-xl">
-        {page === 'today' && <Today />}
+        {page === 'today' && <Today unread={unread} onOpenAlerts={() => setPage('alerts')} />}
         {page === 'patients' && <Patients open={opened} onClose={() => setOpened(null)} />}
         {page === 'signups' && <Signups />}
         {page === 'availability' && <AvailabilityPage />}

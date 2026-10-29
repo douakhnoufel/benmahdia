@@ -15,6 +15,8 @@ function mockFetch(handler: Handler) {
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: URL, init: RequestInit) => {
+      // The Today page also asks for open holds: none here (tested in today-requests).
+      if (input.pathname === '/v1/staff/holds') return new Response('[]', { status: 200 });
       calls.push({ url: input, init });
       const { status, body } = handler(input, init);
       return new Response(body === undefined ? '' : JSON.stringify(body), { status });

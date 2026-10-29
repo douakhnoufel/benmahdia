@@ -199,6 +199,12 @@ const strings = {
     pricesNotice: 'السعر الجديد يطبق على الحجوزات الجديدة فقط. المواعيد المحجوزة تحتفظ بسعرها.',
     priceDzd: 'السعر (دج)',
     errPrice: 'يجب أن يكون السعر بين 0 و100000 دج.',
+    pendingRequests: 'حجوزات في انتظار الدفع',
+    holdUntil: 'يُحرَّر الموعد في {time} إن لم يُدفع',
+    payingCib: 'الدفع ببطاقة CIB جارٍ',
+    payingEdahabia: 'الدفع ببطاقة الذهبية جارٍ',
+    unreadAlertsCount: 'تنبيهات غير مقروءة: {n}',
+    openAlerts: 'عرض التنبيهات',
   },
   fr: {
     appName: 'BenMahdia — Espace médecin',
@@ -395,6 +401,12 @@ const strings = {
     pricesNotice: 'Le nouveau prix s’applique aux nouvelles réservations. Les rendez-vous déjà réservés gardent leur prix.',
     priceDzd: 'Prix (DA)',
     errPrice: 'Le prix doit être entre 0 et 100 000 DA.',
+    pendingRequests: 'Réservations en attente de paiement',
+    holdUntil: 'Libéré à {time} si non payé',
+    payingCib: 'Paiement CIB en cours',
+    payingEdahabia: 'Paiement Edahabia en cours',
+    unreadAlertsCount: 'Alertes non lues : {n}',
+    openAlerts: 'Voir les alertes',
   },
 } as const;
 

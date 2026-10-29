@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { api, type AgendaItem } from '../api';
+import { api, type AgendaItem, type HoldItem } from '../api';
 import { useI18n } from '../i18n';
 import { CheckinBox } from '../components/CheckinBox';
 import { Badge, Button, Card } from '../components/ui';
 import { useLoad } from '../useLoad';
 import { Failed, Loading } from './Status';
+import { fill } from './Tracking';
 
 /** Today's date in clinic time, YYYY-MM-DD. */
 export function clinicToday(now = new Date()): string {
@@ -19,10 +20,20 @@ function shift(day: string, by: number): string {
 
 const statusTone = { confirmed: 'info', completed: 'success', no_show: 'danger', cancelled: 'neutral', awaiting_payment: 'warning' } as const;
 
-export function Today({ initialDay }: { initialDay?: string }) {
+export function Today({
+  initialDay,
+  unread = 0,
+  onOpenAlerts,
+}: {
+  initialDay?: string;
+  /** Unread alerts, shown with a link to the Alerts page (PRD 7). */
+  unread?: number;
+  onOpenAlerts?: () => void;
+}) {
   const { t, date, time } = useI18n();
   const [day, setDay] = useState(initialDay ?? clinicToday());
   const { load, reload, setLoad } = useLoad(() => api.agenda(day), [day]);
+  const requests = useLoad(() => api.holds(day), [day]);
 
   function replace(item: AgendaItem) {
     if (load.state !== 'ready') return;
@@ -40,7 +51,18 @@ export function Today({ initialDay }: { initialDay?: string }) {
           ›
         </Button>
       </div>
+      {unread > 0 && (
+        <Card className="flex flex-wrap items-center gap-md">
+          <span className="text-body-lg text-ink-strong">{fill(t('unreadAlertsCount'), { n: unread })}</span>
+          {onOpenAlerts && (
+            <Button variant="secondary" className="ms-auto" onClick={onOpenAlerts}>
+              {t('openAlerts')}
+            </Button>
+          )}
+        </Card>
+      )}
       <CheckinBox onCheckedIn={replace} />
+      {requests.load.state === 'ready' && <Requests holds={requests.load.data} />}
       <Card className="overflow-x-auto p-0">
         {load.state === 'loading' && <Loading />}
         {load.state === 'error' && <Failed onRetry={reload} />}
@@ -68,6 +90,34 @@ export function Today({ initialDay }: { initialDay?: string }) {
     </section>
   );
 }
+
+/** Slots held while the patient pays (PRD 7: "pending booking requests").
+ * Read only: payment confirms them, not the desk. Hidden when there are none. */
+function Requests({ holds }: { holds: HoldItem[] }) {
+  const { t, lang, time } = useI18n();
+  const open = holds.filter((h) => new Date(h.expires_at).getTime() > Date.now());
+  if (open.length === 0) return null;
+  return (
+    <section aria-labelledby="requests">
+      <Card className="flex flex-col gap-md">
+        <h3 id="requests" className="text-h3 text-ink-strong">{t('pendingRequests')}</h3>
+        <ul className="flex flex-col">
+          {open.map((h) => (
+            <li key={h.id} className="flex flex-wrap items-center gap-md border-b border-border py-sm last:border-0">
+              <span className="text-ink-strong" dir="ltr">{time(h.start)}</span>
+              <span className="text-ink-body" dir="ltr">{h.patient_phone ?? '—'}</span>
+              <span className="text-ink-body">{lang === 'ar' ? h.doctor_name_ar : h.doctor_name_fr}</span>
+              <Badge tone="warning">{h.paying_by && h.paying_by !== 'clinic' ? t(PAYING[h.paying_by]) : t('awaiting_payment')}</Badge>
+              <span className="text-caption text-ink-muted">{fill(t('holdUntil'), { time: time(h.expires_at) })}</span>
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </section>
+  );
+}
+
+const PAYING = { cib: 'payingCib', edahabia: 'payingEdahabia' } as const;
 
 function Row({ item, onChange, timeOf }: { item: AgendaItem; onChange: (a: AgendaItem) => void; timeOf: (iso: string) => string }) {
   const { t, lang } = useI18n();

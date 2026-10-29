@@ -24,7 +24,9 @@ from ..models import (
     AuditLog,
     DoctorProfile,
     IdStatus,
+    Payment,
     PaymentMethod,
+    PaymentStatus,
     Role,
     User,
 )
@@ -55,6 +57,23 @@ class AgendaItem(BaseModel):
     doctor_name_ar: str = ""
     doctor_name_fr: str = ""
     mine: bool = False
+
+
+class HoldItem(BaseModel):
+    """A slot held while the patient pays: a booking request, not a visit yet."""
+
+    id: uuid.UUID
+    patient_id: uuid.UUID
+    patient_phone: str | None
+    start: str
+    end: str
+    doctor_name_ar: str
+    doctor_name_fr: str
+    mine: bool
+    # The slot is given back at this time if still unpaid.
+    expires_at: str
+    # The card chosen at Chargily's checkout, once the patient opened it.
+    paying_by: PaymentMethod | None = None
 
 
 class MeOut(BaseModel):
@@ -199,6 +218,55 @@ def agenda(
         .order_by(Appointment.start_utc)
     ).all()
     return [_item(db, a, doctor) for a in rows]
+
+
+@router.get("/holds", response_model=list[HoldItem])
+def holds(
+    day: date | None = None,
+    doctor: DoctorProfile = Depends(current_doctor),
+    db: Session = Depends(get_db),
+) -> list[HoldItem]:
+    """The clinic's open holds of one day (default: today): the pending
+    booking requests of the Today page (PRD 7). Read only: a card hold is
+    confirmed only by Chargily's signed webhook, a pay-at-clinic hold only by
+    the patient. A hold that ran out is left out: its slot is free again."""
+    now = clock.now()
+    day = day or scheduling.clinic_today(now)
+    first, last = scheduling.to_utc(day, 0), scheduling.to_utc(day + timedelta(days=1), 0)
+    rows = db.scalars(
+        select(Appointment)
+        .where(
+            Appointment.start_utc >= first,
+            Appointment.start_utc < last,
+            Appointment.status == AppointmentStatus.awaiting_payment,
+            Appointment.hold_expires_at > now,
+        )
+        .order_by(Appointment.start_utc)
+    ).all()
+    out = []
+    for a in rows:
+        row = _item(db, a, doctor)
+        paying_by = db.scalar(
+            select(Payment.method)
+            .where(Payment.appointment_id == a.id, Payment.status == PaymentStatus.pending)
+            .order_by(Payment.created_at.desc())
+            .limit(1)
+        )
+        out.append(
+            HoldItem(
+                id=a.id,
+                patient_id=a.patient_id,
+                patient_phone=row.patient_phone,
+                start=row.start,
+                end=row.end,
+                doctor_name_ar=row.doctor_name_ar,
+                doctor_name_fr=row.doctor_name_fr,
+                mine=row.mine,
+                expires_at=utc_iso(a.hold_expires_at),
+                paying_by=paying_by,
+            )
+        )
+    return out
 
 
 @router.post("/checkin", response_model=AgendaItem)
