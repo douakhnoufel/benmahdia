@@ -21,6 +21,7 @@ function backend() {
           { ...base, id: 'b1', type: 'booking_confirmed' },
           { ...base, id: 'b2', type: 'booking_cancelled' },
           { ...base, id: 'm1', type: 'milestone' },
+          { ...base, id: 'd1', type: 'account_deleted' },
         ]),
         { status: 200 },
       ),
@@ -48,7 +49,10 @@ describe('Booking alerts (PRD 4.4: both sides are notified)', () => {
     expect(await screen.findByText('Rendez-vous confirmé')).toBeInTheDocument();
     expect(screen.getByText('Rendez-vous annulé')).toBeInTheDocument();
     expect(screen.getByText('Nouvelle étape sans consommation')).toBeInTheDocument();
+    expect(screen.getByText('Le patient a supprimé son compte')).toBeInTheDocument();
     expect(screen.queryByText('Alerte')).toBeNull();
+    // The deleted patient's alert has no link to a file that no longer exists.
+    expect(screen.getAllByText('Ouvrir la fiche')).toHaveLength(3);
   });
 
   it('and in Arabic', async () => {
@@ -57,5 +61,6 @@ describe('Booking alerts (PRD 4.4: both sides are notified)', () => {
     expect(await screen.findByText('موعد مؤكَّد')).toBeInTheDocument();
     expect(screen.getByText('موعد ملغى')).toBeInTheDocument();
     expect(screen.getByText('بلغ مرحلة جديدة دون تعاطٍ')).toBeInTheDocument();
+    expect(screen.getByText('حذف المريض حسابه')).toBeInTheDocument();
   });
 });

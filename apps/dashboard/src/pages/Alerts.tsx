@@ -13,6 +13,7 @@ const KIND: Record<string, StringKey> = {
   booking_confirmed: 'alertBookingConfirmed',
   booking_cancelled: 'alertBookingCancelled',
   milestone: 'alertMilestone',
+  account_deleted: 'alertAccountDeleted',
 };
 
 /** The doctor's alerts. They name an event and a patient, nothing medical;
@@ -59,9 +60,12 @@ export function Alerts({ onOpen, onChange }: { onOpen: (patient: { id: string; p
               <span className="text-ink-body" dir="ltr">{a.patient_phone ?? '—'}</span>
               <span className="text-caption text-ink-muted">{date(a.created_at)} · {time(a.created_at)}</span>
             </div>
-            <Button variant="secondary" onClick={() => onOpen({ id: a.patient_id, phone: a.patient_phone })}>
-              {t('openPatient')}
-            </Button>
+            {/* A deleted patient's file is gone (404): this alert stays unlinked. */}
+            {a.type !== 'account_deleted' && (
+              <Button variant="secondary" onClick={() => onOpen({ id: a.patient_id, phone: a.patient_phone })}>
+                {t('openPatient')}
+              </Button>
+            )}
             {!a.read && (
               <Button disabled={busy === a.id} onClick={() => markRead(a)}>{t('markRead')}</Button>
             )}
