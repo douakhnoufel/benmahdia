@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_tokens.dart';
 import '../booking/booking_widgets.dart';
+import 'option_cards.dart';
 import 'recovery_models.dart';
 import 'recovery_widgets.dart';
 
@@ -322,22 +323,22 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
         spacing: AppSpace.md,
         children: [
           Text(l10n.habitsAdd, style: text.headlineMedium),
-          Wrap(
-            spacing: AppSpace.sm,
-            runSpacing: AppSpace.sm,
+          OptionGrid(
             children: [
               for (final MapEntry(key: kind, value: label)
                   in widget.catalog.entries)
                 if (!widget.kept.contains(kind))
-                  ChoiceChip(
-                    label: Text(label.of(lang)),
+                  OptionCard(
+                    icon: habitIcon(kind),
+                    label: label.of(lang),
                     selected: _kind == kind,
-                    onSelected: (_) => setState(() => _kind = kind),
+                    onTap: () => setState(() => _kind = kind),
                   ),
-              ChoiceChip(
-                label: Text(l10n.habitsOwn),
+              OptionCard(
+                icon: habitIcon(HabitKind.custom),
+                label: l10n.habitsOwn,
                 selected: _kind == HabitKind.custom,
-                onSelected: (_) => setState(() => _kind = HabitKind.custom),
+                onTap: () => setState(() => _kind = HabitKind.custom),
               ),
             ],
           ),

@@ -11,6 +11,7 @@ import 'package:benmahdia_mobile/features/recovery/recovery_repository.dart';
 import 'package:benmahdia_mobile/features/recovery/recovery_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:benmahdia_mobile/features/recovery/option_cards.dart';
 
 import 'helpers.dart';
 
@@ -171,8 +172,8 @@ void main() {
     await tester.tap(find.text('أضف عادة'));
     await tester.pumpAndSettle();
     // The habit already kept is not offered again.
-    expect(find.widgetWithText(ChoiceChip, 'الرياضة أو المشي'), findsNothing);
-    await tester.tap(find.widgetWithText(ChoiceChip, 'تنظيف الأسنان'));
+    expect(find.widgetWithText(OptionCard, 'الرياضة أو المشي'), findsNothing);
+    await tester.tap(find.widgetWithText(OptionCard, 'تنظيف الأسنان'));
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'حفظ'));
     await tester.pumpAndSettle();
@@ -194,7 +195,7 @@ void main() {
     await _scrollTo(tester, find.text('أضف عادة'));
     await tester.tap(find.text('أضف عادة'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(ChoiceChip, 'بكلماتي'));
+    await tester.tap(find.widgetWithText(OptionCard, 'بكلماتي'));
     await tester.pump();
     final save = find.widgetWithText(FilledButton, 'حفظ');
     expect(tester.widget<FilledButton>(save).onPressed, isNull);

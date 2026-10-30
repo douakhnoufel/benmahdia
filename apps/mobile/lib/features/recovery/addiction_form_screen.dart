@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_tokens.dart';
 import '../booking/booking_format.dart';
+import 'option_cards.dart';
 import 'recovery_models.dart';
 
 /// What the patient enters for one addiction.
@@ -13,11 +14,12 @@ typedef AddictionEntry = ({
   SubstanceProfile? profile,
   String? substance,
   DateTime cleanSince,
+  int? goalDays,
 });
 
 /// "What are you recovering from?": the substance (one of the clinic's
 /// profiles, or another substance and its type), the exact product
-/// (optional) and the day of the last use. The doctor reviews it afterwards.
+/// (optional), the day of the last use and the first small goal (PRD 5.6). The doctor reviews it afterwards.
 class AddictionFormScreen extends StatefulWidget {
   const AddictionFormScreen({
     super.key,
@@ -40,6 +42,7 @@ class _AddictionFormScreenState extends State<AddictionFormScreen> {
   SubstanceProfile? _profile;
   bool _other = false;
   late DateTime _since = dayOf(widget.today);
+  int? _goal; // null = automatic
   bool _saving = false;
 
   @override
@@ -56,8 +59,14 @@ class _AddictionFormScreenState extends State<AddictionFormScreen> {
       firstDate: DateTime(today.year - 30),
       lastDate: today,
     );
-    if (picked != null) setState(() => _since = picked);
+    if (picked == null) return;
+    setState(() {
+      _since = picked;
+      if (_goal != null && _goal! <= _daysClean) _goal = null;
+    });
   }
+
+  int get _daysClean => dayOf(widget.today).difference(_since).inDays;
 
   bool get _ready => _profile != null || (_other && _type != null);
 
@@ -70,6 +79,7 @@ class _AddictionFormScreenState extends State<AddictionFormScreen> {
         profile: _profile,
         substance: substance.isEmpty ? null : substance,
         cleanSince: _since,
+        goalDays: _goal,
       ));
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -84,91 +94,117 @@ class _AddictionFormScreenState extends State<AddictionFormScreen> {
 
     return Scaffold(
       appBar: AppBar(backgroundColor: AppColors.background),
-      body: ListView(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(
           AppSpace.screenHorizontal,
           0,
           AppSpace.screenHorizontal,
           AppSpace.xl,
         ),
-        children: [
-          Semantics(
-            header: true,
-            child: Text(l10n.addictionFormTitle, style: text.headlineLarge),
-          ),
-          const SizedBox(height: AppSpace.sm),
-          Text(l10n.addictionFormBody, style: text.bodyLarge),
-          const SizedBox(height: AppSpace.xl),
-          Text(l10n.substanceLabel, style: text.labelMedium),
-          const SizedBox(height: AppSpace.sm),
-          Wrap(
-            spacing: AppSpace.sm,
-            runSpacing: AppSpace.sm,
-            children: [
-              for (final p in widget.profiles)
-                ChoiceChip(
-                  label: Text(p.name.of(lang)),
-                  selected: _profile == p.profile,
-                  onSelected: (_) => setState(() {
-                    _profile = p.profile;
-                    _other = false;
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Semantics(
+              header: true,
+              child: Text(l10n.addictionFormTitle, style: text.headlineLarge),
+            ),
+            const SizedBox(height: AppSpace.sm),
+            Text(l10n.addictionFormBody, style: text.bodyLarge),
+            const SizedBox(height: AppSpace.xl),
+            Text(l10n.substanceLabel, style: text.labelMedium),
+            const SizedBox(height: AppSpace.sm),
+            OptionGrid(
+              children: [
+                for (final p in widget.profiles)
+                  OptionCard(
+                    icon: substanceIcon(p.profile),
+                    label: p.name.of(lang),
+                    selected: _profile == p.profile,
+                    onTap: () => setState(() {
+                      _profile = p.profile;
+                      _other = false;
+                    }),
+                  ),
+                OptionCard(
+                  icon: substanceIcon(null),
+                  label: l10n.substanceOther,
+                  selected: _other,
+                  onTap: () => setState(() {
+                    _profile = null;
+                    _other = true;
                   }),
                 ),
-              ChoiceChip(
-                label: Text(l10n.substanceOther),
-                selected: _other,
-                onSelected: (_) => setState(() {
-                  _profile = null;
-                  _other = true;
-                }),
+              ],
+            ),
+            if (_other) ...[
+              const SizedBox(height: AppSpace.xl),
+              Text(l10n.addictionTypeLabel, style: text.labelMedium),
+              const SizedBox(height: AppSpace.sm),
+              Wrap(
+                spacing: AppSpace.sm,
+                runSpacing: AppSpace.sm,
+                children: [
+                  for (final t in AddictionType.values)
+                    ChoiceChip(
+                      label: Text(l10n.addictionType(t.name)),
+                      selected: _type == t,
+                      onSelected: (_) => setState(() => _type = t),
+                    ),
+                ],
               ),
             ],
-          ),
-          if (_other) ...[
             const SizedBox(height: AppSpace.xl),
-            Text(l10n.addictionTypeLabel, style: text.labelMedium),
+            TextField(
+              controller: _substance,
+              textInputAction: TextInputAction.done,
+              decoration: InputDecoration(
+                labelText: l10n.addictionSubstance,
+                hintText: l10n.addictionSubstanceHint,
+              ),
+            ),
+            const SizedBox(height: AppSpace.xl),
+            Text(l10n.addictionCleanSince, style: text.labelMedium),
+            const SizedBox(height: AppSpace.sm),
+            Semantics(
+              button: true,
+              label: '${l10n.addictionCleanSince} ${l10n.longDate(_since)}',
+              excludeSemantics: true,
+              child: OutlinedButton.icon(
+                onPressed: _pickDate,
+                icon: const Icon(Icons.event_rounded),
+                label: Text(l10n.longDate(_since)),
+              ),
+            ),
+            const SizedBox(height: AppSpace.xl),
+            Text(l10n.goalTitle, style: text.labelMedium),
             const SizedBox(height: AppSpace.sm),
             Wrap(
               spacing: AppSpace.sm,
               runSpacing: AppSpace.sm,
               children: [
-                for (final t in AddictionType.values)
-                  ChoiceChip(
-                    label: Text(l10n.addictionType(t.name)),
-                    selected: _type == t,
-                    onSelected: (_) => setState(() => _type = t),
+                ChoiceChip(
+                  label: Text(
+                    '${l10n.goalAuto} · ${l10n.bookDays(nextGoal(_daysClean))}',
                   ),
+                  selected: _goal == null,
+                  onSelected: (_) => setState(() => _goal = null),
+                ),
+                for (final step in goalSteps)
+                  if (step > _daysClean)
+                    ChoiceChip(
+                      label: Text(l10n.bookDays(step)),
+                      selected: _goal == step,
+                      onSelected: (_) => setState(() => _goal = step),
+                    ),
               ],
             ),
+            const SizedBox(height: AppSpace.xl),
+            FilledButton(
+              onPressed: !_ready || _saving ? null : _save,
+              child: Text(l10n.addictionSave),
+            ),
           ],
-          const SizedBox(height: AppSpace.xl),
-          TextField(
-            controller: _substance,
-            textInputAction: TextInputAction.done,
-            decoration: InputDecoration(
-              labelText: l10n.addictionSubstance,
-              hintText: l10n.addictionSubstanceHint,
-            ),
-          ),
-          const SizedBox(height: AppSpace.xl),
-          Text(l10n.addictionCleanSince, style: text.labelMedium),
-          const SizedBox(height: AppSpace.sm),
-          Semantics(
-            button: true,
-            label: '${l10n.addictionCleanSince} ${l10n.longDate(_since)}',
-            excludeSemantics: true,
-            child: OutlinedButton.icon(
-              onPressed: _pickDate,
-              icon: const Icon(Icons.event_rounded),
-              label: Text(l10n.longDate(_since)),
-            ),
-          ),
-          const SizedBox(height: AppSpace.xl),
-          FilledButton(
-            onPressed: !_ready || _saving ? null : _save,
-            child: Text(l10n.addictionSave),
-          ),
-        ],
+        ),
       ),
     );
   }

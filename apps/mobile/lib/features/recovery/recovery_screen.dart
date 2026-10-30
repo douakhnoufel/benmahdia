@@ -426,7 +426,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
             today: _repo.now(),
             profiles: _profiles,
             onSave: (entry) async {
-              final Addiction added;
+              Addiction added;
               try {
                 added = await _repo.addAddiction(
                   type: entry.type,
@@ -434,6 +434,13 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
                   substance: entry.substance,
                   cleanSince: entry.cleanSince,
                 );
+                if (entry.goalDays != null) {
+                  try {
+                    added = await _repo.setGoal(added, entry.goalDays);
+                  } on RecoveryUnavailable {
+                    // Saved without the goal: the patient can set it later.
+                  }
+                }
               } on RecoveryUnavailable {
                 if (!mounted) return;
                 messenger.showSnackBar(
