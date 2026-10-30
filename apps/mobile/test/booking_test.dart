@@ -16,7 +16,8 @@ import 'helpers.dart';
 
 // Saturday 17 October 2026, 17:10 clinic time.
 final _now = DateTime(2026, 10, 17, 17, 10);
-// Monday 19 October 09:00: the first free slot after the 24 h notice.
+// Monday 19 October 09:00: a free slot after the 24 h notice (07:45 is the
+// first one).
 final _monday9 = DateTime(2026, 10, 19, 9);
 
 const _doctorAr = 'د. بن مهدية حسين';
@@ -94,7 +95,7 @@ void main() {
 
       expect(find.text(_doctorAr), findsOneWidget);
       expect(find.textContaining('2000 دج'), findsOneWidget);
-      expect(find.text('أقرب موعد: الاثنين 19 أكتوبر · 09:00'), findsOneWidget);
+      expect(find.text('أقرب موعد: الاثنين 19 أكتوبر · 07:45'), findsOneWidget);
 
       // A single doctor is picked already.
       await tester.tap(find.text('اختيار اليوم والوقت'));
@@ -112,7 +113,7 @@ void main() {
       expect(find.text('Dr Benmahdia Hocine'), findsOneWidget);
       expect(find.textContaining('2000 DA'), findsOneWidget);
       expect(
-        find.text('Prochain créneau : lundi 19 octobre · 09:00'),
+        find.text('Prochain créneau : lundi 19 octobre · 07:45'),
         findsOneWidget,
       );
     });

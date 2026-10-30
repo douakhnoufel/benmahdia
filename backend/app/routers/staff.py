@@ -50,6 +50,9 @@ class AgendaItem(BaseModel):
     method: PaymentMethod | None
     price_dzd: int
     paid: bool
+    # When the payment was recorded, if it was. The waiting room puts first
+    # those who paid before they arrived.
+    paid_at: str | None = None
     # When the front desk accepted the patient's booking code, if it did.
     checked_in_at: str | None = None
     # Whose visit it is: the agenda is clinic-wide, but only the visit's own
@@ -190,6 +193,7 @@ def _item(db: Session, a: Appointment, doctor: DoctorProfile) -> AgendaItem:
         method=a.method,
         price_dzd=a.price_dzd,
         paid=a.paid_at is not None,
+        paid_at=utc_iso(a.paid_at) if a.paid_at else None,
         checked_in_at=utc_iso(a.checked_in_at) if a.checked_in_at else None,
         doctor_name_ar=owner.name_ar if owner else "",
         doctor_name_fr=owner.name_fr if owner else "",

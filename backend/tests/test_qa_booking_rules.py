@@ -203,25 +203,25 @@ def test_r09_five_minute_slots(client, sms):
 
 def test_r10_first_and_last_slot_and_no_overrun(client, sms):
     doctor = make_doctor()
-    # Monday morning window now ends at 11:50: an 11:45 slot would overrun it.
+    # Monday's window now ends at 14:20: a 14:15 slot would overrun it.
     with Session(engine) as db:
         w = db.scalar(select(Availability).where(
             Availability.doctor_id == doctor.user_id, Availability.weekday == 0,
-            Availability.start_minute == 9 * 60))
-        w.end_minute = 11 * 60 + 50
+            Availability.start_minute == 7 * 60 + 30))
+        w.end_minute = 14 * 60 + 20
         db.commit()
     s = verified_patient(client, sms)
-    assert hold(client, s, doctor, "2026-10-19T08:00:00Z").status_code == 201  # 09:00 first
-    assert hold(client, s, doctor, "2026-10-19T07:45:00Z").status_code == 409  # 08:45
-    assert hold(client, s, doctor, "2026-10-19T10:30:00Z").status_code == 201  # 11:30 last
-    assert hold(client, s, doctor, "2026-10-19T10:45:00Z").status_code == 409  # 11:45 overruns
-    assert hold(client, s, doctor, "2026-10-19T11:00:00Z").status_code == 409  # break
+    assert hold(client, s, doctor, "2026-10-19T06:30:00Z").status_code == 201  # 07:30 first
+    assert hold(client, s, doctor, "2026-10-19T06:15:00Z").status_code == 409  # 07:15
+    assert hold(client, s, doctor, "2026-10-19T13:00:00Z").status_code == 201  # 14:00 last
+    assert hold(client, s, doctor, "2026-10-19T13:15:00Z").status_code == 409  # 14:15 overruns
+    assert hold(client, s, doctor, "2026-10-19T13:30:00Z").status_code == 409  # closed
     starts = [
         x["start"] for d in client.get(f"/v1/doctors/{doctor.user_id}/calendar",
                                        headers=headers(s)).json()["days"]
         if d["day"] == "2026-10-19" for x in d["slots"]
     ]
-    assert "2026-10-19T10:30:00Z" in starts and "2026-10-19T10:45:00Z" not in starts
+    assert "2026-10-19T13:00:00Z" in starts and "2026-10-19T13:15:00Z" not in starts
 
 
 # --- Notice and horizon (R-13, R-14, R-15, R-16) ------------------------------
@@ -282,8 +282,8 @@ def test_r15_start_with_an_algiers_offset_is_the_same_slot(client, sms):
 def test_r15_off_grid_offset_is_refused(client, sms):
     doctor = make_doctor()
     s = verified_patient(client, sms)
-    # 09:00 UTC+2 = 07:00Z = 08:00 Algiers: before opening.
-    assert hold(client, s, doctor, "2026-10-19T09:00:00+02:00").status_code == 409
+    # 08:00 UTC+2 = 06:00Z = 07:00 Algiers: before opening.
+    assert hold(client, s, doctor, "2026-10-19T08:00:00+02:00").status_code == 409
 
 
 def test_r16_horizon_and_today_use_the_algiers_day_after_utc_midnight(client, sms):
