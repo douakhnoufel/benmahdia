@@ -81,6 +81,11 @@ def social() -> Social:
 def client(sms, social):
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
+    if engine.dialect.name == "postgresql":
+        # Fresh connections: psycopg prepares a statement after a few runs,
+        # and a plan prepared against the dropped tables (their enum types
+        # get new ids) fails with "cached plan must not change result type".
+        engine.dispose()
     for leftover in Path(os.environ["SELFIE_DIR"]).glob("*"):
         leftover.unlink()
     clock.frozen = START

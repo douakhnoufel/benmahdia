@@ -2,7 +2,7 @@
 their own days. The server never sees what the reminder says: the phone
 schedules it locally, with neutral text."""
 
-import re
+import uuid
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, Response
@@ -10,8 +10,9 @@ from pydantic import BaseModel, field_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from .. import scheduling
 from ..clock import clock
-from ..db import get_db
+from ..db import get_db, insert_once
 from ..errors import ApiError
 from ..models import DailyCheck, User
 from .recovery import patient
@@ -25,11 +26,10 @@ DAYS_AHEAD = 1
 # How far back the list goes by default (covers the week view and more).
 LIST_DAYS = 60
 
-_HHMM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
 def _today() -> date:
-    return clock.now().date()
+    return scheduling.clinic_today(clock.now())
 
 
 @router.get("/checkins", response_model=list[date])
@@ -56,11 +56,14 @@ def tick(
     today = _today()
     if not today - timedelta(days=DAYS_BACK) <= day <= today + timedelta(days=DAYS_AHEAD):
         raise ApiError(422, "checkin_day_out_of_range")
-    exists = db.scalar(
-        select(DailyCheck.id).where(DailyCheck.patient_id == user.id, DailyCheck.day == day)
-    )
-    if exists is None:
-        db.add(DailyCheck(patient_id=user.id, day=day))
+
+    def stored() -> uuid.UUID | None:
+        return db.scalar(
+            select(DailyCheck.id).where(DailyCheck.patient_id == user.id, DailyCheck.day == day)
+        )
+
+    if stored() is None:
+        insert_once(db, DailyCheck(patient_id=user.id, day=day), stored)
         db.commit()
     return Response(status_code=204)
 
@@ -72,7 +75,7 @@ class ReminderBody(BaseModel):
     @field_validator("time")
     @classmethod
     def _valid(cls, v: str | None) -> str | None:
-        if v is not None and not _HHMM.match(v):
+        if v is not None and not scheduling.is_hhmm(v):
             raise ValueError("time must be HH:MM, 24 h")
         return v
 

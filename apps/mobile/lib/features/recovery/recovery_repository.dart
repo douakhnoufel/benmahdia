@@ -29,6 +29,10 @@ abstract interface class RecoveryRepository {
   /// The patient's next small goal for [addiction]; null = automatic.
   Future<Addiction> setGoal(Addiction addiction, int? days);
 
+  /// The celebration for [addiction]'s milestone reached now was shown, so
+  /// it is not shown again (PRD 5.1).
+  Future<Addiction> markMilestoneSeen(Addiction addiction);
+
   /// What each substance profile asks (PRD 5.6).
   Future<List<ProfileSpec>> profiles();
 

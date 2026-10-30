@@ -17,6 +17,8 @@ class FakeRecoveryRepository implements RecoveryRepository {
         start: now.subtract(const Duration(days: 9, hours: 3)),
         longestPastDays: 21,
         pastDays: 55,
+        // Day 7 was celebrated already: opening the demo shows no pop-up.
+        milestoneSeen: 7,
       ),
     ];
     _doses = [
@@ -141,6 +143,18 @@ class FakeRecoveryRepository implements RecoveryRepository {
   Future<Addiction> setGoal(Addiction addiction, int? days) async {
     await _call();
     final updated = addiction.withGoal(days);
+    _addictions = [
+      for (final a in _addictions) a.id == addiction.id ? updated : a,
+    ];
+    return updated;
+  }
+
+  @override
+  Future<Addiction> markMilestoneSeen(Addiction addiction) async {
+    await _call();
+    final updated = addiction.withMilestoneSeen(
+      addiction.milestone ?? reachedMilestone(addiction.days(now())),
+    );
     _addictions = [
       for (final a in _addictions) a.id == addiction.id ? updated : a,
     ];

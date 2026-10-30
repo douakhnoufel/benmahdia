@@ -12,6 +12,16 @@ class LocalizedText {
 /// Day counts that fill a sobriety circle (PRD 5.1): then every year.
 const milestones = [1, 3, 7, 14, 30, 60, 90, 180, 365];
 
+/// The highest milestone [days] has reached; 0 before the first day.
+int reachedMilestone(int days) {
+  if (days >= 365) return days ~/ 365 * 365;
+  var reached = 0;
+  for (final m in milestones) {
+    if (m <= days) reached = m;
+  }
+  return reached;
+}
+
 /// The next milestone after [days] (the ring's goal).
 int nextMilestone(int days) {
   for (final m in milestones) {
@@ -179,10 +189,19 @@ class Addiction {
     this.reviewed = true,
     this.profile,
     this.goalDays,
+    this.milestoneSeen = 0,
+    this.milestone,
   });
 
   final String id;
   final AddictionType type;
+
+  /// The highest milestone of this streak as the server counts it (PRD
+  /// 5.1); null when no server answered, then the phone's clock counts.
+  final int? milestone;
+
+  /// The highest milestone of this streak already celebrated (PRD 5.1).
+  final int milestoneSeen;
 
   /// How it is tracked (PRD 5.6); null = generic.
   final SubstanceProfile? profile;
@@ -220,6 +239,12 @@ class Addiction {
   /// What the circle fills toward now.
   int goal(DateTime now) => currentGoal(days(now), goalDays);
 
+  /// The milestone to celebrate now, or null when it was already.
+  int? pendingMilestone(DateTime now) {
+    final reached = milestone ?? reachedMilestone(days(now));
+    return reached > milestoneSeen ? reached : null;
+  }
+
   Addiction withGoal(int? days) => Addiction(
     id: id,
     type: type,
@@ -230,12 +255,29 @@ class Addiction {
     longestPastDays: longestPastDays,
     pastDays: pastDays,
     goalDays: days,
+    milestoneSeen: milestoneSeen,
+    milestone: milestone,
+  );
+
+  Addiction withMilestoneSeen(int days) => Addiction(
+    id: id,
+    type: type,
+    profile: profile,
+    substance: substance,
+    reviewed: reviewed,
+    start: start,
+    longestPastDays: longestPastDays,
+    pastDays: pastDays,
+    goalDays: goalDays,
+    milestoneSeen: days,
+    milestone: milestone,
   );
 
   /// The counter after a relapse at [at] (never before the current start).
   Addiction relapsed(DateTime at) {
     final when = at.isBefore(start) ? start : at;
-    // The goal goes back to the first small step (PRD 5.6).
+    // The goal goes back to the first small step (PRD 5.6) and the new
+    // streak starts its own milestone ladder.
     return Addiction(
       id: id,
       type: type,

@@ -24,13 +24,19 @@ from .models import (
     DoseStatus,
     Medication,
     ReviewStatus,
+    User,
 )
+from .routers.checkins import DAYS_BACK
 from .routers.recovery import _doctor_of
+from .substances import reached_milestone
 
 DAYS_IN_A_ROW = 2
 # PRD 5.6, fixed in v1.
 CHECK_DAYS_IN_A_ROW = 3
 HIGH_CRAVING = 4
+# A check can be saved up to DAYS_BACK days back, so a run ending on any of
+# the last DAYS_BACK + 1 full days is re-examined.
+LATE_CHECK_DAYS = DAYS_BACK + 1
 
 
 def _taken_on(db: Session, medication_id, day) -> bool:
@@ -52,7 +58,10 @@ def missed_dose_alerts(db: Session) -> int:
     days = [today - timedelta(days=n) for n in range(1, DAYS_IN_A_ROW + 1)]
     day_start = scheduling.to_utc(today, 0)
     created = 0
-    for m in db.scalars(select(Medication).where(Medication.active.is_(True))):
+    meds = select(Medication).join(User, User.id == Medication.patient_id).where(
+        Medication.active.is_(True), User.deleted_at.is_(None)
+    )
+    for m in db.scalars(meds):
         runs = all(
             m.start_date <= d and (m.end_date is None or d <= m.end_date) for d in days
         )
@@ -87,9 +96,10 @@ def _raise_once(db: Session, patient_id: uuid.UUID, kind: str, since: datetime) 
     doctor_id = _doctor_of(db, patient_id)
     if doctor_id is None:
         return False
+    # Per patient and kind, not per doctor: every doctor of the clinic sees
+    # every alert (PRD 3), and a rebooking with a colleague changes doctor_id.
     already = db.scalar(
         select(Alert.id).where(
-            Alert.doctor_id == doctor_id,
             Alert.patient_id == patient_id,
             Alert.type == kind,
             Alert.created_at >= since,
@@ -103,25 +113,47 @@ def _raise_once(db: Session, patient_id: uuid.UUID, kind: str, since: datetime) 
 
 
 def _tracked() -> Select:
-    return select(Addiction).where(
-        Addiction.active.is_(True), Addiction.review_status != ReviewStatus.rejected
+    """Tracked addictions of patients whose account still exists: a deleted
+    account gets no more nightly alerts (G-12), its account_deleted alert
+    already told the doctors."""
+    return (
+        select(Addiction)
+        .join(User, User.id == Addiction.patient_id)
+        .where(
+            Addiction.active.is_(True),
+            Addiction.review_status != ReviewStatus.rejected,
+            User.deleted_at.is_(None),
+        )
     )
 
 
 def craving_alerts(db: Session) -> int:
-    days, since = _check_window()
-    patients = set()
-    for a in db.scalars(_tracked()):
-        high = db.scalars(
-            select(AddictionCheck.day).where(
-                AddictionCheck.addiction_id == a.id,
-                AddictionCheck.day.in_(days),
-                AddictionCheck.craving >= HIGH_CRAVING,
-            )
-        ).all()
-        if len(set(high)) == len(days):
-            patients.add(a.patient_id)
-    created = sum(_raise_once(db, p, "craving_high", since) for p in patients)
+    """A run of three high days is looked for ending on each of the last
+    LATE_CHECK_DAYS full days, not only yesterday: a patient may still save a
+    day after the nightly run (same-day edit window), which can complete a
+    run that ended earlier. The dedupe window of a run starts at the day
+    before its last day, so a run never alerts twice and overlapping runs
+    stay at one alert per three days."""
+    today = scheduling.clinic_today(clock.now())
+    patients: dict[uuid.UUID, datetime] = {}
+    for lag in range(LATE_CHECK_DAYS):
+        last = today - timedelta(days=1 + lag)
+        days = [last - timedelta(days=n) for n in range(CHECK_DAYS_IN_A_ROW)]
+        since = scheduling.to_utc(last - timedelta(days=1), 0)
+        for a in db.scalars(_tracked()):
+            high = db.scalars(
+                select(AddictionCheck.day).where(
+                    AddictionCheck.addiction_id == a.id,
+                    AddictionCheck.day.in_(days),
+                    AddictionCheck.craving >= HIGH_CRAVING,
+                )
+            ).all()
+            if len(set(high)) == len(days):
+                patients.setdefault(a.patient_id, since)
+    created = 0
+    for patient_id, since in patients.items():
+        created += _raise_once(db, patient_id, "craving_high", since)
+        db.flush()
     db.commit()
     return created
 
@@ -152,8 +184,30 @@ def no_checkin_alerts(db: Session) -> int:
     return created
 
 
+def milestone_alerts(db: Session) -> int:
+    """"milestone" (PRD 5.1): one alert for each milestone a streak reaches,
+    even if the patient did not open the app. A streak that starts far back
+    (or a missed run) gives one alert for the highest milestone, not one per
+    step. It names no addiction."""
+    now = clock.now()
+    created = 0
+    for a in db.scalars(_tracked()):
+        reached = reached_milestone(max(0, (now - a.sobriety_start).days))
+        if reached <= a.milestone_alerted:
+            continue
+        a.milestone_alerted = reached
+        doctor_id = _doctor_of(db, a.patient_id)
+        if doctor_id is not None:
+            db.add(Alert(doctor_id=doctor_id, patient_id=a.patient_id, type="milestone"))
+            created += 1
+        db.flush()
+    db.commit()
+    return created
+
+
 if __name__ == "__main__":
     with SessionLocal() as session:
         print(f"Raised {missed_dose_alerts(session)} missed-dose alert(s).")
         print(f"Raised {craving_alerts(session)} craving alert(s).")
         print(f"Raised {no_checkin_alerts(session)} missed-check alert(s).")
+        print(f"Raised {milestone_alerts(session)} milestone alert(s).")

@@ -15,6 +15,7 @@ from sqlalchemy import (
     Integer,
     LargeBinary,
     String,
+    Text,
     UniqueConstraint,
     Uuid,
     event,
@@ -194,6 +195,8 @@ class AuditLog(Base):
     content, codes, passwords or tokens."""
 
     __tablename__ = "audit_log"
+    # actor_id has no foreign key on purpose: the audit trail outlives the account.
+    __table_args__ = (Index("ix_audit_log_action_created_at", "action", "created_at"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     actor_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, index=True)
@@ -289,7 +292,12 @@ class Appointment(Base):
     __tablename__ = "appointments"
     __table_args__ = (
         CheckConstraint("end_utc > start_utc", name="ck_appointment_range"),
+        CheckConstraint("price_dzd >= 0", name="ck_appointments_price_dzd"),
         Index("ix_appointments_doctor_start", "doctor_id", "start_utc"),
+        # The clinic-wide day list, across doctors.
+        Index("ix_appointments_start_utc", "start_utc"),
+        # The hold expiry sweep.
+        Index("ix_appointments_status_hold_expires_at", "status", "hold_expires_at"),
         UniqueConstraint("checkin_code", name="uq_appointments_checkin_code"),
     )
 
@@ -336,8 +344,9 @@ class AppointmentNote(Base):
     appointment_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("appointments.id", ondelete="CASCADE"), unique=True
     )
+    # RESTRICT: removing a doctor's profile never deletes their clinical notes.
     doctor_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("doctor_profiles.user_id", ondelete="CASCADE"), index=True
+        ForeignKey("doctor_profiles.user_id", ondelete="RESTRICT"), index=True
     )
     text_enc: Mapped[bytes] = mapped_column(LargeBinary)
     # False: only the author reads it. True: every doctor of the clinic does.
@@ -358,6 +367,7 @@ class Payment(Base):
     never card details."""
 
     __tablename__ = "payments"
+    __table_args__ = (CheckConstraint("amount_dzd >= 0", name="ck_payments_amount_dzd"),)
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     # Null when the slot was lost before the payment arrived: such a paid
@@ -418,6 +428,13 @@ class Addiction(Base):
     [past_days] and [longest_past_days], so progress is never erased."""
 
     __tablename__ = "addictions"
+    __table_args__ = (
+        CheckConstraint("goal_days > 0", name="ck_addictions_goal_days"),
+        CheckConstraint("milestone_seen >= 0", name="ck_addictions_milestone_seen"),
+        CheckConstraint("milestone_alerted >= 0", name="ck_addictions_milestone_alerted"),
+        CheckConstraint("longest_past_days >= 0", name="ck_addictions_longest_past_days"),
+        CheckConstraint("past_days >= 0", name="ck_addictions_past_days"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     patient_id: Mapped[uuid.UUID] = mapped_column(
@@ -430,6 +447,10 @@ class Addiction(Base):
     # The small goal the patient chose (PRD 5.6), in days of the current
     # streak; None lets the app pick the next step. A relapse clears it.
     goal_days: Mapped[int | None] = mapped_column(Integer)
+    # The highest milestone of the current streak (PRD 5.1) the app already
+    # celebrated, and the one the doctor was told about. A relapse resets both.
+    milestone_seen: Mapped[int] = mapped_column(Integer, default=0)
+    milestone_alerted: Mapped[int] = mapped_column(Integer, default=0)
     # The exact product, in the patient's words.
     substance: Mapped[str | None] = mapped_column(String(100))
     sobriety_start: Mapped[datetime] = mapped_column(DateTime)
@@ -439,7 +460,10 @@ class Addiction(Base):
         Enum(ReviewStatus, name="review_status"), default=ReviewStatus.pending
     )
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime)
-    reviewed_by: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    # The doctor who reviewed it; RESTRICT keeps a clinical record's author.
+    reviewed_by: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("doctor_profiles.user_id", ondelete="RESTRICT", name="fk_addictions_reviewed_by")
+    )
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
@@ -481,7 +505,10 @@ class AddictionCheck(Base):
     never written to logs, alerts or the audit log."""
 
     __tablename__ = "addiction_checks"
-    __table_args__ = (UniqueConstraint("addiction_id", "day"),)
+    __table_args__ = (
+        UniqueConstraint("addiction_id", "day"),
+        CheckConstraint("craving BETWEEN 1 AND 5", name="ck_addiction_checks_craving"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     addiction_id: Mapped[uuid.UUID] = mapped_column(
@@ -546,12 +573,22 @@ class Medication(Base):
     screens: reminders on the phone say nothing about it."""
 
     __tablename__ = "medications"
+    __table_args__ = (
+        CheckConstraint(
+            "end_date IS NULL OR end_date >= start_date", name="ck_medications_dates"
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     patient_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
-    prescribed_by: Mapped[uuid.UUID] = mapped_column(Uuid)
+    # RESTRICT: a prescription keeps the doctor who wrote it.
+    prescribed_by: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey(
+            "doctor_profiles.user_id", ondelete="RESTRICT", name="fk_medications_prescribed_by"
+        )
+    )
     name: Mapped[str] = mapped_column(String(100))
     amount: Mapped[str] = mapped_column(String(50))
     times: Mapped[list[str]] = mapped_column(JSON)
@@ -598,11 +635,76 @@ class Quote(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
+class ArticleTopic(str, enum.Enum):
+    """The library's sections (PRD 5.5)."""
+
+    addiction = "addiction"
+    cravings = "cravings"
+    relapse = "relapse"
+    medication = "medication"
+    family = "family"
+    motivation = "motivation"
+
+
+class Article(Base):
+    """A short article the clinic's doctors write and publish from the
+    dashboard (PRD 5.5, 7), in one language. [body] is plain text with blank
+    lines between paragraphs: no HTML, so nothing in it can run in the app or
+    the dashboard. [addiction_type] is an AddictionType value, or None for
+    every patient."""
+
+    __tablename__ = "articles"
+    __table_args__ = (
+        CheckConstraint("language IN ('ar', 'fr')", name="ck_articles_language"),
+        CheckConstraint(
+            "published = false OR published_at IS NOT NULL", name="ck_articles_published_at"
+        ),
+        # The library, newest published first.
+        Index("ix_articles_published_published_at", "published", "published_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    # RESTRICT: an article keeps the doctor who wrote it.
+    author_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("doctor_profiles.user_id", ondelete="RESTRICT", name="fk_articles_author_id")
+    )
+    title: Mapped[str] = mapped_column(String(160))
+    body: Mapped[str] = mapped_column(Text)
+    language: Mapped[str] = mapped_column(String(2))
+    topic: Mapped[ArticleTopic] = mapped_column(Enum(ArticleTopic, name="article_topic"))
+    addiction_type: Mapped[str | None] = mapped_column(String(16))
+    published: Mapped[bool] = mapped_column(Boolean, default=False)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class ArticleFavourite(Base):
+    """A patient saved [article_id] to read again."""
+
+    __tablename__ = "article_favourites"
+    __table_args__ = (UniqueConstraint("patient_id", "article_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    patient_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    article_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("articles.id", ondelete="CASCADE"), index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
 class Alert(Base):
     """A heads-up for a doctor's dashboard. It names a kind of event and a
     patient, never medical content (PRD 5, 9)."""
 
     __tablename__ = "alerts"
+    __table_args__ = (
+        CheckConstraint("priority IN ('normal', 'high')", name="ck_alerts_priority"),
+        # The dashboard's newest-first list.
+        Index("ix_alerts_created_at", "created_at"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     doctor_id: Mapped[uuid.UUID] = mapped_column(
@@ -611,7 +713,8 @@ class Alert(Base):
     patient_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
-    # "relapse", "missed_doses", "craving_high", "no_checkin"; "milestone" later.
+    # "relapse", "missed_doses", "craving_high", "no_checkin", "milestone",
+    # "booking_confirmed", "booking_cancelled", "account_deleted".
     type: Mapped[str] = mapped_column(String(32))
     priority: Mapped[str] = mapped_column(String(8), default="normal")
     read: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -638,4 +741,25 @@ event.listen(
     Appointment.__table__,
     "after_create",
     DDL(OVERLAP_DDL).execute_if(dialect="postgresql"),
+)
+
+
+# PostgreSQL only: "HH:MM", 24 h, ASCII digits, for a dose's time and a
+# habit's reminder (the API checks the same with app/scheduling.py). SQLite
+# has no regex operator; local tests rely on the API check there.
+HHMM_REGEX = "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+DOSE_TIME_DDL = (
+    "ALTER TABLE dose_logs ADD CONSTRAINT ck_dose_logs_time "
+    f"CHECK (\"time\" ~ '{HHMM_REGEX}')"
+)
+HABIT_REMINDER_DDL = (
+    "ALTER TABLE habits ADD CONSTRAINT ck_habits_reminder_time "
+    f"CHECK (reminder_time ~ '{HHMM_REGEX}')"
+)
+
+event.listen(
+    DoseLog.__table__, "after_create", DDL(DOSE_TIME_DDL).execute_if(dialect="postgresql")
+)
+event.listen(
+    Habit.__table__, "after_create", DDL(HABIT_REMINDER_DDL).execute_if(dialect="postgresql")
 )

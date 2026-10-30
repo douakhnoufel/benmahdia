@@ -1083,7 +1083,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get recoveryNoMeds => 'Aucun médicament aujourd\'hui.';
 
   @override
-  String get recoveryDoseTake => 'Pris';
+  String get recoveryDoseTake => 'Prendre';
 
   @override
   String get recoveryDoseSkip => 'Pas pris';
@@ -1539,4 +1539,70 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reminderHabitOwn => 'C\'est l\'heure de votre habitude.';
+
+  @override
+  String get articlesTitle => 'Articles';
+
+  @override
+  String get articlesAll => 'Tous';
+
+  @override
+  String get articlesSaved => 'Enregistrés';
+
+  @override
+  String get articlesNone => 'Pas encore d\'article dans cette rubrique.';
+
+  @override
+  String get articlesNoneSaved =>
+      'Aucun article enregistré. Touchez le marque-page dans un article pour le garder.';
+
+  @override
+  String get articleSave => 'Enregistrer l\'article';
+
+  @override
+  String get articleUnsave => 'Retirer des enregistrés';
+
+  @override
+  String get articleSavedLabel => 'Enregistré';
+
+  @override
+  String get articleSaveFailed => 'Enregistrement impossible. Réessayez.';
+
+  @override
+  String get articleTopicAddiction => 'Comprendre l\'addiction';
+
+  @override
+  String get articleTopicCravings => 'Envies et déclencheurs';
+
+  @override
+  String get articleTopicRelapse => 'Prévenir la rechute';
+
+  @override
+  String get articleTopicMedication => 'Médicaments';
+
+  @override
+  String get articleTopicFamily => 'Famille et soutien';
+
+  @override
+  String get articleTopicMotivation => 'Motivation';
+
+  @override
+  String get milestoneTitle => 'Bravo !';
+
+  @override
+  String milestoneBody(int days, String name) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days jours',
+      one: 'Une journée entière',
+    );
+    return '$_temp0 sans $name. C\'est un vrai pas, continuez.';
+  }
+
+  @override
+  String get milestoneBadges => 'Vos badges de cette série';
+
+  @override
+  String get milestoneContinue => 'Continuer';
 }

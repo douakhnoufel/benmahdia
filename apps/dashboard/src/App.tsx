@@ -4,6 +4,7 @@ import { useI18n, type StringKey } from './i18n';
 import { api, type Me } from './api';
 import { Button } from './components/ui';
 import { Alerts } from './pages/Alerts';
+import { Articles } from './pages/Articles';
 import { AvailabilityPage } from './pages/Availability';
 import { Login } from './pages/Login';
 import { Patients } from './pages/Patients';
@@ -12,8 +13,8 @@ import { Prices } from './pages/Prices';
 import { Signups } from './pages/Signups';
 import { Today } from './pages/Today';
 
-type Page = 'today' | 'patients' | 'signups' | 'alerts' | 'availability' | 'payments' | 'prices';
-const doctorPages: Page[] = ['today', 'patients', 'signups', 'alerts', 'availability', 'payments'];
+type Page = 'today' | 'patients' | 'signups' | 'alerts' | 'articles' | 'availability' | 'payments' | 'prices';
+const doctorPages: Page[] = ['today', 'patients', 'signups', 'alerts', 'articles', 'availability', 'payments'];
 
 export function App() {
   const { t, lang, setLang } = useI18n();
@@ -87,6 +88,7 @@ export function App() {
         {page === 'today' && <Today unread={unread} onOpenAlerts={() => setPage('alerts')} />}
         {page === 'patients' && <Patients open={opened} onClose={() => setOpened(null)} />}
         {page === 'signups' && <Signups />}
+        {page === 'articles' && <Articles />}
         {page === 'availability' && <AvailabilityPage />}
         {page === 'payments' && <Payments />}
         {page === 'prices' && <Prices />}

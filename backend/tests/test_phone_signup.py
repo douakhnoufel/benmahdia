@@ -158,3 +158,9 @@ def test_audit_has_no_secrets(client, sms):
     for row in rows:
         assert "sobre2026" not in (row.target or "")
         assert last_code(sms) not in (row.target or "")
+
+
+def test_only_ascii_or_arabic_indic_digits_make_a_phone_number():
+    from app.phone import normalize_phone
+    assert normalize_phone("٠٥٥٠١٢٣٤٥٦") == "+213550123456"
+    assert normalize_phone("०५५०१२३४५६") is None  # Devanagari digits

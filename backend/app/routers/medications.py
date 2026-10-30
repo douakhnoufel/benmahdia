@@ -6,7 +6,6 @@ patient with a booked visit, with any doctor). The phone schedules
 reminders locally with neutral text, so the drug name is never sent through
 a push service."""
 
-import re
 import uuid
 from datetime import date, timedelta
 from typing import Literal
@@ -18,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from .. import audit, scheduling
 from ..clock import clock
-from ..db import get_db
+from ..db import get_db, insert_once
 from ..errors import ApiError
 from ..models import (
     Addiction,
@@ -37,7 +36,6 @@ from .staff import current_doctor
 router = APIRouter(prefix="/v1/me", tags=["recovery"])
 staff_router = APIRouter(prefix="/v1/staff/patients", tags=["staff"])
 
-_HHMM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 MAX_TIMES = 6
 # Same window as the daily check: a late answer or a phone already past midnight.
 DAYS_BACK = 2
@@ -75,7 +73,7 @@ class MedicationIn(BaseModel):
     @field_validator("times")
     @classmethod
     def _times(cls, v: list[str]) -> list[str]:
-        if any(not _HHMM.match(t) for t in v) or len(set(v)) != len(v):
+        if any(not scheduling.is_hhmm(t) for t in v) or len(set(v)) != len(v):
             raise ValueError("times must be distinct HH:MM, 24 h")
         return sorted(v)
 
@@ -224,7 +222,7 @@ class DoseIn(BaseModel):
     @field_validator("time")
     @classmethod
     def _time(cls, v: str) -> str:
-        if not _HHMM.match(v):
+        if not scheduling.is_hhmm(v):
             raise ValueError("time must be HH:MM, 24 h")
         return v
 
@@ -290,15 +288,21 @@ def answer_dose(
         raise ApiError(422, "dose_day_out_of_range")
     if not _runs_on(m, body.day) or body.time not in m.times:
         raise ApiError(422, "dose_not_scheduled")
-    log = db.scalar(
-        select(DoseLog).where(
-            DoseLog.medication_id == m.id, DoseLog.day == body.day, DoseLog.time == body.time
+
+    def stored() -> DoseLog | None:
+        return db.scalar(
+            select(DoseLog).where(
+                DoseLog.medication_id == m.id, DoseLog.day == body.day, DoseLog.time == body.time
+            )
         )
-    )
+
+    log = stored()
+    inserted = False
     if log is None:
-        log = DoseLog(medication_id=m.id, day=body.day, time=body.time, status=body.status)
-        db.add(log)
-    else:
+        log, inserted = insert_once(
+            db, DoseLog(medication_id=m.id, day=body.day, time=body.time, status=body.status), stored
+        )
+    if not inserted:  # answering again (or losing the race) replaces the answer
         log.status = body.status
         log.logged_at = clock.now()
     db.commit()

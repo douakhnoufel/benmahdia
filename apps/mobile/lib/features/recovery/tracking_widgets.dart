@@ -47,44 +47,53 @@ class RecoveryLockedView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpace.screenHorizontal),
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpace.xl),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: AppSpace.md,
-              children: [
-                const Icon(
-                  Icons.lock_outline_rounded,
-                  size: 40,
-                  color: AppColors.sand500,
-                ),
-                Semantics(
-                  header: true,
-                  child: Text(
-                    l10n.recoveryLockedTitle,
-                    textAlign: TextAlign.center,
-                    style: text.titleLarge,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpace.screenHorizontal),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpace.xl),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: AppSpace.md,
+                      children: [
+                        const Icon(
+                          Icons.lock_outline_rounded,
+                          size: 40,
+                          color: AppColors.sand500,
+                        ),
+                        Semantics(
+                          header: true,
+                          child: Text(
+                            l10n.recoveryLockedTitle,
+                            textAlign: TextAlign.center,
+                            style: text.titleLarge,
+                          ),
+                        ),
+                        Text(
+                          l10n.recoveryLockedBody,
+                          textAlign: TextAlign.center,
+                          style: text.bodyLarge,
+                        ),
+                        FilledButton.icon(
+                          onPressed: onBook,
+                          icon: const Icon(Icons.calendar_month_rounded),
+                          label: Text(l10n.recoveryLockedBook),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                Text(
-                  l10n.recoveryLockedBody,
-                  textAlign: TextAlign.center,
-                  style: text.bodyLarge,
-                ),
-                FilledButton.icon(
-                  onPressed: onBook,
-                  icon: const Icon(Icons.calendar_month_rounded),
-                  label: Text(l10n.recoveryLockedBook),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

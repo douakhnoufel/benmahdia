@@ -129,6 +129,13 @@ def test_bad_input_is_refused_and_nothing_is_kept(client, sms, override, expecte
     assert client.get(IDENTITY, headers=bearer(s)).json()["status"] == "none"
 
 
+def test_an_id_number_is_checked_whole_not_up_to_a_trailing_newline():
+    from app.routers.identity import _ID_NUMBER
+    assert _ID_NUMBER.fullmatch("ABC1234")
+    assert not _ID_NUMBER.fullmatch("ABC1234\n")
+    assert not _ID_NUMBER.fullmatch("ABC123\u0664")  # Arabic-Indic digit
+
+
 # --- who may declare ------------------------------------------------------------------
 
 

@@ -2,7 +2,7 @@ import re
 
 _EASTERN = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
 _SEPARATORS = re.compile(r"[\s\-.()‎‏⁦-⁩]")
-_MOBILE = re.compile(r"^[567]\d{8}$")
+_MOBILE = re.compile(r"[567][0-9]{8}")
 
 
 def normalize_phone(raw: str) -> str | None:
@@ -10,7 +10,7 @@ def normalize_phone(raw: str) -> str | None:
     same spellings as the app: 0550 12 34 56, +213 550…, 00213…, Arabic-Indic
     digits."""
     digits = _SEPARATORS.sub("", raw.translate(_EASTERN))
-    if not re.fullmatch(r"\+?\d+", digits):
+    if not re.fullmatch(r"\+?[0-9]+", digits):
         return None
     if digits.startswith("+213"):
         digits = digits[4:]
@@ -20,4 +20,4 @@ def normalize_phone(raw: str) -> str | None:
         digits = digits[3:]
     if digits.startswith("0"):
         digits = digits[1:]
-    return f"+213{digits}" if _MOBILE.match(digits) else None
+    return f"+213{digits}" if _MOBILE.fullmatch(digits) else None

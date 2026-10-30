@@ -11,14 +11,14 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from .. import audit
+from .. import audit, scheduling
 from ..clock import clock
-from ..db import get_db
+from ..db import get_db, insert_once
 from ..errors import ApiError
 from ..habits import HABITS
 from ..models import DoctorProfile, Habit, HabitKind, HabitLog, User
 from .addiction_checks import TextOut, _text
-from .checkins import _HHMM, DAYS_AHEAD, DAYS_BACK, LIST_DAYS
+from .checkins import DAYS_AHEAD, DAYS_BACK, LIST_DAYS
 from .medications import clinic_patient
 from .recovery import patient
 from .staff import current_doctor
@@ -31,7 +31,7 @@ SUMMARY_DAYS = 30
 
 
 def _valid_time(v: str | None) -> str | None:
-    if v is not None and not _HHMM.match(v):
+    if v is not None and not scheduling.is_hhmm(v):
         raise ValueError("time must be HH:MM, 24 h")
     return v
 
@@ -85,7 +85,7 @@ class HabitOut(BaseModel):
 
 
 def _today() -> date:
-    return clock.now().date()
+    return scheduling.clinic_today(clock.now())
 
 
 def _days(db: Session, habit_id: uuid.UUID, since: date) -> list[date]:
@@ -197,9 +197,12 @@ def mark_done(
     """Ticks the habit done for [day]; ticking twice changes nothing."""
     h = _own(db, user, habit_id)
     _check_day(day)
-    exists = db.scalar(select(HabitLog.id).where(HabitLog.habit_id == h.id, HabitLog.day == day))
-    if exists is None:
-        db.add(HabitLog(habit_id=h.id, day=day))
+
+    def stored() -> uuid.UUID | None:
+        return db.scalar(select(HabitLog.id).where(HabitLog.habit_id == h.id, HabitLog.day == day))
+
+    if stored() is None:
+        insert_once(db, HabitLog(habit_id=h.id, day=day), stored)
         db.commit()
     return Response(status_code=204)
 

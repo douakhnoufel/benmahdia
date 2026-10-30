@@ -351,6 +351,22 @@ export type Availability = {
 
 /** A doctor as the super admin sets their price (PRD 4.4). */
 export type AdminDoctor = { id: string; name_ar: string; name_fr: string; price_dzd: number; slot_minutes: number };
+export type ArticleTopic = 'addiction' | 'cravings' | 'relapse' | 'medication' | 'family' | 'motivation';
+
+/** What the doctor writes. [body] is plain text: blank lines split paragraphs. */
+export type ArticleInput = {
+  title: string;
+  body: string;
+  language: 'ar' | 'fr';
+  topic: ArticleTopic;
+  /** null = for every patient. */
+  addiction_type: AddictionType | null;
+  published: boolean;
+};
+
+export type ArticleSummary = Omit<ArticleInput, 'body'> & { id: string; published_at: string | null; updated_at: string };
+
+export type Article = ArticleSummary & { body: string };
 
 export const api = {
   async login(email: string, password: string) {
@@ -406,6 +422,10 @@ export const api = {
     request<null>('DELETE', `v1/staff/patients/${patientId}/medications/${medicationId}`),
   alerts: (unread = false) => request<Alert[]>('GET', `v1/staff/alerts${unread ? '?unread=true' : ''}`),
   markAlertRead: (id: string) => request<Alert>('POST', `v1/staff/alerts/${id}/read`),
+  articles: () => request<ArticleSummary[]>('GET', 'v1/staff/articles'),
+  article: (id: string) => request<Article>('GET', `v1/staff/articles/${id}`),
+  createArticle: (article: ArticleInput) => request<Article>('POST', 'v1/staff/articles', article),
+  updateArticle: (id: string, article: ArticleInput) => request<Article>('PUT', `v1/staff/articles/${id}`, article),
   /** A temporary browser URL for the selfie; release it with URL.revokeObjectURL. */
   selfie: async (id: string) => URL.createObjectURL(await requestBlob(`v1/staff/signups/${id}/selfie`)),
 };
