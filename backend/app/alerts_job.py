@@ -24,6 +24,7 @@ from .models import (
     DoseStatus,
     Medication,
     ReviewStatus,
+    User,
 )
 from .routers.recovery import _doctor_of
 from .substances import reached_milestone
@@ -55,7 +56,10 @@ def missed_dose_alerts(db: Session) -> int:
     days = [today - timedelta(days=n) for n in range(1, DAYS_IN_A_ROW + 1)]
     day_start = scheduling.to_utc(today, 0)
     created = 0
-    for m in db.scalars(select(Medication).where(Medication.active.is_(True))):
+    meds = select(Medication).join(User, User.id == Medication.patient_id).where(
+        Medication.active.is_(True), User.deleted_at.is_(None)
+    )
+    for m in db.scalars(meds):
         runs = all(
             m.start_date <= d and (m.end_date is None or d <= m.end_date) for d in days
         )
@@ -106,8 +110,17 @@ def _raise_once(db: Session, patient_id: uuid.UUID, kind: str, since: datetime) 
 
 
 def _tracked() -> Select:
-    return select(Addiction).where(
-        Addiction.active.is_(True), Addiction.review_status != ReviewStatus.rejected
+    """Tracked addictions of patients whose account still exists: a deleted
+    account gets no more nightly alerts (G-12), its account_deleted alert
+    already told the doctors."""
+    return (
+        select(Addiction)
+        .join(User, User.id == Addiction.patient_id)
+        .where(
+            Addiction.active.is_(True),
+            Addiction.review_status != ReviewStatus.rejected,
+            User.deleted_at.is_(None),
+        )
     )
 
 

@@ -636,14 +636,44 @@ def test_deleting_an_account_with_no_booked_visit_raises_no_alert(client, sms):
     assert alerts() == []
 
 
-def test_question_nightly_alerts_continue_for_a_deleted_account(client, sms):
-    # QUESTION G-12: the account is disabled at once (PRD 12.5), its file is
-    # 404 for the doctor, yet craving alerts (with the phone) keep coming.
+def _delete(client, s) -> None:
+    r = client.request("DELETE", "/v1/me", json={"password": "sobre2026"}, headers=bearer(s))
+    assert r.status_code == 204, r.text
+
+
+def test_nightly_alerts_stop_for_a_deleted_account(client, sms):
+    """G-12, decided: once a patient deletes their account (PRD 12.5) the
+    nightly jobs raise nothing more for them; the account_deleted alert has
+    already told the doctors, and the file is 404 for them."""
     doc, s = setup(client, sms)
     a = add(client, s).json()
     seed_checks(a["id"], "2026-10-14", "2026-10-15", "2026-10-16", craving=5)
-    r = client.request("DELETE", "/v1/me", json={"password": "sobre2026"}, headers=bearer(s))
-    assert r.status_code == 204, r.text
-    assert run(craving_alerts) == 1
+    _delete(client, s)
+    assert run(craving_alerts) == 0
+    assert [k for _, _, k in alerts()] == ["account_deleted"]
     url = f"/v1/staff/patients/{s['user']['id']}/addictions"
     assert client.get(url, headers=bearer(doc)).status_code == 404
+
+
+def test_a_deleted_account_raises_no_missed_doses(client, sms):
+    doc, s = setup(client, sms)
+    prescribe(client, doc, s)
+    _delete(client, s)
+    assert run(missed_dose_alerts) == 0
+    assert [k for _, _, k in alerts()] == ["account_deleted"]
+
+
+def test_a_deleted_account_raises_no_no_checkin(client, sms):
+    _, s = setup(client, sms)
+    _old_addiction(client, s)
+    _delete(client, s)
+    assert run(no_checkin_alerts) == 0
+    assert [k for _, _, k in alerts()] == ["account_deleted"]
+
+
+def test_a_deleted_account_raises_no_milestone(client, sms):
+    _, s = setup(client, sms)
+    add(client, s)  # 10 days clean: milestone 7
+    _delete(client, s)
+    assert run(milestone_alerts) == 0
+    assert [k for _, _, k in alerts()] == ["account_deleted"]
