@@ -77,7 +77,7 @@ class _SelfieScreenState extends State<SelfieScreen>
         imageFormatGroup: mlKitFormatGroup,
       );
       await camera.initialize();
-      if (!mounted) return camera.dispose();
+      if (!mounted) { unawaited(camera.dispose()); return; }
       await camera.startImageStream((frame) => _onFrame(camera, frame));
       setState(() {
         _camera = camera;
