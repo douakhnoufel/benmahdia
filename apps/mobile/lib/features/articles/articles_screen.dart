@@ -7,6 +7,8 @@ import '../../core/app_route.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_tokens.dart';
 import '../booking/booking_widgets.dart';
+import '../recovery/recovery_models.dart';
+import '../recovery/recovery_repository.dart';
 import 'article_models.dart';
 import 'article_screen.dart';
 import 'articles_repository.dart';
@@ -29,9 +31,9 @@ String topicName(AppLocalizations l10n, ArticleTopic topic) => switch (topic) {
   ArticleTopic.motivation => l10n.articleTopicMotivation,
 };
 
-/// The clinic's articles in the app's language (PRD 5.5), by topic, with the
-/// patient's saved ones a tap away. Readable at any time, even before the
-/// first visit.
+/// The clinic's articles in the app's language (PRD 5.5), by topic or by one
+/// of the patient's own addictions, with the saved ones a tap away. Readable
+/// at any time, even before the first visit.
 class ArticlesScreen extends ConsumerStatefulWidget {
   const ArticlesScreen({super.key});
 
@@ -41,11 +43,39 @@ class ArticlesScreen extends ConsumerStatefulWidget {
 
 class _ArticlesScreenState extends ConsumerState<ArticlesScreen> {
   ArticleTopic? _topic;
+  AddictionType? _addiction;
   bool _saved = false;
   String? _language;
   Future<List<ArticleSummary>>? _articles;
 
+  /// The patient's own addiction types, one chip each.
+  List<AddictionType> _mine = const [];
+
   ArticlesRepository get _repo => ref.read(articlesRepositoryProvider);
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadMine());
+  }
+
+  Future<void> _loadMine() async {
+    try {
+      final addictions = await ref
+          .read(recoveryRepositoryProvider)
+          .addictions();
+      if (!mounted) return;
+      setState(() {
+        _mine = [
+          for (final t in AddictionType.values)
+            if (addictions.any((a) => a.type == t)) t,
+        ];
+      });
+    } catch (_) {
+      // Locked before the first visit, or offline: the library still opens,
+      // without the addiction chips.
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -61,6 +91,7 @@ class _ArticlesScreenState extends ConsumerState<ArticlesScreen> {
   Future<List<ArticleSummary>> _load() => _repo.articles(
     language: _language!,
     topic: _topic,
+    addictionType: _addiction,
     favouritesOnly: _saved,
   );
 
@@ -68,8 +99,13 @@ class _ArticlesScreenState extends ConsumerState<ArticlesScreen> {
     _articles = _load();
   });
 
-  void _filter({ArticleTopic? topic, bool saved = false}) {
+  void _filter({
+    ArticleTopic? topic,
+    AddictionType? addiction,
+    bool saved = false,
+  }) {
     _topic = topic;
+    _addiction = addiction;
     _saved = saved;
     _reload();
   }
@@ -112,7 +148,7 @@ class _ArticlesScreenState extends ConsumerState<ArticlesScreen> {
                 children: [
                   ChoiceChip(
                     label: Text(l10n.articlesAll),
-                    selected: _topic == null && !_saved,
+                    selected: _topic == null && _addiction == null && !_saved,
                     onSelected: (_) => _filter(),
                   ),
                   ChoiceChip(
@@ -121,6 +157,12 @@ class _ArticlesScreenState extends ConsumerState<ArticlesScreen> {
                     selected: _saved,
                     onSelected: (_) => _filter(saved: true),
                   ),
+                  for (final a in _mine)
+                    ChoiceChip(
+                      label: Text(l10n.addictionType(a.name)),
+                      selected: _addiction == a,
+                      onSelected: (_) => _filter(addiction: a),
+                    ),
                   for (final t in ArticleTopic.values)
                     ChoiceChip(
                       label: Text(topicName(l10n, t)),

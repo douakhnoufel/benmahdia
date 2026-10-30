@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../recovery/recovery_models.dart';
 import 'article_models.dart';
 import 'articles_repository.dart';
 
@@ -92,12 +93,14 @@ class ApiArticlesRepository implements ArticlesRepository {
   Future<List<ArticleSummary>> articles({
     required String language,
     ArticleTopic? topic,
+    AddictionType? addictionType,
     bool favouritesOnly = false,
   }) async {
     final query = Uri(
       queryParameters: {
         'language': language,
         if (topic != null) 'topic': topic.name,
+        if (addictionType != null) 'addiction_type': addictionType.name,
         if (favouritesOnly) 'favourites': 'true',
       },
     ).query;

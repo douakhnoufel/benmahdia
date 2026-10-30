@@ -2,17 +2,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/auth_models.dart';
 import '../auth/auth_repository.dart';
+import '../recovery/recovery_models.dart';
 import 'api_articles_repository.dart';
 import 'article_models.dart';
 import 'fake_articles_repository.dart';
 
 /// The clinic's article library (PRD 5.5): published articles, readable at
-/// any time, filtered by language and topic, with the patient's favourites.
+/// any time, filtered by language, topic and addiction, with the patient's
+/// favourites.
 abstract interface class ArticlesRepository {
-  /// Published articles in [language], newest first.
+  /// Published articles in [language], newest first. With [addictionType],
+  /// the ones written for it and the ones written for everyone.
   Future<List<ArticleSummary>> articles({
     required String language,
     ArticleTopic? topic,
+    AddictionType? addictionType,
     bool favouritesOnly = false,
   });
 

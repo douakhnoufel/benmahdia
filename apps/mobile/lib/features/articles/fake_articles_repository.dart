@@ -1,3 +1,4 @@
+import '../recovery/recovery_models.dart';
 import 'article_models.dart';
 import 'articles_repository.dart';
 
@@ -53,11 +54,15 @@ class FakeArticlesRepository implements ArticlesRepository {
   Future<List<ArticleSummary>> articles({
     required String language,
     ArticleTopic? topic,
+    AddictionType? addictionType,
     bool favouritesOnly = false,
   }) async => [
     for (final a in _articles)
       if (a.summary.language == language &&
           (topic == null || a.summary.topic == topic) &&
+          (addictionType == null ||
+              a.summary.addictionType == null ||
+              a.summary.addictionType == addictionType.name) &&
           (!favouritesOnly || _favourites.contains(a.summary.id)))
         _withState(a.summary),
   ];
