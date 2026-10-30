@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/app_route.dart';
+import '../../core/locale_provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_tokens.dart';
 import '../booking/booking_flow.dart';
@@ -49,15 +51,24 @@ class _HomeShellState extends State<HomeShell> {
       select: _select,
       refresh: _refresh,
       child: Scaffold(
-        body: IndexedStack(
-          index: _tab.index,
+        body: Stack(
           children: [
-            AppointmentsGate(
-              key: ValueKey('appointments$_generation'),
-              showBack: false,
+            IndexedStack(
+              index: _tab.index,
+              children: [
+                AppointmentsGate(
+                  key: ValueKey('appointments$_generation'),
+                  showBack: false,
+                ),
+                RecoveryScreen(key: ValueKey('recovery$_generation')),
+                const CompanionScreen(),
+              ],
             ),
-            RecoveryScreen(key: ValueKey('recovery$_generation')),
-            const CompanionScreen(),
+            const PositionedDirectional(
+              top: 0,
+              end: 0,
+              child: SafeArea(child: _LanguageButton()),
+            ),
           ],
         ),
         bottomNavigationBar: DecoratedBox(
@@ -86,6 +97,36 @@ class _HomeShellState extends State<HomeShell> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Switches Arabic / French after sign-in (the sign-in screens have their own
+/// toggle).
+class _LanguageButton extends ConsumerWidget {
+  const _LanguageButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final notifier = ref.read(localeProvider.notifier);
+    final current = ref.watch(localeProvider).languageCode;
+    return PopupMenuButton<String>(
+      tooltip: l10n.langArabic == 'العربية' ? 'اللغة' : 'Langue',
+      icon: const Icon(Icons.translate_rounded, color: AppColors.textBody),
+      onSelected: (code) => notifier.set(Locale(code)),
+      itemBuilder: (_) => [
+        CheckedPopupMenuItem(
+          value: 'ar',
+          checked: current == 'ar',
+          child: Text(l10n.langArabic),
+        ),
+        CheckedPopupMenuItem(
+          value: 'fr',
+          checked: current == 'fr',
+          child: Text(l10n.langFrench),
+        ),
+      ],
     );
   }
 }

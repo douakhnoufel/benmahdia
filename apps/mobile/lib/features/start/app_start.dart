@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../theme/app_tokens.dart';
 import '../auth/auth_flow.dart';
+import '../auth/auth_repository.dart';
 import '../intro/intro_screen.dart';
 import '../home/home_shell.dart';
 import '../profile/profile_flow.dart';
@@ -37,7 +39,11 @@ class _AppStartState extends State<AppStart> {
         _Stage.splash => SplashScreen(
           key: const ValueKey(_Stage.splash),
           ready: widget.ready,
-          onDone: () => _go(_Stage.intro),
+          // A restored login goes straight to the app.
+          onDone: () =>
+              ProviderScope.containerOf(context).read(sessionProvider) != null
+              ? openHome(context)
+              : _go(_Stage.intro),
         ),
         _Stage.intro => IntroScreen(
           key: const ValueKey(_Stage.intro),

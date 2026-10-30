@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/local_store.dart';
 import 'api_auth_repository.dart';
 import 'auth_models.dart';
 import 'fake_auth_repository.dart';
@@ -57,14 +60,20 @@ final authRepositoryProvider = Provider<AuthRepository>(
 );
 
 /// The signed-in patient, or null.
-// TODO(auth): keep the refresh token in secure storage across launches.
+/// Saved on the phone (encrypted) so the patient stays signed in.
 class SessionNotifier extends Notifier<AuthSession?> {
   @override
   AuthSession? build() => null;
 
-  void set(AuthSession session) => state = session;
+  void set(AuthSession session) {
+    state = session;
+    unawaited(LocalStore.writeSession(session));
+  }
 
-  void clear() => state = null;
+  void clear() {
+    state = null;
+    unawaited(LocalStore.clearSession());
+  }
 }
 
 final sessionProvider = NotifierProvider<SessionNotifier, AuthSession?>(
