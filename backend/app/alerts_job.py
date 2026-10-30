@@ -26,6 +26,7 @@ from .models import (
     ReviewStatus,
     User,
 )
+from .routers.checkins import DAYS_BACK
 from .routers.recovery import _doctor_of
 from .substances import reached_milestone
 
@@ -33,8 +34,9 @@ DAYS_IN_A_ROW = 2
 # PRD 5.6, fixed in v1.
 CHECK_DAYS_IN_A_ROW = 3
 HIGH_CRAVING = 4
-# A check can be saved up to two days back, so a run is re-examined that long.
-LATE_CHECK_DAYS = 3
+# A check can be saved up to DAYS_BACK days back, so a run ending on any of
+# the last DAYS_BACK + 1 full days is re-examined.
+LATE_CHECK_DAYS = DAYS_BACK + 1
 
 
 def _taken_on(db: Session, medication_id, day) -> bool:

@@ -424,6 +424,13 @@ def test_rebooking_with_another_doctor_does_not_repeat_the_alert(client, sms):
     assert len(alerts("craving_high")) == 1
 
 
+def test_late_check_window_follows_the_checkin_days_back():
+    from app.alerts_job import LATE_CHECK_DAYS
+    from app.routers.checkins import DAYS_BACK
+
+    assert LATE_CHECK_DAYS == DAYS_BACK + 1
+
+
 def _listed_to(client, headers) -> list[tuple]:
     r = client.get("/v1/staff/alerts", headers=headers)
     assert r.status_code == 200, r.text
