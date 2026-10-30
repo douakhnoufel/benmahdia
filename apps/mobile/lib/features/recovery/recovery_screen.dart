@@ -51,6 +51,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
   bool _loading = true;
   bool _failed = false;
   bool _locked = false;
+  bool _celebrating = false;
 
   RecoveryRepository get _repo => ref.read(recoveryRepositoryProvider);
 
@@ -112,6 +113,17 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
   /// shown (PRD 5.1), one addiction after the other. Never throws: a "seen"
   /// the server did not get shows the celebration again next time.
   Future<void> _celebrate() async {
+    // A reload while a celebration is open must not stack a second one.
+    if (_celebrating) return;
+    _celebrating = true;
+    try {
+      await _celebrateEach();
+    } finally {
+      _celebrating = false;
+    }
+  }
+
+  Future<void> _celebrateEach() async {
     for (final a in List.of(_addictions)) {
       final days = a.pendingMilestone(_repo.now());
       if (days == null) continue;

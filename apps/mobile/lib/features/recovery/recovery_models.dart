@@ -190,10 +190,15 @@ class Addiction {
     this.profile,
     this.goalDays,
     this.milestoneSeen = 0,
+    this.milestone,
   });
 
   final String id;
   final AddictionType type;
+
+  /// The highest milestone of this streak as the server counts it (PRD
+  /// 5.1); null when no server answered, then the phone's clock counts.
+  final int? milestone;
 
   /// The highest milestone of this streak already celebrated (PRD 5.1).
   final int milestoneSeen;
@@ -236,7 +241,7 @@ class Addiction {
 
   /// The milestone to celebrate now, or null when it was already.
   int? pendingMilestone(DateTime now) {
-    final reached = reachedMilestone(days(now));
+    final reached = milestone ?? reachedMilestone(days(now));
     return reached > milestoneSeen ? reached : null;
   }
 
@@ -251,6 +256,7 @@ class Addiction {
     pastDays: pastDays,
     goalDays: days,
     milestoneSeen: milestoneSeen,
+    milestone: milestone,
   );
 
   Addiction withMilestoneSeen(int days) => Addiction(
@@ -264,6 +270,7 @@ class Addiction {
     pastDays: pastDays,
     goalDays: goalDays,
     milestoneSeen: days,
+    milestone: milestone,
   );
 
   /// The counter after a relapse at [at] (never before the current start).

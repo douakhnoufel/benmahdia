@@ -41,6 +41,25 @@ void main() {
       expect(a.withMilestoneSeen(14).withGoal(28).milestoneSeen, 14);
       expect(a.withMilestoneSeen(14).relapsed(now).milestoneSeen, 0);
     });
+
+    test('the server\'s milestone wins over the phone\'s clock', () {
+      // The phone's clock runs a week ahead: it would count day 14.
+      final a = Addiction(
+        id: 'a',
+        type: AddictionType.alcohol,
+        start: DateTime(2026, 10, 1),
+        longestPastDays: 0,
+        pastDays: 0,
+        milestoneSeen: 7,
+        milestone: 7,
+      );
+      final now = DateTime(2026, 10, 17);
+      expect(a.pendingMilestone(now), isNull);
+      expect(a.withGoal(28).milestone, 7);
+      expect(a.withMilestoneSeen(7).milestone, 7);
+      // A relapse starts a new streak the server has not counted yet.
+      expect(a.relapsed(now).milestone, isNull);
+    });
   });
 
   test('the API records the celebration and reads it back', () async {
@@ -82,6 +101,7 @@ void main() {
     expect(sent.single.method, 'POST');
     expect(sent.single.url.path, '/v1/me/addictions/a-1/milestone/seen');
     expect(updated.milestoneSeen, 14);
+    expect(updated.milestone, 14);
   });
 
   group('celebration', () {

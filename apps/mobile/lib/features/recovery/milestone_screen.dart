@@ -95,9 +95,9 @@ class _MilestoneScreenState extends State<MilestoneScreen>
                 children: [
                   for (final m in _earned)
                     Chip(
-                      avatar: const Icon(
+                      avatar: Icon(
                         Icons.star_rounded,
-                        size: 18,
+                        size: AppType.h3.size,
                         color: AppColors.onSand,
                       ),
                       label: Text(l10n.bookDays(m)),
@@ -125,24 +125,31 @@ class _Badge extends StatelessWidget {
 
   final int days;
 
+  /// On the 4 px grid, wide enough for a four-digit count in `display`.
+  static const _medal = AppSpace.xxxl * 3;
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     return ExcludeSemantics(
       child: Container(
-        width: 148,
-        height: 148,
+        width: _medal,
+        height: _medal,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: AppColors.sand100,
           shape: BoxShape.circle,
-          border: Border.all(color: AppColors.sand400, width: 6),
+          border: Border.all(color: AppColors.sand400, width: AppSpace.xs),
           boxShadow: AppShadows.card,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.star_rounded, color: AppColors.sand500, size: 28),
+            Icon(
+              Icons.star_rounded,
+              color: AppColors.sand500,
+              size: AppType.h1.size,
+            ),
             Text(
               '$days',
               style: text.displaySmall?.copyWith(color: AppColors.textStrong),

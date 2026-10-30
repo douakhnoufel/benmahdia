@@ -121,6 +121,7 @@ class ApiRecoveryRepository implements RecoveryRepository {
         },
         goalDays: m['goal_days'] as int?,
         milestoneSeen: m['milestone_seen'] as int? ?? 0,
+        milestone: m['milestone'] as int?,
         substance: m['substance'] as String?,
         reviewed: m['review_status'] == 'confirmed',
         start: DateTime.parse(m['clean_since'] as String).toLocal(),

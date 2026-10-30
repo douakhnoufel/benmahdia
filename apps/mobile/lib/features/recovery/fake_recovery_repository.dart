@@ -153,7 +153,7 @@ class FakeRecoveryRepository implements RecoveryRepository {
   Future<Addiction> markMilestoneSeen(Addiction addiction) async {
     await _call();
     final updated = addiction.withMilestoneSeen(
-      reachedMilestone(addiction.days(now())),
+      addiction.milestone ?? reachedMilestone(addiction.days(now())),
     );
     _addictions = [
       for (final a in _addictions) a.id == addiction.id ? updated : a,
