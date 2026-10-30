@@ -6,8 +6,10 @@
 // loading and error states; 24-hour time pickers; double taps; screen
 // readers. Sample data only, no real patients, no real drug names.
 //
-// A test that shows a real bug sits in a group skipped with its QA id (see
-// qa/recovery/2026-10-26/ux-clients.md); remove the skip once it is fixed.
+// A test that shows a real bug sits in a group skipped with its QA id; the
+// skip message says what is wrong (the run's report was never committed, see
+// qa/recovery/2026-10-26/ for its rules and baseline). Remove the skip once
+// the bug is fixed.
 // To run them too (each fails today): --dart-define=QA_RUN_BUGS=true.
 
 import 'package:benmahdia_mobile/core/locale_provider.dart';
@@ -111,7 +113,10 @@ const _evening = Dose(
   status: DoseStatus.due,
 );
 const _quote = Quote(
-  text: LocalizedText(ar: 'خطوة صغيرة كل يوم.', fr: 'Un petit pas chaque jour.'),
+  text: LocalizedText(
+    ar: 'خطوة صغيرة كل يوم.',
+    fr: 'Un petit pas chaque jour.',
+  ),
   source: LocalizedText(ar: '', fr: ''),
 );
 
@@ -161,9 +166,8 @@ class _Repo implements RecoveryRepository {
     if (locked) throw const RecoveryLocked();
   }
 
-  void _put(Addiction a) => addictionList = [
-    for (final x in addictionList) x.id == a.id ? a : x,
-  ];
+  void _put(Addiction a) =>
+      addictionList = [for (final x in addictionList) x.id == a.id ? a : x];
 
   @override
   DateTime now() => _now;
@@ -656,7 +660,9 @@ void main() {
         );
         expect(find.text(l.addictionType('alcohol')), findsOneWidget);
         // Each circle fills toward that addiction's current small goal.
-        final rings = tester.widgetList<SobrietyRing>(find.byType(SobrietyRing));
+        final rings = tester.widgetList<SobrietyRing>(
+          find.byType(SobrietyRing),
+        );
         expect([for (final r in rings) (r.days, r.goal)], [(9, 14), (40, 60)]);
         expect(find.text(l.recoveryQuoteTitle), findsOneWidget);
         expect(find.text(_quote.text.of(lang)), findsOneWidget);
@@ -888,49 +894,55 @@ void main() {
         },
       );
 
-      testWidgets('direction follows the language; 320 wide nothing overflows', (
-        tester,
-      ) async {
-        await pumpCheck(
-          tester,
-          size: const Size(320, 7000),
-          habits: [
-            const Habit(id: 'h1', kind: HabitKind.callFamily),
-            Habit(
-              id: 'h2',
-              kind: HabitKind.custom,
-              text: french ? 'Jardiner le soir' : 'البستنة في المساء',
-            ),
-          ],
-        );
-        expect(tester.takeException(), isNull);
-        expect(_dir(tester, find.byType(DailyCheckScreen)), dir);
-        expect(find.text(l.habitsTitle), findsOneWidget);
-        _expectTranslated(tester, french: french);
-      });
+      testWidgets(
+        'direction follows the language; 320 wide nothing overflows',
+        (tester) async {
+          await pumpCheck(
+            tester,
+            size: const Size(320, 7000),
+            habits: [
+              const Habit(id: 'h1', kind: HabitKind.callFamily),
+              Habit(
+                id: 'h2',
+                kind: HabitKind.custom,
+                text: french ? 'Jardiner le soir' : 'البستنة في المساء',
+              ),
+            ],
+          );
+          expect(tester.takeException(), isNull);
+          expect(_dir(tester, find.byType(DailyCheckScreen)), dir);
+          expect(find.text(l.habitsTitle), findsOneWidget);
+          _expectTranslated(tester, french: french);
+        },
+      );
 
-      testWidgets('Save stays off until every question is answered, and says why', (
-        tester,
-      ) async {
-        await pumpCheck(
-          tester,
-          addictions: [_addiction('c', profile: SubstanceProfile.cocaine)],
-        );
-        final save = find.widgetWithText(FilledButton, l.addictionSave);
-        expect(tester.widget<FilledButton>(save).onPressed, isNull);
-        expect(find.text(l.dailyCheckNeedAnswers), findsOneWidget);
-        await tester.tap(find.text(l.dailyCheckYes));
-        await tester.tap(find.byKey(ValueKey('rating-${l.dailyCheckCraving}-2')));
-        await tester.pump();
-        // The two signals are still missing.
-        expect(tester.widget<FilledButton>(save).onPressed, isNull);
-        for (final s in _spec(SubstanceProfile.cocaine).signals) {
-          await tester.tap(find.byKey(ValueKey('rating-${s.label.of(lang)}-3')));
-        }
-        await tester.pump();
-        expect(tester.widget<FilledButton>(save).onPressed, isNotNull);
-        expect(find.text(l.dailyCheckNeedAnswers), findsNothing);
-      });
+      testWidgets(
+        'Save stays off until every question is answered, and says why',
+        (tester) async {
+          await pumpCheck(
+            tester,
+            addictions: [_addiction('c', profile: SubstanceProfile.cocaine)],
+          );
+          final save = find.widgetWithText(FilledButton, l.addictionSave);
+          expect(tester.widget<FilledButton>(save).onPressed, isNull);
+          expect(find.text(l.dailyCheckNeedAnswers), findsOneWidget);
+          await tester.tap(find.text(l.dailyCheckYes));
+          await tester.tap(
+            find.byKey(ValueKey('rating-${l.dailyCheckCraving}-2')),
+          );
+          await tester.pump();
+          // The two signals are still missing.
+          expect(tester.widget<FilledButton>(save).onPressed, isNull);
+          for (final s in _spec(SubstanceProfile.cocaine).signals) {
+            await tester.tap(
+              find.byKey(ValueKey('rating-${s.label.of(lang)}-3')),
+            );
+          }
+          await tester.pump();
+          expect(tester.widget<FilledButton>(save).onPressed, isNotNull);
+          expect(find.text(l.dailyCheckNeedAnswers), findsNothing);
+        },
+      );
 
       testWidgets('saving every addiction marks today done on the week strip', (
         tester,
@@ -972,33 +984,36 @@ void main() {
         return repo;
       }
 
-      testWidgets('profiles, another substance and its types, the date; 320 wide', (
+      testWidgets(
+        'profiles, another substance and its types, the date; 320 wide',
+        (tester) async {
+          await openForm(tester, size: const Size(320, 2400));
+          expect(find.byType(AddictionFormScreen), findsOneWidget);
+          for (final s in sampleProfiles) {
+            expect(
+              find.widgetWithText(ChoiceChip, s.name.of(lang)),
+              findsOneWidget,
+            );
+          }
+          await tester.tap(find.widgetWithText(ChoiceChip, l.substanceOther));
+          await tester.pumpAndSettle();
+          for (final t in AddictionType.values) {
+            expect(
+              find.widgetWithText(ChoiceChip, l.addictionType(t.name)),
+              findsOneWidget,
+            );
+          }
+          expect(find.text(l.addictionCleanSince), findsOneWidget);
+          expect(find.text(l.longDate(_today)), findsOneWidget);
+          expect(tester.takeException(), isNull);
+          expect(_dir(tester, find.byType(AddictionFormScreen)), dir);
+          _expectTranslated(tester, french: french);
+        },
+      );
+
+      testWidgets("a saved entry waits for the doctor's review", (
         tester,
       ) async {
-        await openForm(tester, size: const Size(320, 2400));
-        expect(find.byType(AddictionFormScreen), findsOneWidget);
-        for (final s in sampleProfiles) {
-          expect(
-            find.widgetWithText(ChoiceChip, s.name.of(lang)),
-            findsOneWidget,
-          );
-        }
-        await tester.tap(find.widgetWithText(ChoiceChip, l.substanceOther));
-        await tester.pumpAndSettle();
-        for (final t in AddictionType.values) {
-          expect(
-            find.widgetWithText(ChoiceChip, l.addictionType(t.name)),
-            findsOneWidget,
-          );
-        }
-        expect(find.text(l.addictionCleanSince), findsOneWidget);
-        expect(find.text(l.longDate(_today)), findsOneWidget);
-        expect(tester.takeException(), isNull);
-        expect(_dir(tester, find.byType(AddictionFormScreen)), dir);
-        _expectTranslated(tester, french: french);
-      });
-
-      testWidgets("a saved entry waits for the doctor's review", (tester) async {
         final repo = await openForm(tester);
         await tester.tap(
           find.widgetWithText(
@@ -1021,76 +1036,87 @@ void main() {
     });
 
     group('habits and small goals (PRD 5.6) · $lang', () {
-      testWidgets('add a habit: the clinic list, own words, a reminder; 320 wide', (
-        tester,
-      ) async {
-        await _pump(
-          tester,
-          const HomeShell(),
-          repo: _Repo(),
-          french: french,
-          size: const Size(320, 2400),
-        );
-        await _scrollTo(tester, find.text(l.habitsAdd));
-        await tester.tap(find.text(l.habitsAdd));
-        await _settle(tester);
-        // The habit already kept (sport) is not offered twice.
-        expect(
-          find.widgetWithText(
-            ChoiceChip,
-            sampleHabits[HabitKind.sport]!.of(lang),
-          ),
-          findsNothing,
-        );
-        for (final k in [
-          HabitKind.brushTeeth,
-          HabitKind.water,
-          HabitKind.reading,
-          HabitKind.callFamily,
-          HabitKind.sleep,
-        ]) {
+      testWidgets(
+        'add a habit: the clinic list, own words, a reminder; 320 wide',
+        (tester) async {
+          await _pump(
+            tester,
+            const HomeShell(),
+            repo: _Repo(),
+            french: french,
+            size: const Size(320, 2400),
+          );
+          await _scrollTo(tester, find.text(l.habitsAdd));
+          await tester.tap(find.text(l.habitsAdd));
+          await _settle(tester);
+          // The habit already kept (sport) is not offered twice.
           expect(
-            find.widgetWithText(ChoiceChip, sampleHabits[k]!.of(lang)),
+            find.widgetWithText(
+              ChoiceChip,
+              sampleHabits[HabitKind.sport]!.of(lang),
+            ),
+            findsNothing,
+          );
+          for (final k in [
+            HabitKind.brushTeeth,
+            HabitKind.water,
+            HabitKind.reading,
+            HabitKind.callFamily,
+            HabitKind.sleep,
+          ]) {
+            expect(
+              find.widgetWithText(ChoiceChip, sampleHabits[k]!.of(lang)),
+              findsOneWidget,
+            );
+          }
+          final save = find.widgetWithText(FilledButton, l.addictionSave);
+          expect(tester.widget<FilledButton>(save).onPressed, isNull);
+          await tester.tap(find.widgetWithText(ChoiceChip, l.habitsOwn));
+          await tester.pumpAndSettle();
+          expect(
+            tester.widget<TextField>(find.byType(TextField)).maxLength,
+            60,
+          );
+          expect(find.text(l.checkInReminderOff), findsWidgets);
+          expect(tester.takeException(), isNull);
+          _expectTranslated(tester, french: french);
+        },
+      );
+
+      testWidgets(
+        'the goal sheet: steps not reached yet, and automatic; 320 wide',
+        (tester) async {
+          await _pump(
+            tester,
+            const HomeShell(),
+            repo: _Repo(),
+            french: french,
+            size: const Size(320, 2400),
+          );
+          await _scrollTo(tester, find.text(l.goalChange));
+          await tester.tap(find.text(l.goalChange));
+          await _settle(tester);
+          expect(find.text(l.goalTitle), findsOneWidget);
+          expect(
+            find.widgetWithText(
+              ChoiceChip,
+              '${l.goalAuto} · ${l.bookDays(14)}',
+            ),
             findsOneWidget,
           );
-        }
-        final save = find.widgetWithText(FilledButton, l.addictionSave);
-        expect(tester.widget<FilledButton>(save).onPressed, isNull);
-        await tester.tap(find.widgetWithText(ChoiceChip, l.habitsOwn));
-        await tester.pumpAndSettle();
-        expect(tester.widget<TextField>(find.byType(TextField)).maxLength, 60);
-        expect(find.text(l.checkInReminderOff), findsWidgets);
-        expect(tester.takeException(), isNull);
-        _expectTranslated(tester, french: french);
-      });
-
-      testWidgets('the goal sheet: steps not reached yet, and automatic; 320 wide', (
-        tester,
-      ) async {
-        await _pump(
-          tester,
-          const HomeShell(),
-          repo: _Repo(),
-          french: french,
-          size: const Size(320, 2400),
-        );
-        await _scrollTo(tester, find.text(l.goalChange));
-        await tester.tap(find.text(l.goalChange));
-        await _settle(tester);
-        expect(find.text(l.goalTitle), findsOneWidget);
-        expect(
-          find.widgetWithText(
-            ChoiceChip,
-            '${l.goalAuto} · ${l.bookDays(14)}',
-          ),
-          findsOneWidget,
-        );
-        expect(find.widgetWithText(ChoiceChip, l.bookDays(14)), findsOneWidget);
-        expect(find.widgetWithText(ChoiceChip, l.bookDays(28)), findsOneWidget);
-        expect(find.widgetWithText(ChoiceChip, l.bookDays(7)), findsNothing);
-        expect(tester.takeException(), isNull);
-        _expectTranslated(tester, french: french);
-      });
+          expect(
+            find.widgetWithText(ChoiceChip, l.bookDays(14)),
+            findsOneWidget,
+          );
+          expect(
+            find.widgetWithText(ChoiceChip, l.bookDays(28)),
+            findsOneWidget,
+          );
+          expect(find.widgetWithText(ChoiceChip, l.bookDays(7)), findsNothing);
+          expect(tester.takeException(), isNull);
+          _expectTranslated(tester, french: french);
+        },
+      );
     });
 
     group('relapse (PRD 5.1, 5.6) · $lang', () {
@@ -1124,9 +1150,12 @@ void main() {
         return repo;
       }
 
-      test('the wording is supportive, never judgmental, never a diagnosis', () {
-        _expectGentle(relapseWords, lang);
-      });
+      test(
+        'the wording is supportive, never judgmental, never a diagnosis',
+        () {
+          _expectGentle(relapseWords, lang);
+        },
+      );
 
       testWidgets('the sheet keeps the past and names the doctor as support', (
         tester,
@@ -1138,31 +1167,37 @@ void main() {
         _expectTranslated(tester, french: french);
       });
 
-      testWidgets('after a relapse: the counter restarts, longest and total stay', (
-        tester,
-      ) async {
-        // 9 days now; 21 days was the longest; 55 days before this streak.
-        final repo = _Repo(
-          addictions: [_addiction('a1', profile: SubstanceProfile.pregabalin)],
-        );
-        await _pump(tester, const HomeShell(), repo: repo, french: french);
-        expect(find.text(l.bookDays(21)), findsWidgets);
-        expect(find.text(l.bookDays(64)), findsWidgets);
-        await _scrollTo(tester, find.text(l.recoveryRelapse));
-        await tester.tap(find.text(l.recoveryRelapse));
-        await _settle(tester);
-        await tester.tap(find.text(l.recoveryRelapseConfirm));
-        await _settle(tester);
+      testWidgets(
+        'after a relapse: the counter restarts, longest and total stay',
+        (tester) async {
+          // 9 days now; 21 days was the longest; 55 days before this streak.
+          final repo = _Repo(
+            addictions: [
+              _addiction('a1', profile: SubstanceProfile.pregabalin),
+            ],
+          );
+          await _pump(tester, const HomeShell(), repo: repo, french: french);
+          expect(find.text(l.bookDays(21)), findsWidgets);
+          expect(find.text(l.bookDays(64)), findsWidgets);
+          await _scrollTo(tester, find.text(l.recoveryRelapse));
+          await tester.tap(find.text(l.recoveryRelapse));
+          await _settle(tester);
+          await tester.tap(find.text(l.recoveryRelapseConfirm));
+          await _settle(tester);
 
-        expect(repo.relapses, hasLength(1));
-        expect(_snack(tester), l.recoveryRelapseDone);
-        _expectGentle([_snack(tester)!], lang);
-        expect(tester.widget<SobrietyRing>(find.byType(SobrietyRing)).days, 0);
-        // The small goal goes back to one day (PRD 5.6).
-        expect(find.text(l.recoveryNextGoal(l.bookDays(1))), findsOneWidget);
-        expect(find.text(l.bookDays(21)), findsWidgets); // longest
-        expect(find.text(l.bookDays(64)), findsWidgets); // total
-      });
+          expect(repo.relapses, hasLength(1));
+          expect(_snack(tester), l.recoveryRelapseDone);
+          _expectGentle([_snack(tester)!], lang);
+          expect(
+            tester.widget<SobrietyRing>(find.byType(SobrietyRing)).days,
+            0,
+          );
+          // The small goal goes back to one day (PRD 5.6).
+          expect(find.text(l.recoveryNextGoal(l.bookDays(1))), findsOneWidget);
+          expect(find.text(l.bookDays(21)), findsWidgets); // longest
+          expect(find.text(l.bookDays(64)), findsWidgets); // total
+        },
+      );
 
       testWidgets('the streak that ends becomes the longest when it was', (
         tester,
@@ -1302,21 +1337,18 @@ void main() {
       },
     );
 
-    _bug(
-      'UX-04',
-      'double tap on Remove sends two deletes',
-      'remove a habit',
-      (tester) async {
-        final repo = _Repo();
-        await _pump(tester, const HomeShell(), repo: repo);
-        final remove = find.byTooltip(
-          _ar.habitsRemove(sampleHabits[HabitKind.sport]!.ar),
-        );
-        await _scrollTo(tester, remove);
-        await doubleTap(tester, remove);
-        expect(repo.count('removeHabit'), 1);
-      },
-    );
+    _bug('UX-04', 'double tap on Remove sends two deletes', 'remove a habit', (
+      tester,
+    ) async {
+      final repo = _Repo();
+      await _pump(tester, const HomeShell(), repo: repo);
+      final remove = find.byTooltip(
+        _ar.habitsRemove(sampleHabits[HabitKind.sport]!.ar),
+      );
+      await _scrollTo(tester, remove);
+      await doubleTap(tester, remove);
+      expect(repo.count('removeHabit'), 1);
+    });
 
     _bug(
       'UX-04',
@@ -1660,7 +1692,10 @@ void main() {
           await _scrollTo(tester, find.text(l.recoveryRelapse));
           await tester.tap(find.text(l.recoveryRelapse));
           await _settle(tester);
-          expect(tester.widget<TextField>(find.byType(TextField)).maxLength, 500);
+          expect(
+            tester.widget<TextField>(find.byType(TextField)).maxLength,
+            500,
+          );
         },
       );
 
@@ -1679,7 +1714,10 @@ void main() {
             repo: _Repo(),
             french: french,
           );
-          expect(tester.widget<TextField>(find.byType(TextField)).maxLength, 100);
+          expect(
+            tester.widget<TextField>(find.byType(TextField)).maxLength,
+            100,
+          );
         },
       );
     }
