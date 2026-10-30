@@ -30,6 +30,7 @@ from app.models import (
     AppointmentStatus,
     AuditLog,
     DailyCheck,
+    Medication,
 )
 
 from .booking_helpers import add_appointment, verified_patient
@@ -365,6 +366,22 @@ def test_question_one_dose_of_two_taken_clears_the_day(client, sms):
     for day in ("2026-10-15", "2026-10-16"):
         _answer(client, s, med, day, "08:00", "taken")
     assert run(missed_dose_alerts) == 0
+
+
+def test_two_prescribers_missed_doses_raise_one_alert_not_two(client, sms):
+    # A patient with active medicines from two different prescribers, both
+    # missed, still gets a single alert per day (not one per prescriber).
+    doc, s = setup(client, sms)
+    prescribe(client, doc, s)
+    other = other_doctor()
+    with Session(engine) as db:
+        db.add(Medication(
+            patient_id=pid(s), prescribed_by=other, name="QA-DRUG-2",
+            amount="10 mg", times=["09:00"], start_date=date(2026, 10, 10),
+        ))
+        db.commit()
+    assert run(missed_dose_alerts) == 1
+    assert len(alerts("missed_doses")) == 1
 
 
 # --- relapse and milestone (R-99, R-32) ------------------------------------

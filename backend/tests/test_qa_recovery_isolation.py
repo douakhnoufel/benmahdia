@@ -494,8 +494,9 @@ def test_every_doctor_of_the_clinic_reaches_a_clinic_patients_clinical_data(clie
 
 def _unbooked_patient(client, sms, phone: str, hold: str, w: World) -> Patient:
     """A patient who has entered recovery data (and has a prescription row)
-    but holds no booked visit anywhere: no appointment, an unpaid hold, or an
-    expired one. Not a clinic patient (PRD 3)."""
+    but holds no booked visit anywhere: no appointment, an unpaid hold, an
+    expired one, or an appointment that was booked and then cancelled or
+    missed. Not a clinic patient (PRD 3)."""
     s = verified_patient(client, sms, phone)
     pid = user_id(phone)
     if hold == "live_hold":
@@ -504,6 +505,10 @@ def _unbooked_patient(client, sms, phone: str, hold: str, w: World) -> Patient:
     elif hold == "expired_hold":
         add_appointment(w.doc_a, pid, MONDAY_9, status=AppointmentStatus.awaiting_payment,
                         hold_expires_at=clock.now() - timedelta(minutes=1), method=None)
+    elif hold == "cancelled":
+        add_appointment(w.doc_a, pid, MONDAY_9, status=AppointmentStatus.cancelled)
+    elif hold == "no_show":
+        add_appointment(w.doc_a, pid, MONDAY_9, status=AppointmentStatus.no_show)
     # Recovery is locked until a booked visit, so the rows go straight in.
     with Session(engine) as db:
         add = Addiction(patient_id=pid, type=AddictionType.tobacco, profile=SubstanceProfile.nicotine,
@@ -517,13 +522,15 @@ def _unbooked_patient(client, sms, phone: str, hold: str, w: World) -> Patient:
     return Patient("U", phone, s, pid, w.doc_b, addiction, habit_id, medication, RANDOM_ID)
 
 
-@pytest.mark.parametrize("hold", ["no_booking", "live_hold", "expired_hold"])
+@pytest.mark.parametrize("hold", ["no_booking", "live_hold", "expired_hold", "cancelled", "no_show"])
 @pytest.mark.parametrize("actor", ["doctor_a", "doctor_b", "super_admin"])
 def test_a_patient_without_a_booked_visit_is_unknown_to_every_doctor(client, sms, actor, hold):
     """QA R-83 / R-88 / R-02, re-baselined (PRD 3: a clinic patient has a booked
-    visit, not an unpaid hold). A patient with no booking, a live hold or an
-    expired hold answers every doctor, and the super admin, on every clinical
-    route exactly as a random id does, and nothing changes or is audited."""
+    visit, not an unpaid hold or a cancelled/missed one). A patient with no
+    booking, a live hold, an expired hold, or whose only appointment was
+    cancelled or a no-show, answers every doctor, and the super admin, on
+    every clinical route exactly as a random id does, and nothing changes or
+    is audited."""
     w = world(client, sms)
     victim = _unbooked_patient(client, sms, "0661234513", hold, w)
     h, who = {"doctor_a": (w.ha, w.doc_a), "doctor_b": (w.hb, w.doc_b),
