@@ -17,11 +17,11 @@ from ..db import get_db
 from ..deps import recovery_patient
 from ..errors import ApiError
 from ..models import (
+    BOOKED_STATUSES,
     Addiction,
     AddictionType,
     Alert,
     Appointment,
-    AppointmentStatus,
     Relapse,
     ReviewStatus,
     SubstanceProfile,
@@ -269,13 +269,14 @@ def milestone_seen(
 
 def _doctor_of(db: Session, patient_id: uuid.UUID) -> uuid.UUID | None:
     """The doctor the patient last booked with. Patients have no other link
-    to a doctor yet; with none, nobody is alerted. An unpaid hold does not
-    count, as in clinic_patient: it does not make someone a clinic patient."""
+    to a doctor yet; with none, nobody is alerted. An unpaid hold, or a
+    cancelled or no-show appointment, does not count, as in clinic_patient:
+    it does not make someone a clinic patient."""
     return db.scalar(
         select(Appointment.doctor_id)
         .where(
             Appointment.patient_id == patient_id,
-            Appointment.status != AppointmentStatus.awaiting_payment,
+            Appointment.status.in_(BOOKED_STATUSES),
         )
         .order_by(Appointment.start_utc.desc())
         .limit(1)

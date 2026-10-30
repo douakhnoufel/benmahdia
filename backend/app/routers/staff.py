@@ -18,6 +18,7 @@ from ..db import get_db
 from ..deps import current_user
 from ..errors import ApiError
 from ..models import (
+    BOOKED_STATUSES,
     AccountStatus,
     Appointment,
     AppointmentStatus,
@@ -374,7 +375,7 @@ def patients(
     activity first."""
     now = clock.now()
     rows = db.scalars(
-        select(Appointment).where(Appointment.status != AppointmentStatus.awaiting_payment)
+        select(Appointment).where(Appointment.status.in_(BOOKED_STATUSES))
     ).all()
     by_patient: dict[uuid.UUID, list[Appointment]] = {}
     for a in rows:

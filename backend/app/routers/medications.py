@@ -20,9 +20,9 @@ from ..clock import clock
 from ..db import get_db, insert_once
 from ..errors import ApiError
 from ..models import (
+    BOOKED_STATUSES,
     Addiction,
     Appointment,
-    AppointmentStatus,
     DoctorProfile,
     DoseLog,
     DoseStatus,
@@ -114,7 +114,7 @@ def clinic_patient(db: Session, doctor: DoctorProfile, patient_id: uuid.UUID) ->
         select(Appointment.id)
         .where(
             Appointment.patient_id == patient_id,
-            Appointment.status != AppointmentStatus.awaiting_payment,
+            Appointment.status.in_(BOOKED_STATUSES),
         )
         .limit(1)
     )
@@ -126,7 +126,7 @@ def clinic_patient(db: Session, doctor: DoctorProfile, patient_id: uuid.UUID) ->
         .where(
             Appointment.patient_id == patient_id,
             Appointment.doctor_id == doctor.user_id,
-            Appointment.status != AppointmentStatus.awaiting_payment,
+            Appointment.status.in_(BOOKED_STATUSES),
         )
         .limit(1)
     )

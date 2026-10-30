@@ -221,6 +221,11 @@ class AppointmentStatus(str, enum.Enum):
 # appointment no longer blocks its slot for the overlap rule.
 ACTIVE_STATUSES = (AppointmentStatus.awaiting_payment, AppointmentStatus.confirmed)
 
+# Statuses that make someone a clinic patient (PRD 5): a confirmed or
+# completed appointment. An unpaid hold or a cancelled/no-show appointment
+# does not count, even if it is the patient's only one.
+BOOKED_STATUSES = (AppointmentStatus.confirmed, AppointmentStatus.completed)
+
 
 class PaymentMethod(str, enum.Enum):
     edahabia = "edahabia"

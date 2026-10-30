@@ -1,6 +1,7 @@
 """Raises the daily alerts. "missed_doses" (PRD 5.3): a patient who took none
 of a medicine's doses on each of the last two full days; at most one per
-patient and doctor per day. "craving_high" and "no_checkin" (PRD 5.6): craving
+patient per day, even with medicines from more than one prescriber.
+"craving_high" and "no_checkin" (PRD 5.6): craving
 4 or more on one addiction, or no daily check at all, on each of the last
 three full days; at most one of each per patient every three days. Run daily,
 after midnight in Algiers: `python -m app.alerts_job`. No alert names a
@@ -57,29 +58,19 @@ def missed_dose_alerts(db: Session) -> int:
     today = scheduling.clinic_today(now)
     days = [today - timedelta(days=n) for n in range(1, DAYS_IN_A_ROW + 1)]
     day_start = scheduling.to_utc(today, 0)
-    created = 0
     meds = select(Medication).join(User, User.id == Medication.patient_id).where(
         Medication.active.is_(True), User.deleted_at.is_(None)
     )
+    # One run per patient, not per medicine: a patient with medicines from
+    # two prescribers still gets a single alert for the day.
+    missed: set[uuid.UUID] = set()
     for m in db.scalars(meds):
         runs = all(
             m.start_date <= d and (m.end_date is None or d <= m.end_date) for d in days
         )
-        if not runs or any(_taken_on(db, m.id, d) for d in days):
-            continue
-        already = db.scalar(
-            select(Alert.id).where(
-                Alert.doctor_id == m.prescribed_by,
-                Alert.patient_id == m.patient_id,
-                Alert.type == "missed_doses",
-                Alert.created_at >= day_start,
-            ).limit(1)
-        )
-        if already is not None:
-            continue
-        db.add(Alert(doctor_id=m.prescribed_by, patient_id=m.patient_id, type="missed_doses"))
-        db.flush()
-        created += 1
+        if runs and not any(_taken_on(db, m.id, d) for d in days):
+            missed.add(m.patient_id)
+    created = sum(_raise_once(db, pid, "missed_doses", day_start) for pid in missed)
     db.commit()
     return created
 
