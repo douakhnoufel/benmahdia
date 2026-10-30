@@ -42,7 +42,7 @@ HHMM_REGEX = "^([01][0-9]|2[0-3]):[0-5][0-9]$"
 # (table, constraint name, condition every row must meet)
 CHECKS: list[tuple[str, str, str]] = [
     ("appointments", "ck_appointments_price_dzd", "price_dzd >= 0"),
-    ("payments", "ck_payments_amount_dzd", "amount_dzd > 0"),
+    ("payments", "ck_payments_amount_dzd", "amount_dzd >= 0"),
     ("addiction_checks", "ck_addiction_checks_craving", "craving BETWEEN 1 AND 5"),
     ("addictions", "ck_addictions_goal_days", "goal_days > 0"),
     ("addictions", "ck_addictions_milestone_seen", "milestone_seen >= 0"),

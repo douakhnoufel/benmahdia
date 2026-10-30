@@ -116,7 +116,7 @@ BAD_ROWS: dict[str, Callable[[World], object]] = {
         doctor_id=w.doctor, patient_id=w.patient, start_utc=datetime(2026, 10, 21, 8),
         end_utc=datetime(2026, 10, 21, 8, 15), price_dzd=-1),
     "ck_payments_amount_dzd": lambda w: Payment(
-        patient_id=w.patient, amount_dzd=0, method=PaymentMethod.cib, chargily_id="qa-1"),
+        patient_id=w.patient, amount_dzd=-1, method=PaymentMethod.cib, chargily_id="qa-1"),
     "ck_addiction_checks_craving_high": lambda w: AddictionCheck(
         addiction_id=w.addiction, day=date(2026, 10, 1), used=False, craving=6),
     "ck_addiction_checks_craving_low": lambda w: AddictionCheck(
@@ -162,6 +162,9 @@ def test_valid_rows_still_insert(db):
     db.add_all([
         Payment(patient_id=w.patient, appointment_id=w.appointment, amount_dzd=2000,
                 method=PaymentMethod.cib, chargily_id="qa-ok"),
+        # A doctor's price may be 0 DZD (admin prices accept it), so may a payment.
+        Payment(patient_id=w.patient, amount_dzd=0, method=PaymentMethod.clinic,
+                chargily_id="qa-free"),
         AddictionCheck(addiction_id=w.addiction, day=date(2026, 10, 1), used=False, craving=1),
         AddictionCheck(addiction_id=w.addiction, day=date(2026, 10, 2), used=True, craving=5),
         _addiction(w, goal_days=7, milestone_seen=30, milestone_alerted=30,

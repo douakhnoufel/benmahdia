@@ -367,7 +367,7 @@ class Payment(Base):
     never card details."""
 
     __tablename__ = "payments"
-    __table_args__ = (CheckConstraint("amount_dzd > 0", name="ck_payments_amount_dzd"),)
+    __table_args__ = (CheckConstraint("amount_dzd >= 0", name="ck_payments_amount_dzd"),)
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     # Null when the slot was lost before the payment arrived: such a paid
