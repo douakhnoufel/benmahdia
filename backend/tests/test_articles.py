@@ -7,11 +7,13 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import engine
-from app.models import ArticleFavourite, AuditLog
+from app.models import ArticleFavourite, AuditLog, Role
 
 from .booking_helpers import make_doctor
 from .conftest import bearer, register
 from .test_medications import staff_session
+from .test_qa_booking_isolation import staff_headers, staff_user
+from .test_qa_recovery_isolation import EMAIL_ADMIN_NO_PROFILE
 
 BODY = "Une envie dure rarement plus de vingt minutes.\n\nRespirez, buvez de l'eau, appelez quelqu'un."
 
@@ -202,4 +204,32 @@ def test_favourite_saved_by_another_request_at_the_same_moment_is_kept(client, s
     assert fired
     assert r.status_code == 204, r.text
     assert [x["id"] for x in articles(client, s, favourites=True).json()] == [a["id"]]
+
+
+def test_favouriting_an_unknown_article_is_404(client, sms):
+    s = register(client, sms)
+    missing = "00000000-0000-0000-0000-000000000000"
+    assert client.put(f"/v1/me/articles/{missing}/favourite", headers=bearer(s)).status_code == 404
+
+
+def test_patients_cannot_use_the_staff_routes(client, sms):
+    doc = doctor(client)
+    a = write(client, doc).json()
+    s = register(client, sms)
+    body = {k: a[k] for k in ("title", "body", "language", "topic", "addiction_type", "published")}
+    assert client.get("/v1/staff/articles", headers=bearer(s)).status_code == 403
+    assert client.get(f"/v1/staff/articles/{a['id']}", headers=bearer(s)).status_code == 403
+    assert client.put(f"/v1/staff/articles/{a['id']}", json=body, headers=bearer(s)).status_code == 403
+
+
+def test_super_admin_without_a_doctor_profile_cannot_use_the_staff_routes(client, sms):
+    doc = doctor(client)
+    a = write(client, doc).json()
+    staff_user(EMAIL_ADMIN_NO_PROFILE, Role.super_admin, with_profile=False)
+    h = staff_headers(client, EMAIL_ADMIN_NO_PROFILE)
+    body = {k: a[k] for k in ("title", "body", "language", "topic", "addiction_type", "published")}
+    assert client.get("/v1/staff/articles", headers=h).status_code == 403
+    assert client.get(f"/v1/staff/articles/{a['id']}", headers=h).status_code == 403
+    assert client.put(f"/v1/staff/articles/{a['id']}", json=body, headers=h).status_code == 403
+    assert client.post("/v1/staff/articles", json=body, headers=h).status_code == 403
 
