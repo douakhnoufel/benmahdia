@@ -407,6 +407,23 @@ def test_nightly_alerts_skip_a_doctor_the_patient_only_holds_a_slot_with(client,
     assert {d for d, _, _ in kinds} == {doc["doctor"].user_id}
 
 
+def test_rebooking_with_another_doctor_does_not_repeat_the_alert(client, sms):
+    """Shared files (PRD 3): every doctor sees every alert, so the dedupe is
+    per patient and kind, not per doctor. Rebooking with a colleague inside
+    the window must not raise the same alert again."""
+    _, s = setup(client, sms)  # paid visit with the first doctor
+    a = _old_addiction(client, s)
+    seed_checks(a["id"], "2026-10-14", "2026-10-15", "2026-10-16", craving=5)
+    assert run(craving_alerts) == 1
+    assert run(no_checkin_alerts) == 0  # checked every day
+    add_appointment(other_doctor(), pid(s), START + timedelta(days=5))  # rebooked with a colleague
+    assert run(craving_alerts) == 0
+    clock.frozen = START + timedelta(days=1)
+    seed_checks(a["id"], "2026-10-17", craving=5)
+    assert run(craving_alerts) == 0
+    assert len(alerts("craving_high")) == 1
+
+
 def _listed_to(client, headers) -> list[tuple]:
     r = client.get("/v1/staff/alerts", headers=headers)
     assert r.status_code == 200, r.text

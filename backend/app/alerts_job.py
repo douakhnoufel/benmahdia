@@ -94,9 +94,10 @@ def _raise_once(db: Session, patient_id: uuid.UUID, kind: str, since: datetime) 
     doctor_id = _doctor_of(db, patient_id)
     if doctor_id is None:
         return False
+    # Per patient and kind, not per doctor: every doctor of the clinic sees
+    # every alert (PRD 3), and a rebooking with a colleague changes doctor_id.
     already = db.scalar(
         select(Alert.id).where(
-            Alert.doctor_id == doctor_id,
             Alert.patient_id == patient_id,
             Alert.type == kind,
             Alert.created_at >= since,
