@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from .. import audit
 from ..clock import clock
-from ..db import get_db
+from ..db import get_db, insert_once
 from ..deps import current_user
 from ..errors import ApiError
 from ..models import (
@@ -166,13 +166,18 @@ def add_favourite(
 ) -> Response:
     """Saves the article; saving twice changes nothing."""
     a = _published(db, article_id)
-    exists = db.scalar(
-        select(ArticleFavourite.id).where(
-            ArticleFavourite.patient_id == user.id, ArticleFavourite.article_id == a.id
+
+    def stored() -> ArticleFavourite | None:
+        return db.scalar(
+            select(ArticleFavourite).where(
+                ArticleFavourite.patient_id == user.id, ArticleFavourite.article_id == a.id
+            )
         )
-    )
-    if exists is None:
-        db.add(ArticleFavourite(patient_id=user.id, article_id=a.id))
+
+    if stored() is None:
+        # Two taps at once: the second insert meets the unique key and keeps
+        # the row the other request saved.
+        insert_once(db, ArticleFavourite(patient_id=user.id, article_id=a.id), stored)
         db.commit()
     return Response(status_code=204)
 

@@ -1,11 +1,13 @@
 """Articles (PRD 5.5, 7): doctors write and publish them from the dashboard;
 patients read the published ones, filter them and keep favourites."""
 
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import engine
-from app.models import AuditLog
+from app.models import ArticleFavourite, AuditLog
 
 from .booking_helpers import make_doctor
 from .conftest import bearer, register
@@ -172,3 +174,32 @@ def test_unpublishing_hides_it_from_patients(client, sms):
     client.put(f"/v1/staff/articles/{a['id']}", headers=bearer(doc), json=a | {"published": False})
     assert articles(client, s).json() == []
     assert articles(client, s, favourites=True).json() == []
+
+
+def test_favourite_saved_by_another_request_at_the_same_moment_is_kept(client, sms, monkeypatch):
+    """Two taps at once: the other request saves the favourite right after
+    this one read "not saved yet". The unique key refuses the second row; the
+    call still answers 204 and one favourite is stored (not a 500)."""
+    doc = doctor(client)
+    a = write(client, doc).json()
+    s = register(client, sms)
+    original = Session.scalar
+    fired = []
+
+    def scalar(self, statement, *args, **kwargs):
+        descriptions = getattr(statement, "column_descriptions", None) or [{}]
+        if descriptions[0].get("entity") is ArticleFavourite and not fired:
+            fired.append(True)
+            with Session(engine) as other:
+                other.add(ArticleFavourite(patient_id=uuid.UUID(s["user"]["id"]), article_id=uuid.UUID(a["id"])))
+                other.commit()
+            return None  # what this request read before the other save landed
+        return original(self, statement, *args, **kwargs)
+
+    monkeypatch.setattr(Session, "scalar", scalar)
+    r = client.put(f"/v1/me/articles/{a['id']}/favourite", headers=bearer(s))
+    monkeypatch.undo()
+    assert fired
+    assert r.status_code == 204, r.text
+    assert [x["id"] for x in articles(client, s, favourites=True).json()] == [a["id"]]
+
