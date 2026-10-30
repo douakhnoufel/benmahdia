@@ -297,7 +297,7 @@
   "recoveryMedsTitle": "Mes médicaments du jour",
   "recoveryMedsCount": "{taken} sur {total}",
   "recoveryNoMeds": "Aucun médicament aujourd'hui.",
-  "recoveryDoseTake": "Pris",
+  "recoveryDoseTake": "Prendre",
   "recoveryDoseSkip": "Pas pris",
   "recoveryDoseTaken": "Pris",
   "recoveryDoseSkipped": "Non pris",

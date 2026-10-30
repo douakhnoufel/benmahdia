@@ -1083,7 +1083,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get recoveryNoMeds => 'Aucun médicament aujourd\'hui.';
 
   @override
-  String get recoveryDoseTake => 'Pris';
+  String get recoveryDoseTake => 'Prendre';
 
   @override
   String get recoveryDoseSkip => 'Pas pris';

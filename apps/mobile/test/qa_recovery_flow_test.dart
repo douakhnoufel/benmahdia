@@ -1022,10 +1022,19 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        await _tapVisible(
-          tester,
-          find.widgetWithText(FilledButton, l.addictionSave),
+        final save = find.widgetWithText(FilledButton, l.addictionSave);
+        await tester.scrollUntilVisible(
+          save,
+          200,
+          scrollable: find
+              .descendant(
+                of: find.byType(AddictionFormScreen),
+                matching: find.byType(Scrollable),
+              )
+              .first,
         );
+        await tester.pumpAndSettle();
+        await _tapVisible(tester, save);
         await _settle(tester);
         expect(repo.addictionList, hasLength(2));
         expect(find.byType(AddictionFormScreen), findsNothing);

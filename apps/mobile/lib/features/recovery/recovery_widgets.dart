@@ -297,7 +297,7 @@ class _RelapseSheetState extends State<_RelapseSheet> {
     final l10n = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
     final at = _at;
-    return Padding(
+    return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
         AppSpace.screenHorizontal,
         0,
@@ -573,8 +573,9 @@ class NextAppointmentCard extends StatelessWidget {
             children: [
               Container(
                 width: 52,
-                height: 56,
+                constraints: const BoxConstraints(minHeight: 56),
                 alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(vertical: AppSpace.xs),
                 decoration: BoxDecoration(
                   color: AppColors.teal50,
                   borderRadius: BorderRadius.circular(AppRadius.field),
@@ -761,9 +762,10 @@ class _DoseRow extends StatelessWidget {
           ],
         ),
         if (dose.status == DoseStatus.due)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+          Wrap(
+            alignment: WrapAlignment.end,
             spacing: AppSpace.sm,
+            runSpacing: AppSpace.sm,
             children: [
               OutlinedButton(
                 style: OutlinedButton.styleFrom(
@@ -867,12 +869,19 @@ class ClinicCard extends ConsumerWidget {
             Row(
               children: [
                 Expanded(child: Text(l10n.clinicTitle, style: text.titleLarge)),
-                Pill(
-                  text: today.isEmpty
-                      ? l10n.clinicClosedToday
-                      : l10n.clinicOpenToday,
-                  color: today.isEmpty ? AppColors.sand500 : AppColors.success,
-                  dot: today.isEmpty ? AppColors.sand400 : AppColors.success,
+                const SizedBox(width: AppSpace.sm),
+                Flexible(
+                  child: Pill(
+                    text: today.isEmpty
+                        ? l10n.clinicClosedToday
+                        : l10n.clinicOpenToday,
+                    color: today.isEmpty
+                        ? AppColors.sand500
+                        : AppColors.success,
+                    dot: today.isEmpty
+                        ? AppColors.sand400
+                        : AppColors.success,
+                  ),
                 ),
               ],
             ),
