@@ -188,7 +188,6 @@ def test_craving_window_is_three_algiers_days_at_the_nightly_run(client, sms):
     assert run(craving_alerts) == 1
 
 
-@pytest.mark.xfail(strict=True, reason="QA ALERT-01: a day checked after the nightly run never completes a craving_high run")
 def test_a_check_saved_after_the_nightly_run_still_completes_three_high_days(client, sms):
     _, s = setup(client, sms)
     a = add(client, s).json()
@@ -204,6 +203,11 @@ def test_a_check_saved_after_the_nightly_run_still_completes_three_high_days(cli
     clock.frozen = nightly("2026-10-22")
     run(craving_alerts)
     # 10-18, 10-19 and 10-20 were three high days in a row.
+    assert len(alerts("craving_high")) == 1
+    # Running the job again, or on later nights, never raises it twice.
+    assert run(craving_alerts) == 0
+    clock.frozen = nightly("2026-10-23")
+    assert run(craving_alerts) == 0
     assert len(alerts("craving_high")) == 1
 
 

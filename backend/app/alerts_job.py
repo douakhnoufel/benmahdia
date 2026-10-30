@@ -32,6 +32,8 @@ DAYS_IN_A_ROW = 2
 # PRD 5.6, fixed in v1.
 CHECK_DAYS_IN_A_ROW = 3
 HIGH_CRAVING = 4
+# A check can be saved up to two days back, so a run is re-examined that long.
+LATE_CHECK_DAYS = 3
 
 
 def _taken_on(db: Session, medication_id, day) -> bool:
@@ -110,19 +112,32 @@ def _tracked() -> Select:
 
 
 def craving_alerts(db: Session) -> int:
-    days, since = _check_window()
-    patients = set()
-    for a in db.scalars(_tracked()):
-        high = db.scalars(
-            select(AddictionCheck.day).where(
-                AddictionCheck.addiction_id == a.id,
-                AddictionCheck.day.in_(days),
-                AddictionCheck.craving >= HIGH_CRAVING,
-            )
-        ).all()
-        if len(set(high)) == len(days):
-            patients.add(a.patient_id)
-    created = sum(_raise_once(db, p, "craving_high", since) for p in patients)
+    """A run of three high days is looked for ending on each of the last
+    LATE_CHECK_DAYS full days, not only yesterday: a patient may still save a
+    day after the nightly run (same-day edit window), which can complete a
+    run that ended earlier. The dedupe window of a run starts at the day
+    before its last day, so a run never alerts twice and overlapping runs
+    stay at one alert per three days."""
+    today = scheduling.clinic_today(clock.now())
+    patients: dict[uuid.UUID, datetime] = {}
+    for lag in range(LATE_CHECK_DAYS):
+        last = today - timedelta(days=1 + lag)
+        days = [last - timedelta(days=n) for n in range(CHECK_DAYS_IN_A_ROW)]
+        since = scheduling.to_utc(last - timedelta(days=1), 0)
+        for a in db.scalars(_tracked()):
+            high = db.scalars(
+                select(AddictionCheck.day).where(
+                    AddictionCheck.addiction_id == a.id,
+                    AddictionCheck.day.in_(days),
+                    AddictionCheck.craving >= HIGH_CRAVING,
+                )
+            ).all()
+            if len(set(high)) == len(days):
+                patients.setdefault(a.patient_id, since)
+    created = 0
+    for patient_id, since in patients.items():
+        created += _raise_once(db, patient_id, "craving_high", since)
+        db.flush()
     db.commit()
     return created
 
