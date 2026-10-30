@@ -25,7 +25,29 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.7
 
 flutter:
   uses-material-design: true
   generate: true
+  assets:
+    - assets/brand/logo.png
+
+# App icon from the clinic logo: dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/brand/logo_source.jpg
+  remove_alpha_ios: true
+  adaptive_icon_background: "#FFFFFF" # AppColors.surface
+  adaptive_icon_foreground: assets/brand/logo_padded.png
+
+# Launch screen before Flutter starts: dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#063A35" # AppColors.teal900, same as the splash screen
+  image: assets/brand/logo_padded.png
+  android_12:
+    color: "#063A35"
+    icon_background_color: "#FFFFFF"
+    image: assets/brand/logo_android12.png

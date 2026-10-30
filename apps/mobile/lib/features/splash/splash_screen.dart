@@ -82,10 +82,35 @@ class _SplashScreenState extends State<SplashScreen> {
                     textAlign: TextAlign.center,
                     style: text.bodyMedium?.copyWith(color: AppColors.sand300),
                   ),
+                  const SizedBox(height: AppSpace.xl),
+                  const _Loading(),
                 ],
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Small spinner under the text while startup runs. Still (a quarter ring)
+/// when the OS asks for reduced motion. Decorative.
+class _Loading extends StatelessWidget {
+  const _Loading();
+
+  @override
+  Widget build(BuildContext context) {
+    final still = MediaQuery.disableAnimationsOf(context);
+    return ExcludeSemantics(
+      child: SizedBox.square(
+        dimension: AppSpace.xl,
+        child: CircularProgressIndicator(
+          key: const ValueKey('splash-loading'),
+          value: still ? 0.25 : null,
+          strokeWidth: 3,
+          color: AppColors.onPrimary,
+          backgroundColor: AppColors.teal100.withValues(alpha: 0.3),
         ),
       ),
     );

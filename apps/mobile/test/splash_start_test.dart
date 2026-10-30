@@ -62,6 +62,28 @@ void main() {
     expect(tester.hasRunningAnimations, isFalse);
   });
 
+  testWidgets('splash shows the clinic logo and a spinner, still under '
+      'reduced motion', (tester) async {
+    for (final reduce in [false, true]) {
+      await pumpApp(
+        tester,
+        SplashScreen(ready: Completer<void>().future, onDone: () {}),
+        reduceMotion: reduce,
+      );
+      await tester.pump();
+      expect(
+        find.image(const AssetImage('assets/brand/logo.png')),
+        findsOneWidget,
+      );
+      final spinner = tester.widget<CircularProgressIndicator>(
+        find.byKey(const ValueKey('splash-loading')),
+      );
+      expect(spinner.value, reduce ? isNotNull : isNull);
+      expect(tester.takeException(), isNull);
+      await tester.pump(AppMotion.splashMinimum);
+    }
+  });
+
   testWidgets('app start: splash, then intro, then welcome', (tester) async {
     await pumpApp(tester, AppStart(ready: Future<void>.value()));
     await tester.pump();
