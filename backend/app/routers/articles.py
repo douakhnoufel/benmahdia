@@ -261,6 +261,7 @@ def staff_update(
     a = db.get(Article, article_id)
     if a is None:
         raise ApiError(404, "not_found")
+    audit.record(db, "article.edited", actor_id=doctor.user_id, target=str(a.id), request=request)
     _apply(a, body, request, db, doctor)
     db.commit()
     db.refresh(a)

@@ -233,3 +233,14 @@ def test_super_admin_without_a_doctor_profile_cannot_use_the_staff_routes(client
     assert client.put(f"/v1/staff/articles/{a['id']}", json=body, headers=h).status_code == 403
     assert client.post("/v1/staff/articles", json=body, headers=h).status_code == 403
 
+
+def test_editing_is_audited_with_ids_only(client, sms):
+    author = make_doctor()
+    doc = staff_session(client, author)
+    a = write(client, doc).json()
+    body = {k: a[k] for k in ("body", "language", "topic", "addiction_type", "published")}
+    r = client.put(f"/v1/staff/articles/{a['id']}", headers=bearer(doc), json=body | {"title": "Nouveau titre"})
+    assert r.status_code == 200, r.text
+    with Session(engine) as db:
+        rows = list(db.scalars(select(AuditLog).where(AuditLog.action == "article.edited")))
+    assert [(str(x.actor_id), x.target) for x in rows] == [(str(author.user_id), a["id"])]
