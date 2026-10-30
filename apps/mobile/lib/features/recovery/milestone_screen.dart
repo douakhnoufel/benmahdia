@@ -52,67 +52,91 @@ class _MilestoneScreenState extends State<MilestoneScreen>
 
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpace.screenHorizontal,
-            vertical: AppSpace.xl,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Spacer(),
-              ScaleTransition(
-                scale: CurvedAnimation(parent: _pop, curve: AppMotion.pop),
-                child: Center(child: _Badge(days: widget.days)),
-              ),
-              const SizedBox(height: AppSpace.xl),
-              Semantics(
-                header: true,
-                liveRegion: true,
-                child: Text(
-                  l10n.milestoneTitle,
-                  textAlign: TextAlign.center,
-                  style: text.headlineLarge,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Badge, wording, and streak chips in a scrollable area so
+            // long streaks (many badge chips) fit on a small phone.
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpace.screenHorizontal,
+                  AppSpace.xl,
+                  AppSpace.screenHorizontal,
+                  AppSpace.md,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ScaleTransition(
+                      scale: CurvedAnimation(
+                        parent: _pop,
+                        curve: AppMotion.pop,
+                      ),
+                      child: Center(child: _Badge(days: widget.days)),
+                    ),
+                    const SizedBox(height: AppSpace.xl),
+                    Semantics(
+                      header: true,
+                      liveRegion: true,
+                      child: Text(
+                        l10n.milestoneTitle,
+                        textAlign: TextAlign.center,
+                        style: text.headlineLarge,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpace.sm),
+                    Text(
+                      l10n.milestoneBody(widget.days, widget.name),
+                      textAlign: TextAlign.center,
+                      style: text.bodyLarge?.copyWith(
+                        color: AppColors.textBody,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpace.xl),
+                    Text(
+                      l10n.milestoneBadges,
+                      textAlign: TextAlign.center,
+                      style: text.labelLarge?.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpace.sm),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: AppSpace.sm,
+                      runSpacing: AppSpace.sm,
+                      children: [
+                        for (final m in _earned)
+                          Chip(
+                            avatar: Icon(
+                              Icons.star_rounded,
+                              size: AppType.h3.size,
+                              color: AppColors.onSand,
+                            ),
+                            label: Text(l10n.bookDays(m)),
+                            backgroundColor: AppColors.sand100,
+                            side: const BorderSide(color: AppColors.sand300),
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: AppSpace.sm),
-              Text(
-                l10n.milestoneBody(widget.days, widget.name),
-                textAlign: TextAlign.center,
-                style: text.bodyLarge?.copyWith(color: AppColors.textBody),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpace.screenHorizontal,
+                0,
+                AppSpace.screenHorizontal,
+                AppSpace.xl,
               ),
-              const SizedBox(height: AppSpace.xl),
-              Text(
-                l10n.milestoneBadges,
-                textAlign: TextAlign.center,
-                style: text.labelLarge?.copyWith(color: AppColors.textMuted),
-              ),
-              const SizedBox(height: AppSpace.sm),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: AppSpace.sm,
-                runSpacing: AppSpace.sm,
-                children: [
-                  for (final m in _earned)
-                    Chip(
-                      avatar: Icon(
-                        Icons.star_rounded,
-                        size: AppType.h3.size,
-                        color: AppColors.onSand,
-                      ),
-                      label: Text(l10n.bookDays(m)),
-                      backgroundColor: AppColors.sand100,
-                      side: const BorderSide(color: AppColors.sand300),
-                    ),
-                ],
-              ),
-              const Spacer(),
-              FilledButton(
+              child: FilledButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(l10n.milestoneContinue),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
