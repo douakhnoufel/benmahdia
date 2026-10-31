@@ -39,7 +39,7 @@ a color, size, radius, or shadow — reference a token.
 | Token | Hex | Use |
 |---|---|---|
 | `surface`       | `#FFFFFF` | cards, sheets, inputs |
-| `background`    | `#FBF8F3` | screen background (= sand.50) |
+| `background`    | `#FFFFFF` | screen background (white, = surface) |
 | `text.strong`   | `#10302C` | headings |
 | `text.body`     | `#3A4B48` | body copy |
 | `text.muted`    | `#6B7A77` | captions, placeholders |
