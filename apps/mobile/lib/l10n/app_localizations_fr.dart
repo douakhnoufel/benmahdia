@@ -291,6 +291,13 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le premier médecin avec qui vous réservez devient votre médecin traitant à la clinique.';
 
   @override
+  String get bookNoDoctorTitle => 'Aucun médecin disponible pour le moment';
+
+  @override
+  String get bookNoDoctorBody =>
+      'Aucun médecin n\'est ouvert à la réservation pour l\'instant. Appelez le cabinet pour prendre rendez-vous.';
+
+  @override
   String get bookClinic => 'Clinique Benmahdia';
 
   @override
@@ -923,6 +930,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profileFullName => 'Nom complet';
 
   @override
+  String get profileFullNameArabic => 'Nom complet (en arabe)';
+
+  @override
+  String get profileFullNameLatin => 'Nom en latin (comme sur la carte)';
+
+  @override
+  String get profileFullNameLatinHint => 'Lu au dos de la carte';
+
+  @override
   String get profileBirthDate => 'Date de naissance (AAAA-MM-JJ)';
 
   @override
@@ -1266,6 +1282,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Choisissez le type et la date de votre dernière consommation. Votre médecin vérifiera ces informations.';
 
   @override
+  String get addictionGoalsAuto =>
+      'La clinique fixe vos petits objectifs pour vous.';
+
+  @override
   String get addictionTypeLabel => 'Type';
 
   @override
@@ -1316,7 +1336,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profilePassportNumber => 'Numéro de passeport';
 
   @override
-  String get scanPlaceCard => 'Placez la carte dans le cadre';
+  String get scanPlaceCard => 'Placez l\'avant de la carte dans le cadre';
+
+  @override
+  String get scanPlaceCardBack =>
+      'Retournez la carte et placez le dos dans le cadre';
 
   @override
   String get scanPlacePassport =>

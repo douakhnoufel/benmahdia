@@ -26,6 +26,8 @@ class ProfileFormScreen extends ConsumerStatefulWidget {
 class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
   final _id = TextEditingController();
   final _name = TextEditingController();
+  // National ID only: the Latin transliteration read from the back MRZ.
+  final _nameLatin = TextEditingController();
   final _birth = TextEditingController();
   final _errors = <IdField, String>{};
   Uint8List? _selfie;
@@ -39,6 +41,7 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
   void dispose() {
     _id.dispose();
     _name.dispose();
+    _nameLatin.dispose();
     _birth.dispose();
     super.dispose();
   }
@@ -64,9 +67,18 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
         final name = scanned.fullName;
         if (number != null) _id.text = number;
         if (birth != null) _birth.text = _iso(birth);
-        if (name != null && _name.text.trim().isEmpty) {
-          _name.text = name;
-          _errors.remove(IdField.fullName);
+        // The scanned name is Latin. For a passport it is the only name; for a
+        // national ID it fills the Latin field and the patient writes their
+        // Arabic name (the card is not read in Arabic).
+        if (name != null) {
+          if (_type == IdDocType.passport) {
+            if (_name.text.trim().isEmpty) {
+              _name.text = name;
+              _errors.remove(IdField.fullName);
+            }
+          } else if (_nameLatin.text.trim().isEmpty) {
+            _nameLatin.text = name;
+          }
         }
         _errors.remove(IdField.idNumber);
         _errors.remove(IdField.birthDate);
@@ -91,6 +103,7 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
     final l10n = AppLocalizations.of(context);
     final number = normalizeIdNumber(_id.text);
     final name = _name.text.trim().replaceAll(RegExp(r'\s+'), ' ');
+    final nameLatin = _nameLatin.text.trim().replaceAll(RegExp(r'\s+'), ' ');
     final birth = parseDate(_birth.text, today: DateTime.now());
     final selfie = _selfie;
     final errors = <IdField, String>{
@@ -118,6 +131,9 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
               idType: _type,
               idNumber: number,
               fullName: name,
+              fullNameLatin: _type == IdDocType.nationalId && nameLatin.isNotEmpty
+                  ? nameLatin
+                  : null,
               birthDate: birth,
             ),
             selfie,
@@ -172,11 +188,15 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
           onSelectionChanged: busy
               ? null
               : (picked) => setState(() {
-                  // A different document: its number must be read again.
+                  // A different document: its number and name must be read again.
                   _type = picked.single;
                   _id.clear();
+                  _name.clear();
+                  _nameLatin.clear();
                   _scanned = false;
-                  _errors.remove(IdField.idNumber);
+                  _errors
+                    ..remove(IdField.idNumber)
+                    ..remove(IdField.fullName);
                 }),
         ),
         OutlinedButton.icon(
@@ -219,10 +239,23 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
           textCapitalization: TextCapitalization.words,
           textInputAction: TextInputAction.next,
           decoration: InputDecoration(
-            labelText: l10n.profileFullName,
+            labelText: _type == IdDocType.nationalId
+                ? l10n.profileFullNameArabic
+                : l10n.profileFullName,
             errorText: _errors[IdField.fullName],
           ),
         ),
+        if (_type == IdDocType.nationalId)
+          TextField(
+            key: const ValueKey('profile-name-latin'),
+            controller: _nameLatin,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.next,
+            decoration: InputDecoration(
+              labelText: l10n.profileFullNameLatin,
+              hintText: l10n.profileFullNameLatinHint,
+            ),
+          ),
         TextField(
           key: const ValueKey('profile-birth'),
           controller: _birth,

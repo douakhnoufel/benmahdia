@@ -41,7 +41,6 @@ class CounterCard extends StatelessWidget {
     required this.now,
     required this.onRelapse,
     this.note,
-    this.onChangeGoal,
   });
 
   final Addiction addiction;
@@ -51,7 +50,6 @@ class CounterCard extends StatelessWidget {
   final DateTime now;
   final VoidCallback onRelapse;
   final EarlyNote? note;
-  final VoidCallback? onChangeGoal;
 
   @override
   Widget build(BuildContext context) {
@@ -108,11 +106,6 @@ class CounterCard extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: text.bodyMedium,
                 ),
-                if (onChangeGoal != null)
-                  TextButton(
-                    onPressed: onChangeGoal,
-                    child: Text(l10n.goalChange),
-                  ),
               ],
             ),
             if (note case final note?) EarlyNoteBox(note: note),
@@ -878,9 +871,7 @@ class ClinicCard extends ConsumerWidget {
                     color: today.isEmpty
                         ? AppColors.sand500
                         : AppColors.success,
-                    dot: today.isEmpty
-                        ? AppColors.sand400
-                        : AppColors.success,
+                    dot: today.isEmpty ? AppColors.sand400 : AppColors.success,
                   ),
                 ),
               ],

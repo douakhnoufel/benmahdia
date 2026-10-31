@@ -14,6 +14,18 @@ IconData substanceIcon(SubstanceProfile? profile) => switch (profile) {
   null => Icons.more_horiz_rounded,
 };
 
+/// Icon shown on an addiction-type card (the "other substance" path).
+IconData addictionTypeIcon(AddictionType type) => switch (type) {
+  AddictionType.opioids => Icons.medication_liquid_rounded,
+  AddictionType.cannabis => Icons.grass_rounded,
+  AddictionType.alcohol => Icons.local_bar_rounded,
+  AddictionType.tobacco => Icons.smoking_rooms_rounded,
+  AddictionType.pills => Icons.medication_rounded,
+  AddictionType.stimulants => Icons.bolt_rounded,
+  AddictionType.gambling => Icons.casino_rounded,
+  AddictionType.other => Icons.more_horiz_rounded,
+};
+
 /// Icon shown on a habit card.
 IconData habitIcon(HabitKind kind) => switch (kind) {
   HabitKind.sport => Icons.directions_run_rounded,

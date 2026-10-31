@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,10 +7,12 @@ import '../../l10n/app_localizations.dart';
 import '../../theme/app_tokens.dart';
 import '../../widgets/flow_top_bar.dart';
 import '../../widgets/staggered_reveal.dart';
+import '../recovery/fake_recovery_repository.dart' show benmahdiaClinic;
 import 'booking_format.dart';
 import 'booking_models.dart';
 import 'booking_repository.dart';
 import 'booking_widgets.dart';
+import 'payment_launcher.dart';
 
 /// Booking step 1: pick a doctor. Each card shows the next free time. The
 /// first doctor a patient books becomes their primary doctor (PRD 4.3).
@@ -52,6 +56,8 @@ class _BookDoctorScreenState extends ConsumerState<BookDoctorScreen> {
               );
             } else if (!snapshot.hasData) {
               body = const Center(child: CircularProgressIndicator());
+            } else if (doctors.isEmpty) {
+              body = const _NoDoctor();
             } else {
               body = ListView(
                 padding: const EdgeInsets.fromLTRB(
@@ -119,6 +125,55 @@ class _BookDoctorScreenState extends ConsumerState<BookDoctorScreen> {
           },
         ),
       ),
+    );
+  }
+}
+
+/// Shown when no doctor can be booked: says so and offers to call the clinic.
+class _NoDoctor extends ConsumerWidget {
+  const _NoDoctor();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final text = Theme.of(context).textTheme;
+    final open = ref.read(openUrlProvider);
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpace.screenHorizontal,
+        AppSpace.xl,
+        AppSpace.screenHorizontal,
+        AppSpace.xl,
+      ),
+      children: [
+        Semantics(
+          header: true,
+          child: Text(l10n.bookNoDoctorTitle, style: text.headlineLarge),
+        ),
+        const SizedBox(height: AppSpace.xs),
+        Text(l10n.bookNoDoctorBody, style: text.bodyLarge),
+        const SizedBox(height: AppSpace.xl),
+        for (final phone in benmahdiaClinic.phones)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpace.md),
+            child: Semantics(
+              button: true,
+              label: l10n.clinicCallNumber(phone),
+              excludeSemantics: true,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                ),
+                onPressed: () => unawaited(
+                  open(Uri(scheme: 'tel', path: phone.replaceAll(' ', ''))),
+                ),
+                icon: const Icon(Icons.call_outlined, size: 20),
+                label: LtrText(phone),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

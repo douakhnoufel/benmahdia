@@ -25,7 +25,7 @@ abstract final class AppColors {
 
   // Ink & lines
   static const surface = Color(0xFFFFFFFF);
-  static const background = sand50;
+  static const background = Color(0xFFFFFFFF);
   static const textStrong = Color(0xFF10302C);
   static const textBody = Color(0xFF3A4B48);
   static const textMuted = Color(0xFF6B7A77);

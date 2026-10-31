@@ -121,6 +121,59 @@ void main() {
     });
   });
 
+  group('national ID back (TD1 MRZ)', () {
+    String td1() {
+      final l1 = 'I<DZA123456789${mrzCheckDigit('123456789')}'.padRight(30, '<');
+      const birth = '900517';
+      const exp = '300101';
+      final head =
+          '$birth${mrzCheckDigit(birth)}M$exp${mrzCheckDigit(exp)}DZA'
+              .padRight(29, '<');
+      final l2 = '${head}0';
+      final l3 = 'BENALI<<KARIM'.padRight(30, '<');
+      return '$l1\n$l2\n$l3';
+    }
+
+    test('reads the Latin name and birth date; the number is not taken here', () {
+      final read = parseMrzTd1(td1(), today: _today);
+      expect(read, isNotNull);
+      expect(read!.fullName, 'BENALI KARIM');
+      expect(read.birthDate, DateTime(1990, 5, 17));
+      expect(read.issuer, 'DZA');
+      expect(read.idNumber, isNull); // the 18-digit number comes from the front
+    });
+
+    test('readFrame(back) accepts only an Algerian card that has a name', () {
+      expect(
+        readFrame(td1(), IdDocType.nationalId, side: IdSide.back, today: _today),
+        isNotNull,
+      );
+      final foreign = td1().replaceFirst('I<DZA', 'I<FRA');
+      expect(
+        readFrame(foreign, IdDocType.nationalId, side: IdSide.back, today: _today),
+        isNull,
+      );
+    });
+
+    test('refuses a wrong birth-date check digit', () {
+      final lines = td1().split('\n');
+      final wrong = ((mrzCheckDigit('900517') + 1) % 10).toString();
+      lines[1] = lines[1].substring(0, 6) + wrong + lines[1].substring(7);
+      expect(parseMrzTd1(lines.join('\n'), today: _today), isNull);
+    });
+
+    test('front and back merge: number from the front, name from the back', () {
+      final front = ScannedId(
+        idNumber: '123456789012345678',
+        birthDate: DateTime(1990, 5, 17),
+      );
+      final merged = front.mergeBack(parseMrzTd1(td1(), today: _today)!);
+      expect(merged.idNumber, '123456789012345678');
+      expect(merged.fullName, 'BENALI KARIM');
+      expect(merged.birthDate, DateTime(1990, 5, 17));
+    });
+  });
+
   group('face framing', () {
     const image = Size(720, 1280);
     test('no face, two faces, too small, off centre, good', () {

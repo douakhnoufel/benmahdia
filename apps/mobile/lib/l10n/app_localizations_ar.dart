@@ -284,6 +284,13 @@ class AppLocalizationsAr extends AppLocalizations {
       'أول طبيب تحجز معه يصبح طبيبك المتابع في العيادة.';
 
   @override
+  String get bookNoDoctorTitle => 'لا يوجد طبيب متاح للحجز الآن';
+
+  @override
+  String get bookNoDoctorBody =>
+      'لا يوجد أي طبيب مفتوح للحجز حالياً. اتصل بالعيادة لتحديد موعد.';
+
+  @override
   String get bookClinic => 'عيادة بن مهدية';
 
   @override
@@ -908,6 +915,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get profileFullName => 'الاسم الكامل';
 
   @override
+  String get profileFullNameArabic => 'الاسم الكامل (بالعربية)';
+
+  @override
+  String get profileFullNameLatin => 'الاسم باللاتينية (كما في البطاقة)';
+
+  @override
+  String get profileFullNameLatinHint => 'يُقرأ من ظهر البطاقة';
+
+  @override
   String get profileBirthDate => 'تاريخ الميلاد (سنة-شهر-يوم)';
 
   @override
@@ -1244,6 +1260,9 @@ class AppLocalizationsAr extends AppLocalizations {
       'اختر النوع وتاريخ آخر تعاطٍ. سيراجع طبيبك هذه المعلومات.';
 
   @override
+  String get addictionGoalsAuto => 'نحدّد لك أهدافك الصغيرة تلقائياً.';
+
+  @override
   String get addictionTypeLabel => 'النوع';
 
   @override
@@ -1292,7 +1311,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get profilePassportNumber => 'رقم جواز السفر';
 
   @override
-  String get scanPlaceCard => 'ضع البطاقة داخل الإطار';
+  String get scanPlaceCard => 'ضع وجه البطاقة داخل الإطار';
+
+  @override
+  String get scanPlaceCardBack => 'اقلب البطاقة وضع ظهرها داخل الإطار';
 
   @override
   String get scanPlacePassport =>

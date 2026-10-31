@@ -14,12 +14,13 @@ typedef AddictionEntry = ({
   SubstanceProfile? profile,
   String? substance,
   DateTime cleanSince,
-  int? goalDays,
 });
 
 /// "What are you recovering from?": the substance (one of the clinic's
 /// profiles, or another substance and its type), the exact product
-/// (optional), the day of the last use and the first small goal (PRD 5.6). The doctor reviews it afterwards.
+/// (optional) and the day of the last use. The clinic sets the small goals
+/// (PRD 5.6); the patient does not pick one here. The doctor reviews it
+/// afterwards.
 class AddictionFormScreen extends StatefulWidget {
   const AddictionFormScreen({
     super.key,
@@ -30,7 +31,9 @@ class AddictionFormScreen extends StatefulWidget {
 
   final DateTime today;
   final List<ProfileSpec> profiles;
-  final Future<void> Function(AddictionEntry entry) onSave;
+
+  /// One entry per substance the patient ticked.
+  final Future<void> Function(List<AddictionEntry> entries) onSave;
 
   @override
   State<AddictionFormScreen> createState() => _AddictionFormScreenState();
@@ -39,10 +42,9 @@ class AddictionFormScreen extends StatefulWidget {
 class _AddictionFormScreenState extends State<AddictionFormScreen> {
   final _substance = TextEditingController();
   AddictionType? _type;
-  SubstanceProfile? _profile;
+  final Set<SubstanceProfile> _profileSet = {};
   bool _other = false;
   late DateTime _since = dayOf(widget.today);
-  int? _goal; // null = automatic
   bool _saving = false;
 
   @override
@@ -60,27 +62,34 @@ class _AddictionFormScreenState extends State<AddictionFormScreen> {
       lastDate: today,
     );
     if (picked == null) return;
-    setState(() {
-      _since = picked;
-      if (_goal != null && _goal! <= _daysClean) _goal = null;
-    });
+    setState(() => _since = picked);
   }
 
-  int get _daysClean => dayOf(widget.today).difference(_since).inDays;
+  bool get _ready => _profileSet.isNotEmpty || (_other && _type != null);
 
-  bool get _ready => _profile != null || (_other && _type != null);
+  /// The exact product only makes sense for a single substance.
+  bool get _single => _profileSet.length + (_other ? 1 : 0) == 1;
 
   Future<void> _save() async {
     setState(() => _saving = true);
     final substance = _substance.text.trim();
     try {
-      await widget.onSave((
-        type: _profile == null ? _type : null,
-        profile: _profile,
-        substance: substance.isEmpty ? null : substance,
-        cleanSince: _since,
-        goalDays: _goal,
-      ));
+      await widget.onSave([
+        for (final p in _profileSet)
+          (
+            type: null,
+            profile: p,
+            substance: _single && substance.isNotEmpty ? substance : null,
+            cleanSince: _since,
+          ),
+        if (_other)
+          (
+            type: _type,
+            profile: null,
+            substance: _single && substance.isNotEmpty ? substance : null,
+            cleanSince: _since,
+          ),
+      ]);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -110,6 +119,11 @@ class _AddictionFormScreenState extends State<AddictionFormScreen> {
             ),
             const SizedBox(height: AppSpace.sm),
             Text(l10n.addictionFormBody, style: text.bodyLarge),
+            const SizedBox(height: AppSpace.sm),
+            Text(
+              l10n.addictionGoalsAuto,
+              style: text.bodyMedium?.copyWith(color: AppColors.textBody),
+            ),
             const SizedBox(height: AppSpace.xl),
             Text(l10n.substanceLabel, style: text.labelMedium),
             const SizedBox(height: AppSpace.sm),
@@ -119,20 +133,18 @@ class _AddictionFormScreenState extends State<AddictionFormScreen> {
                   OptionCard(
                     icon: substanceIcon(p.profile),
                     label: p.name.of(lang),
-                    selected: _profile == p.profile,
+                    selected: _profileSet.contains(p.profile),
                     onTap: () => setState(() {
-                      _profile = p.profile;
-                      _other = false;
+                      if (!_profileSet.remove(p.profile)) {
+                        _profileSet.add(p.profile);
+                      }
                     }),
                   ),
                 OptionCard(
                   icon: substanceIcon(null),
                   label: l10n.substanceOther,
                   selected: _other,
-                  onTap: () => setState(() {
-                    _profile = null;
-                    _other = true;
-                  }),
+                  onTap: () => setState(() => _other = !_other),
                 ),
               ],
             ),
@@ -140,28 +152,29 @@ class _AddictionFormScreenState extends State<AddictionFormScreen> {
               const SizedBox(height: AppSpace.xl),
               Text(l10n.addictionTypeLabel, style: text.labelMedium),
               const SizedBox(height: AppSpace.sm),
-              Wrap(
-                spacing: AppSpace.sm,
-                runSpacing: AppSpace.sm,
+              OptionGrid(
                 children: [
                   for (final t in AddictionType.values)
-                    ChoiceChip(
-                      label: Text(l10n.addictionType(t.name)),
+                    OptionCard(
+                      icon: addictionTypeIcon(t),
+                      label: l10n.addictionType(t.name),
                       selected: _type == t,
-                      onSelected: (_) => setState(() => _type = t),
+                      onTap: () => setState(() => _type = t),
                     ),
                 ],
               ),
             ],
-            const SizedBox(height: AppSpace.xl),
-            TextField(
-              controller: _substance,
-              textInputAction: TextInputAction.done,
-              decoration: InputDecoration(
-                labelText: l10n.addictionSubstance,
-                hintText: l10n.addictionSubstanceHint,
+            if (_profileSet.length + (_other ? 1 : 0) <= 1) ...[
+              const SizedBox(height: AppSpace.xl),
+              TextField(
+                controller: _substance,
+                textInputAction: TextInputAction.done,
+                decoration: InputDecoration(
+                  labelText: l10n.addictionSubstance,
+                  hintText: l10n.addictionSubstanceHint,
+                ),
               ),
-            ),
+            ],
             const SizedBox(height: AppSpace.xl),
             Text(l10n.addictionCleanSince, style: text.labelMedium),
             const SizedBox(height: AppSpace.sm),
@@ -174,29 +187,6 @@ class _AddictionFormScreenState extends State<AddictionFormScreen> {
                 icon: const Icon(Icons.event_rounded),
                 label: Text(l10n.longDate(_since)),
               ),
-            ),
-            const SizedBox(height: AppSpace.xl),
-            Text(l10n.goalTitle, style: text.labelMedium),
-            const SizedBox(height: AppSpace.sm),
-            Wrap(
-              spacing: AppSpace.sm,
-              runSpacing: AppSpace.sm,
-              children: [
-                ChoiceChip(
-                  label: Text(
-                    '${l10n.goalAuto} · ${l10n.bookDays(nextGoal(_daysClean))}',
-                  ),
-                  selected: _goal == null,
-                  onSelected: (_) => setState(() => _goal = null),
-                ),
-                for (final step in goalSteps)
-                  if (step > _daysClean)
-                    ChoiceChip(
-                      label: Text(l10n.bookDays(step)),
-                      selected: _goal == step,
-                      onSelected: (_) => setState(() => _goal = step),
-                    ),
-              ],
             ),
             const SizedBox(height: AppSpace.xl),
             FilledButton(

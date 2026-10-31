@@ -42,12 +42,17 @@ class IdentityDraft {
     required this.idNumber,
     required this.fullName,
     required this.birthDate,
+    this.fullNameLatin,
     this.idType = IdDocType.nationalId,
   });
 
   final IdDocType idType;
   final String idNumber;
   final String fullName;
+
+  /// The Latin transliteration from a national ID's back MRZ, when the card
+  /// was scanned on both sides. Null for a passport or a typed-in name.
+  final String? fullNameLatin;
   final DateTime birthDate;
 
   /// `YYYY-MM-DD`, as the API expects.

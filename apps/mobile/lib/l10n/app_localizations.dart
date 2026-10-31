@@ -584,6 +584,18 @@ abstract class AppLocalizations {
   /// **'أول طبيب تحجز معه يصبح طبيبك المتابع في العيادة.'**
   String get bookDoctorBody;
 
+  /// No description provided for @bookNoDoctorTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد طبيب متاح للحجز الآن'**
+  String get bookNoDoctorTitle;
+
+  /// No description provided for @bookNoDoctorBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد أي طبيب مفتوح للحجز حالياً. اتصل بالعيادة لتحديد موعد.'**
+  String get bookNoDoctorBody;
+
   /// No description provided for @bookClinic.
   ///
   /// In ar, this message translates to:
@@ -1556,6 +1568,24 @@ abstract class AppLocalizations {
   /// **'الاسم الكامل'**
   String get profileFullName;
 
+  /// No description provided for @profileFullNameArabic.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاسم الكامل (بالعربية)'**
+  String get profileFullNameArabic;
+
+  /// No description provided for @profileFullNameLatin.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاسم باللاتينية (كما في البطاقة)'**
+  String get profileFullNameLatin;
+
+  /// No description provided for @profileFullNameLatinHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'يُقرأ من ظهر البطاقة'**
+  String get profileFullNameLatinHint;
+
   /// No description provided for @profileBirthDate.
   ///
   /// In ar, this message translates to:
@@ -2144,6 +2174,12 @@ abstract class AppLocalizations {
   /// **'اختر النوع وتاريخ آخر تعاطٍ. سيراجع طبيبك هذه المعلومات.'**
   String get addictionFormBody;
 
+  /// No description provided for @addictionGoalsAuto.
+  ///
+  /// In ar, this message translates to:
+  /// **'نحدّد لك أهدافك الصغيرة تلقائياً.'**
+  String get addictionGoalsAuto;
+
   /// No description provided for @addictionTypeLabel.
   ///
   /// In ar, this message translates to:
@@ -2243,8 +2279,14 @@ abstract class AppLocalizations {
   /// No description provided for @scanPlaceCard.
   ///
   /// In ar, this message translates to:
-  /// **'ضع البطاقة داخل الإطار'**
+  /// **'ضع وجه البطاقة داخل الإطار'**
   String get scanPlaceCard;
+
+  /// No description provided for @scanPlaceCardBack.
+  ///
+  /// In ar, this message translates to:
+  /// **'اقلب البطاقة وضع ظهرها داخل الإطار'**
+  String get scanPlaceCardBack;
 
   /// No description provided for @scanPlacePassport.
   ///

@@ -1000,7 +1000,7 @@ void main() {
           await tester.pumpAndSettle();
           for (final t in AddictionType.values) {
             expect(
-              find.widgetWithText(ChoiceChip, l.addictionType(t.name)),
+              find.widgetWithText(OptionCard, l.addictionType(t.name)),
               findsOneWidget,
             );
           }
@@ -1093,40 +1093,6 @@ void main() {
         },
       );
 
-      testWidgets(
-        'the goal sheet: steps not reached yet, and automatic; 320 wide',
-        (tester) async {
-          await _pump(
-            tester,
-            const HomeShell(),
-            repo: _Repo(),
-            french: french,
-            size: const Size(320, 2400),
-          );
-          await _scrollTo(tester, find.text(l.goalChange));
-          await tester.tap(find.text(l.goalChange));
-          await _settle(tester);
-          expect(find.text(l.goalTitle), findsOneWidget);
-          expect(
-            find.widgetWithText(
-              ChoiceChip,
-              '${l.goalAuto} · ${l.bookDays(14)}',
-            ),
-            findsOneWidget,
-          );
-          expect(
-            find.widgetWithText(ChoiceChip, l.bookDays(14)),
-            findsOneWidget,
-          );
-          expect(
-            find.widgetWithText(ChoiceChip, l.bookDays(28)),
-            findsOneWidget,
-          );
-          expect(find.widgetWithText(ChoiceChip, l.bookDays(7)), findsNothing);
-          expect(tester.takeException(), isNull);
-          _expectTranslated(tester, french: french);
-        },
-      );
     });
 
     group('relapse (PRD 5.1, 5.6) · $lang', () {
@@ -1433,19 +1399,6 @@ void main() {
         find.widgetWithText(FilledButton, _ar.addictionSave),
       );
       expect(repo.count('addHabit'), 1);
-    });
-
-    testWidgets('a step on the goal sheet', (tester) async {
-      final repo = _Repo();
-      await _pump(tester, const HomeShell(), repo: repo);
-      await _scrollTo(tester, find.text(_ar.goalChange));
-      await tester.tap(find.text(_ar.goalChange));
-      await _settle(tester);
-      await doubleTap(
-        tester,
-        find.widgetWithText(ChoiceChip, _ar.bookDays(28)),
-      );
-      expect(repo.count('setGoal'), 1);
     });
 
     testWidgets('Continue on a milestone celebration', (tester) async {

@@ -13,6 +13,16 @@ class ScannedId {
 
   bool get isEmpty => idNumber == null && birthDate == null;
 
+  /// Combines a national ID's front read (this) with its back TD1 read: the
+  /// 18-digit number stays the one from the front, the birth date and the
+  /// Latin name are taken from the machine-readable back when present.
+  ScannedId mergeBack(ScannedId back) => ScannedId(
+    idNumber: idNumber ?? back.idNumber,
+    birthDate: back.birthDate ?? birthDate,
+    fullName: back.fullName ?? fullName,
+    issuer: back.issuer ?? issuer,
+  );
+
   @override
   bool operator ==(Object other) =>
       other is ScannedId &&
@@ -185,6 +195,56 @@ ScannedId? parseMrz(String text, {required DateTime today}) {
       birthDate: date,
       fullName: name,
       issuer: issuer,
+    );
+  }
+  return null;
+}
+
+/// Reads the three machine-readable lines (ICAO 9303, TD1) on the **back** of
+/// the Algerian biometric national ID card: the birth date (with its check
+/// digit) and the Latin transliteration of the name. The 18-digit national
+/// number is read from the front of the card, so it is not taken from here
+/// (the MRZ carries the 9-character document number, not the national number).
+/// Null unless three TD1 lines are found and the birth-date check digit
+/// matches, so a misread is never used.
+ScannedId? parseMrzTd1(String text, {required DateTime today}) {
+  final lines = text
+      .split(RegExp(r'[\r\n]+'))
+      .map(_mrzLine)
+      .where((l) => l.length >= 30)
+      .toList();
+  for (var i = 0; i + 2 < lines.length; i++) {
+    final l1 = lines[i].substring(0, 30);
+    final l2 = lines[i + 1].substring(0, 30);
+    final l3 = lines[i + 2].substring(0, 30);
+    // TD1 line 1 starts with the document code for an ID card ("I", "ID", …).
+    if (!l1.startsWith('I')) continue;
+    final issuer = l1.substring(2, 5).replaceAll('<', '');
+
+    final birth = _digitsOnly(l2.substring(0, 6));
+    final birthCheck = _digitsOnly(l2.substring(6, 7));
+    if (!RegExp(r'^[0-9]{6}$').hasMatch(birth) || !RegExp(r'^[0-9]$').hasMatch(birthCheck)) {
+      continue;
+    }
+    if (mrzCheckDigit(birth) != int.parse(birthCheck)) continue;
+
+    final yy = int.parse(birth.substring(0, 2));
+    final mm = int.parse(birth.substring(2, 4));
+    final dd = int.parse(birth.substring(4, 6));
+    final year = yy > today.year % 100 ? 1900 + yy : 2000 + yy;
+    final date = DateTime(year, mm, dd);
+    if (date.month != mm || date.day != dd || date.isAfter(today)) continue;
+
+    final parts = l3
+        .split('<<')
+        .map((p) => p.replaceAll('<', ' ').trim())
+        .where((p) => p.isNotEmpty)
+        .take(2)
+        .toList();
+    return ScannedId(
+      birthDate: date,
+      fullName: parts.isEmpty ? null : parts.join(' '),
+      issuer: issuer.isEmpty ? null : issuer,
     );
   }
   return null;
