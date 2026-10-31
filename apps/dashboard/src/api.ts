@@ -234,6 +234,8 @@ export type Identity = {
   /** The document declared: the Algerian national ID card or passport. */
   id_type?: 'national_id' | 'passport';
   full_name: string;
+  /** Latin transliteration from a national ID's back MRZ, when scanned. */
+  full_name_latin?: string | null;
   birth_date: string;
   declared_at: string;
   submissions: number;
