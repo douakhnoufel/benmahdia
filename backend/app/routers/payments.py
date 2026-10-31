@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .. import audit, checkin, notices
+from .. import audit, checkin, notices, primary
 from ..chargily import Chargily, get_chargily
 from ..clock import clock
 from ..db import get_db
@@ -113,6 +113,7 @@ async def webhook(
             a.hold_expires_at = None
             a.paid_at = now
             checkin.issue(db, a)
+            primary.link(db, a)
             notices.booking_alert(db, a, notices.CONFIRMED)
             audit.record(db, "appointment.confirmed", target=str(a.id))
         else:

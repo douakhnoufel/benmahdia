@@ -1,4 +1,8 @@
+import re
+import uuid
+
 from fastapi import APIRouter, Depends, Request, Response
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -7,7 +11,7 @@ from ..clock import clock
 from ..db import get_db
 from ..deps import current_user
 from ..errors import ApiError
-from ..models import AccountStatus, Alert, OtpPurpose, Provider, User
+from ..models import AccountStatus, Alert, DoctorProfile, OtpPurpose, PrimaryDoctor, Provider, User
 from ..social import AppleTokens, get_apple_tokens
 from .auth import spend_proof
 from .recovery import _doctor_of
@@ -17,6 +21,57 @@ router = APIRouter(prefix="/v1/me", tags=["me"])
 
 @router.get("", response_model=schemas.Me)
 def read_me(user: User = Depends(current_user)) -> schemas.Me:
+    return tokens.me(user)
+
+
+class MyDoctorOut(BaseModel):
+    id: uuid.UUID
+    name_ar: str
+    name_fr: str
+
+
+@router.get("/doctor", response_model=MyDoctorOut | None)
+def my_doctor(
+    user: User = Depends(current_user), db: Session = Depends(get_db)
+) -> MyDoctorOut | None:
+    """"My doctor": the doctor of the patient's first confirmed booking, or
+    null before any booking. A label only (PRD 4.3)."""
+    row = db.get(PrimaryDoctor, user.id)
+    profile = db.get(DoctorProfile, row.doctor_id) if row is not None else None
+    if profile is None:
+        return None
+    return MyDoctorOut(id=profile.user_id, name_ar=profile.name_ar, name_fr=profile.name_fr)
+
+
+class EmailIn(BaseModel):
+    # None or empty clears the address.
+    email: str | None = None
+
+
+# A contact address only: the account is not identified or recovered by email,
+# so it is stored without a confirmation step (there is no email sender).
+_EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+@router.put("/email", response_model=schemas.Me)
+def set_email(
+    body: EmailIn,
+    request: Request,
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+) -> schemas.Me:
+    """Sets or clears the account's contact email. Not verified and not a
+    sign-in method."""
+    raw = (body.email or "").strip()
+    if raw == "":
+        user.email = None
+    else:
+        if len(raw) > 320 or not _EMAIL.fullmatch(raw):
+            raise ApiError(422, "invalid_email")
+        user.email = raw.lower()
+    audit.record(db, "email.set", actor_id=user.id, request=request)
+    db.commit()
+    db.refresh(user)
     return tokens.me(user)
 
 

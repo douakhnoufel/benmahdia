@@ -136,7 +136,13 @@ class IdDeclaration(Base):
     id_type: Mapped[str] = mapped_column(
         String(16), default="national_id", server_default="national_id"
     )
+    # The main declared name: Arabic for a national ID (read from the front),
+    # the MRZ transliteration for a passport.
     name_enc: Mapped[bytes] = mapped_column(LargeBinary)
+    # The Latin transliteration read from the national ID card's back MRZ.
+    # None for a passport (its only name already lives in name_enc) and for
+    # declarations made before two-sided scanning.
+    name_latin_enc: Mapped[bytes | None] = mapped_column(LargeBinary)
     birth_enc: Mapped[bytes] = mapped_column(LargeBinary)
     # Name of the encrypted selfie file; None once it was deleted.
     selfie_file: Mapped[str | None] = mapped_column(String(64))
@@ -330,6 +336,24 @@ class Appointment(Base):
     # Set when the doctor's dashboard accepted the code on the day.
     checked_in_at: Mapped[datetime | None] = mapped_column(DateTime)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class PrimaryDoctor(Base):
+    """The doctor of a patient's first confirmed booking (PRD 4.3). It is a
+    label ("my doctor" in the app and the dashboard) and nothing more: every
+    doctor of the clinic still reads every clinic patient's file and receives
+    the alerts (PRD 3). One row per patient, kept when the patient later books
+    with a colleague."""
+
+    __tablename__ = "primary_doctors"
+
+    patient_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    doctor_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("doctor_profiles.user_id", ondelete="CASCADE"), index=True
+    )
+    set_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
 class AppointmentNote(Base):

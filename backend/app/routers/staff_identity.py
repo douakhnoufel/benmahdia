@@ -31,6 +31,8 @@ router = APIRouter(prefix="/v1/staff/signups", tags=["staff"])
 class IdentityView(BaseModel):
     id_type: Literal["national_id", "passport"]
     full_name: str
+    # The Latin transliteration from a national ID's back MRZ, when present.
+    full_name_latin: str | None
     birth_date: str
     declared_at: str
     submissions: int
@@ -68,6 +70,11 @@ def view_identity(
     owner = str(d.user_id)
     try:
         name = idcrypto.decrypt(d.name_enc, kind="name", owner=owner).decode()
+        name_latin = (
+            idcrypto.decrypt(d.name_latin_enc, kind="name", owner=owner).decode()
+            if d.name_latin_enc is not None
+            else None
+        )
         birth = idcrypto.decrypt(d.birth_enc, kind="birth", owner=owner).decode()
     except idcrypto.CryptoError:
         raise ApiError(500, "identity_unreadable")
@@ -76,6 +83,7 @@ def view_identity(
     return IdentityView(
         id_type=d.id_type,
         full_name=name,
+        full_name_latin=name_latin,
         birth_date=birth,
         declared_at=utc_iso(d.declared_at),
         submissions=d.attempts,

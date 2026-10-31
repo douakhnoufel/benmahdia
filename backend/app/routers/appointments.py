@@ -7,7 +7,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from .. import audit, checkin, notices, scheduling
+from .. import audit, checkin, notices, primary, scheduling
 from ..clock import clock
 from ..config import get_settings
 from ..db import get_db
@@ -110,13 +110,27 @@ def _mine(db: Session, patient: User, appointment_id: uuid.UUID) -> Appointment:
     return a
 
 
-def _drop_expired_holds(db: Session, now: datetime) -> None:
+def _drop_expired_holds(
+    db: Session, now: datetime, doctor_id: uuid.UUID, start: datetime, end: datetime
+) -> None:
     """An unpaid hold that ran out never became an appointment: remove it so
-    its slot is free again (also for the database overlap rule)."""
+    its slot is free again (also for the database overlap rule).
+
+    A run-out hold whose card checkout is still open stays, unless the slot
+    being asked for overlaps it. So a late payment is confirmed while nobody
+    has taken the slot, and flagged for refund once somebody has (PAY-01),
+    whatever else happens in the clinic meanwhile."""
+    open_checkout = (
+        select(Payment.id)
+        .where(Payment.appointment_id == Appointment.id, Payment.status == PaymentStatus.pending)
+        .exists()
+    )
+    wanted = (Appointment.doctor_id == doctor_id) & (Appointment.start_utc < end) & (Appointment.end_utc > start)
     db.execute(
         delete(Appointment).where(
             Appointment.status == AppointmentStatus.awaiting_payment,
             Appointment.hold_expires_at <= now,
+            ~open_checkout | wanted,
         )
     )
 
@@ -165,7 +179,7 @@ def hold_slot(
         raise ApiError(409, "slot_unavailable")
     end = start + timedelta(minutes=profile.slot_minutes)
 
-    _drop_expired_holds(db, now)
+    _drop_expired_holds(db, now, profile.user_id, start, end)
     # One open hold per patient: starting a new one gives the old one back.
     db.execute(
         delete(Appointment).where(
@@ -264,6 +278,7 @@ def confirm(
     a.method = body.method
     a.hold_expires_at = None
     checkin.issue(db, a)
+    primary.link(db, a)
     notices.booking_alert(db, a, notices.CONFIRMED)
     audit.record(db, "appointment.confirmed", actor_id=patient.id, target=str(a.id), request=request)
     db.commit()
