@@ -145,6 +145,15 @@ class ApiAuthRepository implements AuthRepository {
       );
 
   @override
+  Future<void> logOut(AuthSession session) async {
+    await _send(
+      'POST',
+      'v1/auth/logout',
+      body: {'refresh_token': session.refreshToken},
+    );
+  }
+
+  @override
   Future<AuthSession> resetPassword({
     required String phoneProof,
     required String password,

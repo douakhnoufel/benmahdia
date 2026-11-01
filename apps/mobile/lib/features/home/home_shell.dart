@@ -7,9 +7,11 @@ import '../../core/app_route.dart';
 import '../../core/locale_provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_tokens.dart';
+import '../auth/auth_repository.dart';
 import '../booking/booking_flow.dart';
 import '../companion/companion_screen.dart';
 import '../recovery/recovery_screen.dart';
+import '../welcome/welcome_entry.dart';
 import 'home_scope.dart';
 
 /// Replaces everything (welcome, sign-in) with the signed-in app.
@@ -67,7 +69,12 @@ class _HomeShellState extends State<HomeShell> {
             const PositionedDirectional(
               top: 0,
               end: 0,
-              child: SafeArea(child: _LanguageButton()),
+              child: SafeArea(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [_LogoutButton(), _LanguageButton()],
+                ),
+              ),
             ),
           ],
         ),
@@ -97,6 +104,65 @@ class _HomeShellState extends State<HomeShell> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _LogoutButton extends ConsumerStatefulWidget {
+  const _LogoutButton();
+
+  @override
+  ConsumerState<_LogoutButton> createState() => _LogoutButtonState();
+}
+
+class _LogoutButtonState extends ConsumerState<_LogoutButton> {
+  bool _loggingOut = false;
+
+  Future<void> _logOut() async {
+    if (_loggingOut) return;
+    setState(() => _loggingOut = true);
+
+    final session = ref.read(sessionProvider);
+    if (session != null) {
+      unawaited(
+        ref
+            .read(authRepositoryProvider)
+            .logOut(session)
+            .catchError((Object _) {}),
+      );
+    }
+    await ref.read(sessionProvider.notifier).clear();
+
+    if (!mounted) return;
+    final reduced = AppMotion.reduced(context);
+    unawaited(
+      Navigator.of(context).pushAndRemoveUntil<void>(
+        appRoute(
+          Builder(
+            builder: (entryContext) => welcomeEntry(
+              entryContext,
+              onOpenHome: () => openHome(entryContext),
+            ),
+          ),
+          reduced: reduced,
+        ),
+        (route) => false,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return IconButton(
+      tooltip: l10n.logout,
+      onPressed: _loggingOut ? null : _logOut,
+      icon: _loggingOut
+          ? const SizedBox.square(
+              dimension: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.logout_rounded),
     );
   }
 }

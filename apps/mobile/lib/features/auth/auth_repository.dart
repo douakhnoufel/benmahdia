@@ -29,6 +29,10 @@ abstract interface class AuthRepository {
 
   Future<AuthSession> logIn(PhoneNumber phone, String password);
 
+  /// Revokes this login on the server. Local credentials are cleared even if
+  /// the device is offline.
+  Future<void> logOut(AuthSession session);
+
   /// Sets a new password from a reset proof and signs in.
   Future<AuthSession> resetPassword({
     required String phoneProof,
@@ -70,9 +74,9 @@ class SessionNotifier extends Notifier<AuthSession?> {
     unawaited(LocalStore.writeSession(session));
   }
 
-  void clear() {
+  Future<void> clear() async {
     state = null;
-    unawaited(LocalStore.clearSession());
+    await LocalStore.clearSession();
   }
 }
 

@@ -45,7 +45,7 @@ Future<void> _restoreSession(
         .timeout(const Duration(seconds: 8));
     container.read(sessionProvider.notifier).set(fresh);
   } on AuthFailure {
-    container.read(sessionProvider.notifier).clear();
+    await container.read(sessionProvider.notifier).clear();
   } on Object {
     // Offline or slow server: keep the saved login for next time.
   }

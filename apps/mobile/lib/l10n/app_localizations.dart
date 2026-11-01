@@ -152,6 +152,12 @@ abstract class AppLocalizations {
   /// **'Français'**
   String get langFrench;
 
+  /// No description provided for @logout.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل الخروج'**
+  String get logout;
+
   /// No description provided for @splashLine1.
   ///
   /// In ar, this message translates to:

@@ -39,6 +39,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get langFrench => 'Français';
 
   @override
+  String get logout => 'Se déconnecter';
+
+  @override
   String get splashLine1 => 'Pas à pas vers le rétablissement';
 
   @override
