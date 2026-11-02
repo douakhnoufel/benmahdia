@@ -1704,4 +1704,142 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get milestoneContinue => 'Continuer';
+
+  @override
+  String get momentEntryTitle => 'Un moment difficile';
+
+  @override
+  String get momentEntrySub =>
+      'Une envie forte ? Prenez quelques minutes pour la laisser passer.';
+
+  @override
+  String get momentTitle => 'Un moment difficile';
+
+  @override
+  String get momentIntro =>
+      'Une envie monte puis redescend, comme une vague. Vous n\'avez rien d\'autre à faire que la laisser passer.';
+
+  @override
+  String get momentIntensityTitle => 'Quelle est la force de l\'envie ?';
+
+  @override
+  String get momentScaleLow => 'Faible';
+
+  @override
+  String get momentScaleHigh => 'Très forte';
+
+  @override
+  String momentIntensityOption(int n) {
+    return '$n sur 10';
+  }
+
+  @override
+  String get momentHaltTitle =>
+      'Qu\'est-ce qui se passe en ce moment ? (facultatif)';
+
+  @override
+  String get momentHaltHungry => 'Faim';
+
+  @override
+  String get momentHaltAngry => 'Colère';
+
+  @override
+  String get momentHaltLonely => 'Solitude';
+
+  @override
+  String get momentHaltTired => 'Fatigue';
+
+  @override
+  String get momentStart => 'Commencer à respirer';
+
+  @override
+  String get momentInhale => 'Inspirez';
+
+  @override
+  String get momentHold => 'Retenez';
+
+  @override
+  String get momentExhale => 'Expirez';
+
+  @override
+  String momentTimer(String time) {
+    return 'Depuis $time';
+  }
+
+  @override
+  String get momentTipTitle => 'À essayer maintenant';
+
+  @override
+  String get momentTipBody =>
+      'Mangez quelque chose de piquant (harissa, piment). Le goût fort occupe vos sens et aide l\'envie à passer.';
+
+  @override
+  String get momentTipCaution =>
+      'À éviter en cas d\'ulcère, de reflux ou de médicament qui irrite l\'estomac. Demandez conseil à votre médecin.';
+
+  @override
+  String get momentPlanTitle => 'Mon plan si-alors';
+
+  @override
+  String get momentPlanIf => 'Si...';
+
+  @override
+  String get momentPlanThen => 'Alors je...';
+
+  @override
+  String get momentPlanEmpty =>
+      'Écrivez ce que vous ferez quand l\'envie arrive. Par exemple : si je me sens seul, j\'appelle un proche.';
+
+  @override
+  String momentPlanLine(String ifText, String thenText) {
+    return 'Si $ifText, alors $thenText';
+  }
+
+  @override
+  String get momentPlanAdd => 'Écrire mon plan';
+
+  @override
+  String get momentPlanEdit => 'Modifier';
+
+  @override
+  String get momentPlanSave => 'Enregistrer';
+
+  @override
+  String get momentPassed => 'L\'envie est passée';
+
+  @override
+  String get momentAfterTitle =>
+      'Et maintenant, quelle est la force de l\'envie ?';
+
+  @override
+  String get momentFinish => 'Terminer';
+
+  @override
+  String get momentSaveFailed => 'Enregistrement impossible. Réessayez.';
+
+  @override
+  String get momentResultTitle => 'Ce moment est passé, et c\'est un vrai pas.';
+
+  @override
+  String get momentBefore => 'Avant';
+
+  @override
+  String get momentAfter => 'Après';
+
+  @override
+  String get momentResultDown =>
+      'L\'envie a baissé. Gardez ce souvenir pour la prochaine fois.';
+
+  @override
+  String get momentResultSame =>
+      'L\'envie n\'a pas encore baissé, et c\'est possible. Elle finira par redescendre. Vous pouvez en parler à votre médecin.';
+
+  @override
+  String get momentClose => 'Fermer';
+
+  @override
+  String get sharingOnlyYou => 'Vous seul';
+
+  @override
+  String get sharingDoctor => 'Votre médecin voit ceci';
 }

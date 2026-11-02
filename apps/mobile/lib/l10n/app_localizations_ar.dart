@@ -1677,4 +1677,139 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get milestoneContinue => 'متابعة';
+
+  @override
+  String get momentEntryTitle => 'لحظة صعبة';
+
+  @override
+  String get momentEntrySub => 'رغبة قوية؟ امنح نفسك بضع دقائق لتمرّ.';
+
+  @override
+  String get momentTitle => 'لحظة صعبة';
+
+  @override
+  String get momentIntro =>
+      'الرغبة ترتفع ثم تنخفض كالموجة. لا يُطلب منك سوى أن تتركها تمرّ.';
+
+  @override
+  String get momentIntensityTitle => 'ما مدى قوة الرغبة؟';
+
+  @override
+  String get momentScaleLow => 'خفيفة';
+
+  @override
+  String get momentScaleHigh => 'قوية جداً';
+
+  @override
+  String momentIntensityOption(int n) {
+    return '$n من 10';
+  }
+
+  @override
+  String get momentHaltTitle => 'ما الذي يحدث الآن؟ (اختياري)';
+
+  @override
+  String get momentHaltHungry => 'جوع';
+
+  @override
+  String get momentHaltAngry => 'غضب';
+
+  @override
+  String get momentHaltLonely => 'وحدة';
+
+  @override
+  String get momentHaltTired => 'تعب';
+
+  @override
+  String get momentStart => 'ابدأ التنفس';
+
+  @override
+  String get momentInhale => 'شهيق';
+
+  @override
+  String get momentHold => 'احبس النفس';
+
+  @override
+  String get momentExhale => 'زفير';
+
+  @override
+  String momentTimer(String time) {
+    return 'منذ $time';
+  }
+
+  @override
+  String get momentTipTitle => 'جرّب الآن';
+
+  @override
+  String get momentTipBody =>
+      'تناول شيئاً حارّاً (هريسة، فلفل حار). الطعم القوي يشغل حواسك ويساعد الرغبة على المرور.';
+
+  @override
+  String get momentTipCaution =>
+      'تجنّب ذلك عند وجود قرحة أو ارتجاع، أو عند تناول دواء يهيّج المعدة. استشر طبيبك.';
+
+  @override
+  String get momentPlanTitle => 'خطتي: إذا... فإنني';
+
+  @override
+  String get momentPlanIf => 'إذا...';
+
+  @override
+  String get momentPlanThen => 'فإنني...';
+
+  @override
+  String get momentPlanEmpty =>
+      'اكتب ما ستفعله عند ظهور الرغبة. مثال: إذا شعرت بالوحدة، أتصل بأحد المقرّبين.';
+
+  @override
+  String momentPlanLine(String ifText, String thenText) {
+    return 'إذا $ifText، فإنني $thenText';
+  }
+
+  @override
+  String get momentPlanAdd => 'اكتب خطتي';
+
+  @override
+  String get momentPlanEdit => 'تعديل';
+
+  @override
+  String get momentPlanSave => 'حفظ';
+
+  @override
+  String get momentPassed => 'مرّت الرغبة';
+
+  @override
+  String get momentAfterTitle => 'والآن، ما مدى قوة الرغبة؟';
+
+  @override
+  String get momentFinish => 'إنهاء';
+
+  @override
+  String get momentSaveFailed => 'تعذّر الحفظ. حاول مرة أخرى.';
+
+  @override
+  String get momentResultTitle => 'هذه اللحظة مرّت، وهذه خطوة حقيقية.';
+
+  @override
+  String get momentBefore => 'قبل';
+
+  @override
+  String get momentAfter => 'بعد';
+
+  @override
+  String get momentResultDown =>
+      'انخفضت الرغبة. احتفظ بهذه التجربة للمرة القادمة.';
+
+  @override
+  String get momentResultSame =>
+      'لم تنخفض الرغبة بعد، وهذا وارد. ستنخفض مع الوقت. يمكنك الحديث عن ذلك مع طبيبك.';
+
+  @override
+  String get momentClose => 'إغلاق';
+
+  @override
+  String get sharingOnlyYou => 'أنت فقط';
+
+  @override
+  String get sharingDoctor => 'يراه طبيبك';
 }

@@ -13,6 +13,7 @@ import '../articles/articles_screen.dart';
 import '../booking/booking_models.dart';
 import '../booking/booking_repository.dart';
 import '../booking/booking_widgets.dart';
+import '../craving/moment_entry_card.dart';
 import '../home/home_scope.dart';
 import 'addiction_form_screen.dart';
 import 'daily_check_screen.dart';
@@ -476,6 +477,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
         children: [
           StaggeredReveal(
             children: [
+              const MomentEntryCard(),
               if (_addictions.isEmpty)
                 _EmptyCounters(onAdd: _addAddiction)
               else ...[
