@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../theme/app_tokens.dart';
-import '../auth/auth_flow.dart';
+import '../auth/auth_repository.dart';
 import '../intro/intro_screen.dart';
 import '../home/home_shell.dart';
-import '../profile/profile_flow.dart';
-import '../splash/splash_screen.dart';
-import '../welcome/welcome_screen.dart';
+import '../splash/life_quality_splash_screen.dart';
+import '../welcome/welcome_entry.dart';
 
 enum _Stage { splash, intro, welcome }
 
@@ -34,28 +34,23 @@ class _AppStartState extends State<AppStart> {
       switchInCurve: AppMotion.curve,
       switchOutCurve: AppMotion.curve,
       child: switch (_stage) {
-        _Stage.splash => SplashScreen(
+        _Stage.splash => LifeQualitySplashScreen(
           key: const ValueKey(_Stage.splash),
           ready: widget.ready,
-          onDone: () => _go(_Stage.intro),
+          // A restored login goes straight to the app.
+          onFinish: () =>
+              ProviderScope.containerOf(context).read(sessionProvider) != null
+              ? openHome(context)
+              : _go(_Stage.intro),
         ),
         _Stage.intro => IntroScreen(
           key: const ValueKey(_Stage.intro),
           onDone: () => _go(_Stage.welcome),
         ),
-        _Stage.welcome => WelcomeScreen(
+        _Stage.welcome => welcomeEntry(
+          context,
           key: const ValueKey(_Stage.welcome),
-          // Account first (PRD 12.1), then "Complete your profile", which
-          // has no Skip (PRD 4.2): booking stays closed until it is approved.
-          onCreateAccount: () => openSignUp(
-            context,
-            onSignedIn: (_) =>
-                openProfile(context, afterFinish: () => openHome(context)),
-          ),
-          // Everyone lands on the home shell (recovery tab); the
-          // appointments tab shows what is missing from the profile.
-          onLogin: () =>
-              openLogin(context, onSignedIn: (_) => openHome(context)),
+          onOpenHome: () => openHome(context),
         ),
       },
     );

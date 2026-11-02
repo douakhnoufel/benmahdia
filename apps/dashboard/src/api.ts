@@ -101,14 +101,23 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
 /** Like [request], for a binary answer (the patient's selfie). */
 async function requestBlob(path: string): Promise<Blob> {
+  return (await requestFile(path)).blob;
+}
+
+/** A binary answer with the file name the server suggests. */
+async function requestFile(path: string): Promise<{ blob: Blob; filename: string }> {
   let res = await raw('GET', path, undefined, session?.access_token);
   if (res.status === 401 && (await refresh())) {
     res = await raw('GET', path, undefined, session?.access_token);
   }
   if (res.status === 401) setSession(null);
   if (!res.ok) return parse<never>(res);
-  return res.blob();
+  const disposition = res.headers.get('content-disposition') ?? '';
+  const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? 'export.csv';
+  return { blob: await res.blob(), filename };
 }
+
+export type ExportSheet = 'patients' | 'appointments';
 
 /** Who is signed in. The super admin is also a doctor (PRD 3). */
 export type Me = { id: string; role: 'doctor' | 'super_admin'; name_ar: string; name_fr: string };
@@ -164,7 +173,11 @@ export type Visit = {
   /** The doctor's own note, or a colleague's note its author shared. */
   has_note: boolean;
   note_shared: boolean;
+  /** Days until the next visit the doctor chose; null means the default 30. */
+  next_follow_up_days?: FollowUpDays | null;
 };
+
+export type FollowUpDays = 15 | 30 | 60;
 
 /** The doctor's note after a visit; private unless shared. Never shown to the patient or the AI. */
 export type Note = { text: string | null; updated_at: string | null; shared: boolean; mine: boolean };
@@ -234,6 +247,8 @@ export type Identity = {
   /** The document declared: the Algerian national ID card or passport. */
   id_type?: 'national_id' | 'passport';
   full_name: string;
+  /** Latin transliteration from a national ID's back MRZ, when scanned. */
+  full_name_latin?: string | null;
   birth_date: string;
   declared_at: string;
   submissions: number;
@@ -391,6 +406,8 @@ export const api = {
   setPaid: (id: string, paid: boolean) => request<AgendaItem>('POST', `v1/staff/appointments/${id}/paid`, { paid }),
   checkin: (code: string) => request<AgendaItem>('POST', 'v1/staff/checkin', { code }),
   patients: () => request<Patient[]>('GET', 'v1/staff/patients'),
+  /** Hard-deletes a patient account and all of its data (cascade). Audit kept. */
+  deletePatient: (patientId: string) => request<null>('DELETE', `v1/staff/patients/${patientId}`),
   signups: () => request<Signup[]>('GET', 'v1/staff/signups'),
   approve: (id: string) => request<Signup>('POST', `v1/staff/signups/${id}/approve`),
   reject: (id: string, reason?: string) =>
@@ -405,6 +422,13 @@ export const api = {
   /** Empty text deletes the note. */
   saveNote: (appointmentId: string, text: string, shared: boolean) =>
     request<Note>('PUT', `v1/staff/appointments/${appointmentId}/note`, { text, shared }),
+  /** When the patient's next visit should be after this one: 15, 30 or 60 days. */
+  setFollowUp: (appointmentId: string, days: FollowUpDays) =>
+    request<{ appointment_id: string; next_follow_up_days: FollowUpDays }>(
+      'PUT',
+      `v1/staff/appointments/${appointmentId}/follow-up`,
+      { days },
+    ),
   patientAddictions: (patientId: string) =>
     request<PatientAddiction[]>('GET', `v1/staff/patients/${patientId}/addictions`),
   reviewAddiction: (patientId: string, addictionId: string, decision: 'confirm' | 'reject') =>
@@ -428,4 +452,6 @@ export const api = {
   updateArticle: (id: string, article: ArticleInput) => request<Article>('PUT', `v1/staff/articles/${id}`, article),
   /** A temporary browser URL for the selfie; release it with URL.revokeObjectURL. */
   selfie: async (id: string) => URL.createObjectURL(await requestBlob(`v1/staff/signups/${id}/selfie`)),
+  /** Super admin only: a CSV that Excel opens (no clinical data). */
+  exportSheet: (sheet: ExportSheet) => requestFile(`v1/admin/export/${sheet}.csv`),
 };

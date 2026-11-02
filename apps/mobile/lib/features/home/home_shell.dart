@@ -1,10 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/app_route.dart';
+import '../../core/locale_provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_tokens.dart';
+import '../account/profile_screen.dart';
 import '../booking/booking_flow.dart';
 import '../companion/companion_screen.dart';
 import '../recovery/recovery_screen.dart';
@@ -20,8 +23,8 @@ void openHome(BuildContext context, {HomeTab tab = HomeTab.recovery}) {
   );
 }
 
-/// The signed-in app: appointments, recovery and the companion behind a
-/// bottom bar. Each tab keeps its state while another is shown. Recovery is
+/// The signed-in app: appointments, recovery, the companion and the profile
+/// behind a bottom bar. Each tab keeps its state while another is shown. Recovery is
 /// the home tab (PRD 5: the reason patients open the app every day).
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key, this.initial = HomeTab.recovery});
@@ -49,15 +52,27 @@ class _HomeShellState extends State<HomeShell> {
       select: _select,
       refresh: _refresh,
       child: Scaffold(
-        body: IndexedStack(
-          index: _tab.index,
+        body: Stack(
           children: [
-            AppointmentsGate(
-              key: ValueKey('appointments$_generation'),
-              showBack: false,
+            IndexedStack(
+              index: _tab.index,
+              children: [
+                AppointmentsGate(
+                  key: ValueKey('appointments$_generation'),
+                  showBack: false,
+                ),
+                RecoveryScreen(key: ValueKey('recovery$_generation')),
+                const CompanionScreen(),
+                ProfileScreen(key: ValueKey('profile$_generation')),
+              ],
             ),
-            RecoveryScreen(key: ValueKey('recovery$_generation')),
-            const CompanionScreen(),
+            // Profile has its own language and sign-out rows.
+            if (_tab != HomeTab.profile)
+              const PositionedDirectional(
+                top: 0,
+                end: 0,
+                child: SafeArea(child: _LanguageButton()),
+              ),
           ],
         ),
         bottomNavigationBar: DecoratedBox(
@@ -82,10 +97,45 @@ class _HomeShellState extends State<HomeShell> {
                 selectedIcon: const Icon(Icons.chat_bubble_rounded),
                 label: l10n.navCompanion,
               ),
+              NavigationDestination(
+                icon: const Icon(Icons.person_outline_rounded),
+                selectedIcon: const Icon(Icons.person_rounded),
+                label: l10n.navProfile,
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Switches Arabic / French after sign-in (the sign-in screens have their own
+/// toggle).
+class _LanguageButton extends ConsumerWidget {
+  const _LanguageButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final notifier = ref.read(localeProvider.notifier);
+    final current = ref.watch(localeProvider).languageCode;
+    return PopupMenuButton<String>(
+      tooltip: l10n.langArabic == 'العربية' ? 'اللغة' : 'Langue',
+      icon: const Icon(Icons.translate_rounded, color: AppColors.textBody),
+      onSelected: (code) => notifier.set(Locale(code)),
+      itemBuilder: (_) => [
+        CheckedPopupMenuItem(
+          value: 'ar',
+          checked: current == 'ar',
+          child: Text(l10n.langArabic),
+        ),
+        CheckedPopupMenuItem(
+          value: 'fr',
+          checked: current == 'fr',
+          child: Text(l10n.langFrench),
+        ),
+      ],
     );
   }
 }

@@ -58,7 +58,7 @@ Four roles. A patient sees only their own data; every doctor of the clinic sees 
 | --- | --- | --- | --- |
 | Super admin | One of the 3 doctors (also holds the Doctor role) | Create and deactivate doctor accounts, approve new patient accounts, view platform stats, manage quotes library, configure AI settings | Read other doctors' patient conversations or notes through admin screens |
 | Clinic staff | Reception / front desk | Review ID declarations the app could not approve automatically, approve or reject any declaration (including overturning an automatic approval) with a reason | See clinical data, conversations, notes or medications |
-| Doctor (admin) | Psychiatrist | Manage the clinic's patients, set availability, manage appointments (and see every doctor's appointments and agenda in the clinic), prescribe medication schedules, set addiction profiles, review AI alerts and summaries | See a colleague's private visit notes (unless the author shares them) |
+| Doctor (admin) | Psychiatrist | Manage the clinic's patients (including permanently deleting a patient account from the dashboard, §12.6), set availability, manage appointments (and see every doctor's appointments and agenda in the clinic), prescribe medication schedules, set addiction profiles, review AI alerts and summaries | See a colleague's private visit notes (unless the author shares them); delete a doctor or staff account |
 | Patient | Person in treatment | Book, pay for and cancel appointments, enter their addictions, track sobriety, confirm medications, read articles, chat with the AI companion, delete their account | See other patients, edit their medications, delete relapse history |
 
 **Multi-doctor rules**
@@ -94,17 +94,17 @@ After signing in, the patient goes to **Complete your profile**: scan their **Al
 - **When:** only after sign-in (account created, phone confirmed by OTP), never for a signed-out user. It comes right after sign-up and cannot be skipped. A patient whose details were refused is sent back to it with the reason.
 - **Consent:** before anything is captured, a screen says what is read, what is stored, who sees it, and asks the patient to agree. Start is disabled until they do.
 - **Document:** the patient first picks the Algerian national ID card or the Algerian passport; the choice is sent as `id_type` (`national_id` / `passport`).
-- **Scan:** an in-app camera screen shows a frame shaped like the card (or the passport page). Camera frames are read live, in memory, by on-device text recognition; **no picture is written to the phone** or uploaded. The screen closes by itself when the same details are read on two frames in a row. National ID: the 18-digit number and the birth date from the front. Passport: the two machine-readable lines (MRZ, ICAO 9303) give the number, birth date and name; both check digits must match, and the issuing country must be `DZA`, otherwise the screen says only the Algerian passport is accepted. "Type it instead" is always available; if the camera is refused, the screen explains how to allow it.
+- **Scan:** an in-app camera screen shows a frame shaped like the card (or the passport page). Camera frames are read live, in memory, by on-device text recognition; **no picture is written to the phone** or uploaded. The screen closes by itself when the same details are read on two frames in a row. National ID: read on **both sides** — the front gives the 18-digit number and the birth date; the back's machine-readable zone (MRZ, ICAO 9303 TD1) gives the **Latin transliteration of the name** and the birth date, and is accepted only when its birth-date check digit matches and the issuing country is `DZA`. The card is not read in Arabic (the on-device recognizer is Latin-only), so the patient writes their Arabic name themselves. Passport: the two machine-readable lines (MRZ, ICAO 9303 TD3) give the number, birth date and name; both check digits must match, and the issuing country must be `DZA`, otherwise the screen says only the Algerian passport is accepted. "Type it instead" is always available; if the camera is refused, the screen explains how to allow it.
 - **Selfie:** an in-app front-camera screen with a face oval (JPEG, at most 2 MB). The shutter only works when exactly one face is centred and close enough — a framing check, not a liveness check. The patient sees the photo and can retake it; the camera's temporary file is deleted as soon as it is read. It is for clinic staff to compare by eye when needed: there is no automatic face matching against the card, and no liveness check in this version (a selfie ↔ card-photo match before automatic approval is a later project).
-- **Confirm or edit:** the app pre-fills three fields — ID or passport number, full name, birth date. The scan fills the number and birth date (and, from a passport, the name); the patient types or corrects the full name. The patient must review all three and can correct any of them before submitting. If the scan fails, the patient types the fields by hand. Nothing is sent until the patient taps send.
-- **What is sent:** the document type, the three confirmed text fields and the selfie (base64 JPEG in one JSON request), over TLS, to our server in Algeria. No card image, no OCR raw text.
+- **Confirm or edit:** the app pre-fills the fields — ID or passport number, name, birth date. For a national ID the scan fills the number, the birth date and the **Latin** name (from the back MRZ), and the patient writes their **Arabic** name. For a passport the scan fills the number, birth date and name. The patient reviews every field and can correct any of them before submitting. If the scan fails, the patient types the fields by hand. Nothing is sent until the patient taps send.
+- **What is sent:** the document type, the confirmed text fields (ID number, name, birth date, and for a national ID the Latin name too) and the selfie (base64 JPEG in one JSON request), over TLS, to our server in Algeria. No card image, no OCR raw text.
 - **Server processing (never on the phone):**
   1. Normalize the ID number (trim, remove spaces and separators, uppercase).
   2. Compute `id_hmac = HMAC-SHA256(server_secret, normalized_id)`. The key lives only in the server `.env`, never in the app or the database.
   3. Encrypt full name and birth date (AES-256-GCM, key from `.env`, separate from the HMAC key).
   4. Discard the plain ID number. It is never stored, logged or returned by any endpoint.
   5. Encrypt the selfie (AES-256-GCM, its own key from `.env`) and write it to a private folder outside the web root (file mode 0600). The file name reveals nothing about the patient.
-- **What is stored (minimum):** `id_hmac` (unique), encrypted name, encrypted birth date, the encrypted selfie file, `id_status`, `id_declared_at`, the number of submissions and the reject reason. Nothing else from the card.
+- **What is stored (minimum):** `id_hmac` (unique), encrypted name (and, for a national ID, the encrypted Latin name from the back MRZ), encrypted birth date, the encrypted selfie file, `id_status`, `id_declared_at`, the number of submissions and the reject reason. Nothing else from the card.
 - **Duplicate detection:** `id_hmac` has a unique index. If it already belongs to another account, the submission is refused with a neutral message ("This ID is already linked to an account — contact the clinic"), the attempt is written to the audit log, and the clinic sees it on the sign-ups page. The message never reveals whose account it is.
 - **Status values (`id_status`):** `none` (not yet sent) → `declared` (fields confirmed and stored) → decision: `approved` or `rejected` (with reason), made automatically or by clinic staff. `duplicate` marks a refused attempt. The label **"ID declared"** is used in the app and the dashboard for `declared` and stays visible next to `approved` ("ID declared · approved") — the system never displays "verified".
 - **Approval:** the doctor does not approve IDs. The app approves automatically when every check passes: the fields were read by the scanner and not edited by hand, passport check digits are valid, the ID number is not already used (HMAC), and the selfie has exactly one clear face. Otherwise the declaration goes to the clinic staff queue. Clinic staff see the decrypted name, birth date and selfie (never the ID number, never a card image) and approve or reject with a reason; they can also overturn an automatic approval. Each decision records who made it (`auto` or the staff member). Opening the details and opening the selfie are each in the audit log. These checks prove the card is readable and unused, not that it belongs to the person holding the phone, so the front desk compares with the original card at the first visit. Because "not edited" and "one face" are signals sent by the app, the staff override is the backstop. A rejection deletes the selfie; the patient can resubmit (at most 4 submissions in all, i.e. 3 after a rejection).
@@ -159,7 +159,11 @@ The patient pays for each appointment in the app through Chargily Pay; a slot is
 - **Flow:** patient picks a slot → slot is held → Chargily checkout opens → Chargily sends a signed webhook to the backend → appointment becomes confirmed and both sides are notified: the patient in the app, the doctor by a dashboard alert (also when the patient cancels). Alerts carry no medical content.
 - **Price:** set per doctor by the super admin.
 - **Receipts:** the patient sees a receipt in the app for each paid appointment (reference number, doctor, time, amount, method, payment date, Chargily reference for cards) and can copy it as text. It is a payment receipt, not a tax invoice. The doctor and super admin see paid / unpaid status per appointment.
-- **Cancellations and refunds:** deadline, refund or credit, and no-show rules to decide with the clinic.
+- **Pay at the clinic:** besides paying online, a patient may choose to pay at the clinic. The slot is then held under the no-show policy below instead of being paid up front.
+- **No-show policy (anti fake-booking):** before picking a slot the app warns the patient (on the doctor step) that this policy applies.
+  - A patient who books with **pay at the clinic** and does not show up may be added to a **blacklist** that blocks further bookings. The clinic lifts a blacklisting manually.
+  - A patient who **paid online** and cannot attend is offered a **refund or a reschedule** — they are not blacklisted for a visit they already paid for.
+- **Cancellations and refunds:** cancellation is allowed up to the doctor's notice window (§4.3). Online payments cancelled in time are refunded or rescheduled; the exact deadline and any credit are configured with the clinic.
 - **Security:** the app never sees or stores card numbers; only Chargily's payment id and status are kept.
 
 **Acceptance criteria**
@@ -474,7 +478,7 @@ The biggest risks are GPU hosting availability in Algeria and the AI's behaviour
 - [ ] Final hosting provider and server specs.
 - [ ] Languages for v1: Arabic + French only, or Darja and English too?
 
-* [ ] Appointment price, and refund rules for cancellations and no-shows.
+* [ ] Appointment price. No-show / refund rules decided (§4.4): pay-at-clinic no-show risks the blacklist; online payers get a refund or reschedule. Blacklist enforcement and online refunds are not built yet.
 * [ ] Whose Chargily account receives the payments: the clinic's or yours?
 * [ ] Who writes and approves the articles, and how many at launch?
 * [ ] coconutStudio: confirm hosting in Algeria, pricing and data-processing terms.
@@ -518,6 +522,15 @@ The five flows below are what the backend, the patient app and the dashboard mus
 1. Settings → Delete account → confirm with PIN.
 2. The account is disabled at once and the doctor is notified.
 3. Personal data is erased after the grace period; records the clinic must keep follow the retention policy.
+
+### 12.6 Staff deletion of a patient account
+
+Separate from the patient's own self-service deletion (§12.5), a doctor can permanently delete a patient account from the dashboard (PRD 3: shared files, so any clinic doctor may do it).
+
+1. Patient file → Delete account → confirm by typing the patient's phone number.
+2. The patient row and all of its data (appointments, payments, addictions, habits, medications, daily checks, alerts, favourites, ID declaration, selfie) are removed at once — a hard delete, with no grace period.
+3. The audit log records which doctor deleted which patient; the audit trail is kept even though the account is gone.
+4. Only patient accounts can be deleted this way, never a doctor or the super admin.
 
 ## 13. Build steps
 

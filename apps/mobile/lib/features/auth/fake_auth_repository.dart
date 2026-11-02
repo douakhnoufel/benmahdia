@@ -124,6 +124,9 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> logOut(AuthSession session) async {}
+
+  @override
   Future<AuthSession> resetPassword({
     required String phoneProof,
     required String password,

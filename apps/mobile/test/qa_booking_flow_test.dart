@@ -458,28 +458,33 @@ void main() {
       });
     }
 
-    _bug(
-      'UX-07',
-      'no empty state when the clinic lists no doctor',
-      'no doctor to book: the screen explains it instead of a blank list',
-      (tester) async {
-        await _pump(
-          tester,
-          BookDoctorScreen(onNext: (_) {}),
-          repo: _NoDoctors(),
-        );
-        final known = {
-          _ar.bookTitle,
-          _ar.bookDoctorTitle,
-          _ar.bookDoctorBody,
-          _ar.bookNotice(24),
-          _ar.bookChooseTime,
-          _ar.verifyStep(1, 3),
-        };
-        final extra = _texts(tester).where((t) => !known.contains(t));
-        expect(extra, isNotEmpty, reason: 'only the title and a dead button');
-      },
-    );
+    for (final french in [false, true]) {
+      testWidgets(
+        'UX-07 no doctor to book: the screen explains it and offers to call '
+        '· ${french ? 'fr' : 'ar'}',
+        (tester) async {
+          final l10n = french ? _fr : _ar;
+          final opened = <Uri>[];
+          await _pump(
+            tester,
+            BookDoctorScreen(onNext: (_) {}),
+            repo: _NoDoctors(),
+            french: french,
+            extra: [
+              openUrlProvider.overrideWithValue((url) async {
+                opened.add(url);
+                return true;
+              }),
+            ],
+          );
+          expect(find.text(l10n.bookNoDoctorTitle), findsOneWidget);
+          expect(find.text(l10n.bookNoDoctorBody), findsOneWidget);
+          expect(find.text('+213 551 03 83 85'), findsOneWidget);
+          await tester.tap(find.text('+213 551 03 83 85'));
+          expect(opened.single.toString(), 'tel:+213551038385');
+        },
+      );
+    }
   });
 
   group('ID gate wording (PRD 4.2)', () {
@@ -700,6 +705,8 @@ void main() {
       await tester.tap(find.text('go'));
       await pumpFor(tester, _second);
       await tester.tap(find.text(_ar.bookChooseTime));
+      await pumpFor(tester, _second);
+      await tester.tap(find.text(_ar.bookPolicyContinue));
       await pumpFor(tester, _second);
       await tester.tap(find.text('09:00'));
       await pumpFor(tester, _second);

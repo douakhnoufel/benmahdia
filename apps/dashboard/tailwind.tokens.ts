@@ -23,7 +23,7 @@ export const tokens = {
       500: '#B9995F',
     },
     surface: '#FFFFFF',
-    background: '#FBF8F3',
+    background: '#FFFFFF',
     ink: {
       strong: '#10302C',
       body: '#3A4B48',

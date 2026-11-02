@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/local_store.dart';
 import 'api_auth_repository.dart';
 import 'auth_models.dart';
 import 'fake_auth_repository.dart';
@@ -25,6 +28,10 @@ abstract interface class AuthRepository {
   });
 
   Future<AuthSession> logIn(PhoneNumber phone, String password);
+
+  /// Revokes this login on the server. Local credentials are cleared even if
+  /// the device is offline.
+  Future<void> logOut(AuthSession session);
 
   /// Sets a new password from a reset proof and signs in.
   Future<AuthSession> resetPassword({
@@ -57,14 +64,20 @@ final authRepositoryProvider = Provider<AuthRepository>(
 );
 
 /// The signed-in patient, or null.
-// TODO(auth): keep the refresh token in secure storage across launches.
+/// Saved on the phone (encrypted) so the patient stays signed in.
 class SessionNotifier extends Notifier<AuthSession?> {
   @override
   AuthSession? build() => null;
 
-  void set(AuthSession session) => state = session;
+  void set(AuthSession session) {
+    state = session;
+    unawaited(LocalStore.writeSession(session));
+  }
 
-  void clear() => state = null;
+  Future<void> clear() async {
+    state = null;
+    await LocalStore.clearSession();
+  }
 }
 
 final sessionProvider = NotifierProvider<SessionNotifier, AuthSession?>(

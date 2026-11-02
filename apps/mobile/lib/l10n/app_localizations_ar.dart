@@ -37,6 +37,64 @@ class AppLocalizationsAr extends AppLocalizations {
   String get langFrench => 'Français';
 
   @override
+  String get logout => 'تسجيل الخروج';
+
+  @override
+  String get navProfile => 'حسابي';
+
+  @override
+  String get accountTitle => 'الحساب والإعدادات';
+
+  @override
+  String get profilePhone => 'رقم الهاتف';
+
+  @override
+  String get profileEmail => 'البريد الإلكتروني للتواصل';
+
+  @override
+  String get profileNone => 'غير محدد';
+
+  @override
+  String get profileEmailHint =>
+      'للتواصل معك فقط، وليس وسيلة لتسجيل الدخول. اتركه فارغا لحذفه.';
+
+  @override
+  String get profileEmailInvalid => 'عنوان البريد الإلكتروني غير صالح.';
+
+  @override
+  String get profileSave => 'حفظ';
+
+  @override
+  String get profileCancel => 'إلغاء';
+
+  @override
+  String get profileSaveFailed => 'تعذّر الحفظ. حاول مجددا.';
+
+  @override
+  String get profileIdStatus => 'بطاقة الهوية';
+
+  @override
+  String get profileIdNone => 'لم يُصرَّح بها بعد';
+
+  @override
+  String get accountIdDeclared => 'مُصرَّح بها، قيد المراجعة';
+
+  @override
+  String get profileIdApproved => 'هوية مُصرَّح بها';
+
+  @override
+  String get profileIdRejected => 'مرفوضة: صرّح بها مجددا';
+
+  @override
+  String get profileLanguage => 'اللغة';
+
+  @override
+  String get profileLoadFailed => 'تعذّر تحميل حسابك.';
+
+  @override
+  String get profileRetry => 'اضغط لإعادة المحاولة';
+
+  @override
   String get splashLine1 => 'خطوة بخطوة نحو التعافي';
 
   @override
@@ -284,6 +342,13 @@ class AppLocalizationsAr extends AppLocalizations {
       'أول طبيب تحجز معه يصبح طبيبك المتابع في العيادة.';
 
   @override
+  String get bookNoDoctorTitle => 'لا يوجد طبيب متاح للحجز الآن';
+
+  @override
+  String get bookNoDoctorBody =>
+      'لا يوجد أي طبيب مفتوح للحجز حالياً. اتصل بالعيادة لتحديد موعد.';
+
+  @override
   String get bookClinic => 'عيادة بن مهدية';
 
   @override
@@ -313,6 +378,19 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get bookChooseTime => 'اختيار اليوم والوقت';
+
+  @override
+  String get bookPolicyTitle => 'تنبيه مهم';
+
+  @override
+  String get bookPolicyBody =>
+      'إذا حجزت واخترت الدفع في العيادة ولم تحضر، قد يُدرَج حسابك في القائمة السوداء. لا تحجز إلا إذا كنت متأكداً من الحضور.\n\nأما إذا دفعت عبر الإنترنت، فنوفّر لك استرجاع المبلغ أو إعادة جدولة الموعد.';
+
+  @override
+  String get bookPolicyContinue => 'فهمت، متابعة';
+
+  @override
+  String get bookPolicyBack => 'تراجع';
 
   @override
   String get bookSlotTitle => 'اليوم والوقت';
@@ -627,8 +705,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String bookFollowUpBody(String span, String date) {
-    return 'بعد $span من موعدك يوم $date. يمكنك اختيار يوم قبله أو بعده.';
+    return 'بعد $span من موعدك يوم $date. يمكنك الحجز قبله أو بعده بيومين على الأكثر.';
   }
+
+  @override
+  String get bookOutsideFollowUp =>
+      'حدّد طبيبك موعد متابعتك: الحجز متاح فقط قبل اليوم المقترح أو بعده بيومين.';
 
   @override
   String get bookFollowUpOverdueTitle => 'حان وقت موعد المتابعة';
@@ -906,6 +988,15 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get profileFullName => 'الاسم الكامل';
+
+  @override
+  String get profileFullNameArabic => 'الاسم الكامل (بالعربية)';
+
+  @override
+  String get profileFullNameLatin => 'الاسم باللاتينية (كما في البطاقة)';
+
+  @override
+  String get profileFullNameLatinHint => 'يُقرأ من ظهر البطاقة';
 
   @override
   String get profileBirthDate => 'تاريخ الميلاد (سنة-شهر-يوم)';
@@ -1244,6 +1335,9 @@ class AppLocalizationsAr extends AppLocalizations {
       'اختر النوع وتاريخ آخر تعاطٍ. سيراجع طبيبك هذه المعلومات.';
 
   @override
+  String get addictionGoalsAuto => 'نحدّد لك أهدافك الصغيرة تلقائياً.';
+
+  @override
   String get addictionTypeLabel => 'النوع';
 
   @override
@@ -1292,7 +1386,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get profilePassportNumber => 'رقم جواز السفر';
 
   @override
-  String get scanPlaceCard => 'ضع البطاقة داخل الإطار';
+  String get scanPlaceCard => 'ضع وجه البطاقة داخل الإطار';
+
+  @override
+  String get scanPlaceCardBack => 'اقلب البطاقة وضع ظهرها داخل الإطار';
 
   @override
   String get scanPlacePassport =>
@@ -1580,4 +1677,187 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get milestoneContinue => 'متابعة';
+
+  @override
+  String get momentEntryTitle => 'أواجه لحظة صعبة';
+
+  @override
+  String get momentEntryBody =>
+      'تنفّس، اقتراح تجرّبه، وخطتك. ومعها طريق للوصول إلى العيادة.';
+
+  @override
+  String get momentEntryAction => 'ابدأ';
+
+  @override
+  String get momentTitle => 'لحظة صعبة';
+
+  @override
+  String get momentStartTitle => 'ما مدى قوة الرغبة الآن؟';
+
+  @override
+  String get momentIntensityBefore => 'قوة الرغبة الآن';
+
+  @override
+  String get momentIntensityAfter => 'قوة الرغبة بعد أن مرّت';
+
+  @override
+  String momentIntensityValue(String label, int value) {
+    return '$label: $value من 10';
+  }
+
+  @override
+  String get momentIntensityLow => 'خفيفة';
+
+  @override
+  String get momentIntensityHigh => 'قوية';
+
+  @override
+  String get momentTriggersTitle => 'ما الذي تشعر به الآن؟';
+
+  @override
+  String get momentTriggersHint => 'اختياري، ويساعد على فهم ما يسبق الرغبة';
+
+  @override
+  String get momentTriggerHungry => 'جائع';
+
+  @override
+  String get momentTriggerAngry => 'غاضب';
+
+  @override
+  String get momentTriggerLonely => 'وحيد';
+
+  @override
+  String get momentTriggerTired => 'متعب';
+
+  @override
+  String get momentTriggerOther => 'شيء آخر';
+
+  @override
+  String get momentNeedIntensity => 'اختر قوة الرغبة لنبدأ';
+
+  @override
+  String get momentStart => 'لنتنفّس معاً';
+
+  @override
+  String get momentSurfBody => 'الرغبة موجة: تعلو ثم تهدأ. ابقَ هنا حتى تهدأ.';
+
+  @override
+  String get momentBreatheIn => 'شهيق';
+
+  @override
+  String get momentBreatheHold => 'احبس';
+
+  @override
+  String get momentBreatheOut => 'زفير';
+
+  @override
+  String get momentBreatheSlowly => 'تنفّس ببطء';
+
+  @override
+  String get momentTipTitle => 'جرّب الآن';
+
+  @override
+  String get momentTipSpicy =>
+      'تناول شيئاً حارّاً مثل الهريسة أو الفلفل الحار: الطعم القوي يشغل الحواس.';
+
+  @override
+  String get momentTipGum =>
+      'علكة بالنعناع: المضغ والطعم المنعش يشغلان الحواس.';
+
+  @override
+  String get momentTipWater => 'اشرب كأس ماء ببطء، جرعة جرعة.';
+
+  @override
+  String get momentTipWalk => 'امشِ خمس دقائق، حتى داخل المنزل.';
+
+  @override
+  String get momentTipAnother => 'اقتراح آخر';
+
+  @override
+  String get momentPlanTitle => 'خطتي';
+
+  @override
+  String get momentPlanWhen => 'عندما';
+
+  @override
+  String get momentPlanThen => 'سوف';
+
+  @override
+  String get momentPlanWhenHint => 'عندما أشعر بالتعب في المساء';
+
+  @override
+  String get momentPlanThenHint => 'أشرب كأس ماء وأتصل بأخي';
+
+  @override
+  String get momentPlanSave => 'احفظ الخطة';
+
+  @override
+  String get momentPlanSaved => 'حُفظت الخطة على هاتفك';
+
+  @override
+  String get momentPlanEmpty =>
+      'لا توجد خطة بعد. اكتب خطوة واحدة تساعدك في اللحظة الصعبة.';
+
+  @override
+  String get momentPlanWrite => 'اكتب خطتي';
+
+  @override
+  String get momentPlanChange => 'عدّل الخطة';
+
+  @override
+  String momentPlanLine(String when, String then) {
+    return 'عندما $when، سوف $then.';
+  }
+
+  @override
+  String get momentClinicOpen => 'العيادة مفتوحة الآن';
+
+  @override
+  String get momentClinicClosed => 'العيادة مغلقة الآن';
+
+  @override
+  String get momentCallClinic => 'اتصل بالعيادة';
+
+  @override
+  String get momentCompanion => 'تحدّث مع المرافق';
+
+  @override
+  String get momentUrgent => 'مساعدة عاجلة';
+
+  @override
+  String get momentPassedAction => 'مرّت الرغبة';
+
+  @override
+  String get momentClosingTitle => 'كيف هي الرغبة الآن؟';
+
+  @override
+  String get momentSave => 'احفظ';
+
+  @override
+  String get momentBackToBreathing => 'عد إلى التنفّس';
+
+  @override
+  String get momentPassedTitle => 'لقد تجاوزت هذه اللحظة';
+
+  @override
+  String get momentPassedLower => 'هدأت الرغبة. كل مرة تمرّ فيها تصبح أسهل.';
+
+  @override
+  String get momentPassedSteady =>
+      'ما زالت قوية، ومع ذلك لم تستسلم. هذا يُحسب لك.';
+
+  @override
+  String get momentBefore => 'قبل';
+
+  @override
+  String get momentAfter => 'بعد';
+
+  @override
+  String get momentDone => 'تم';
+
+  @override
+  String get sharingOnlyYou => 'أنت فقط ترى هذا';
+
+  @override
+  String get sharingDoctorSees => 'طبيبك يرى هذا';
 }

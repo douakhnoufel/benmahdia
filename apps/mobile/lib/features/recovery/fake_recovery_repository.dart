@@ -335,18 +335,18 @@ final benmahdiaClinic = ClinicInfo(
   phones: const ['+213 551 03 83 85', '+213 697 17 23 26'],
   maps: Uri.parse('https://share.google/gizHNbNpfRqdHfYmQ'),
   hours: const {
-    DateTime.saturday: [_morning, _afternoon],
-    DateTime.sunday: [_morning, _afternoon],
-    DateTime.monday: [_morning],
-    DateTime.tuesday: [_morning, _afternoon],
-    DateTime.wednesday: [_morning, _afternoon],
-    DateTime.thursday: [(from: 7 * 60, to: 14 * 60 + 30)],
+    DateTime.saturday: [_open],
+    DateTime.sunday: [_open],
+    DateTime.monday: [_open],
+    DateTime.tuesday: [_open],
+    DateTime.wednesday: [_open],
+    DateTime.thursday: [_open],
     DateTime.friday: [],
   },
 );
 
-const OpenHours _morning = (from: 7 * 60, to: 12 * 60 + 30);
-const OpenHours _afternoon = (from: 13 * 60 + 30, to: 14 * 60 + 30);
+/// Every day but Friday, 07:30-14:30.
+const OpenHours _open = (from: 7 * 60 + 30, to: 14 * 60 + 30);
 
 /// The server's substance catalog (backend/app/substances.py), for demo
 /// mode and tests. The notes are placeholders the clinic replaces.

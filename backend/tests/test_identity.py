@@ -179,6 +179,50 @@ def test_an_id_linked_to_another_account_is_refused_neutrally(client, sms):
     assert queue["+213661111111"]["id_status"] == "declared"
 
 
+# --- two-sided national ID: both names ------------------------------------------------------
+
+NAME_AR = "كريم بن علي"                     # made up; the Arabic name from the front
+
+
+def test_national_id_keeps_both_the_arabic_and_the_latin_name(client, sms):
+    s = register(client, sms)
+    r = declare(client, s, full_name=NAME_AR, full_name_latin=NAME)
+    assert r.status_code == 201, r.text
+    doctor_with_password()
+    v = client.get(f"/v1/staff/signups/{user_id()}/identity", headers=doc_headers(client)).json()
+    assert v["full_name"] == NAME_AR
+    assert v["full_name_latin"] == NAME
+    with Session(engine) as db:
+        d = db.get(IdDeclaration, user_id())
+        assert d.name_latin_enc is not None
+        stored = d.name_enc + d.name_latin_enc
+        for secret in (NAME_AR, NAME, "Benali"):
+            assert secret.encode() not in stored      # both encrypted, neither in the clear
+
+
+def test_latin_name_is_optional_and_defaults_to_none(client, sms):
+    s = register(client, sms)
+    assert declare(client, s).status_code == 201
+    doctor_with_password()
+    v = client.get(f"/v1/staff/signups/{user_id()}/identity", headers=doc_headers(client)).json()
+    assert v["full_name_latin"] is None
+    with Session(engine) as db:
+        assert db.get(IdDeclaration, user_id()).name_latin_enc is None
+
+
+def test_resubmitting_without_a_latin_name_clears_the_old_one(client, sms):
+    s = register(client, sms)
+    assert declare(client, s, full_name=NAME_AR, full_name_latin=NAME).status_code == 201
+    doctor_with_password()
+    uid = user_id()
+    assert reject(client, uid).status_code == 200
+    assert declare(client, s, full_name="Karim Ben Ali").status_code == 201   # typed by hand, no latin
+    v = client.get(f"/v1/staff/signups/{uid}/identity", headers=doc_headers(client)).json()
+    assert v["full_name_latin"] is None
+    with Session(engine) as db:
+        assert db.get(IdDeclaration, uid).name_latin_enc is None
+
+
 # --- passports -----------------------------------------------------------------------------
 
 PASSPORT = "AB1234567"                    # made up
@@ -229,8 +273,9 @@ def test_the_doctor_sees_name_birth_date_and_selfie_and_every_view_is_logged(cli
     uid = user_id()
     v = client.get(f"/v1/staff/signups/{uid}/identity", headers=h)
     assert v.status_code == 200, v.text
-    assert v.json() == {"id_type": "national_id", "full_name": NAME, "birth_date": BIRTH,
-                        "declared_at": "2026-10-17T18:00:00Z", "submissions": 1, "has_selfie": True}
+    assert v.json() == {"id_type": "national_id", "full_name": NAME, "full_name_latin": None,
+                        "birth_date": BIRTH, "declared_at": "2026-10-17T18:00:00Z",
+                        "submissions": 1, "has_selfie": True}
     assert ID_NUMBER not in v.text
     img = client.get(f"/v1/staff/signups/{uid}/selfie", headers=h)
     assert img.status_code == 200 and img.content == JPEG

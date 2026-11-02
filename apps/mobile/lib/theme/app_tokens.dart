@@ -25,7 +25,7 @@ abstract final class AppColors {
 
   // Ink & lines
   static const surface = Color(0xFFFFFFFF);
-  static const background = sand50;
+  static const background = Color(0xFFFFFFFF);
   static const textStrong = Color(0xFF10302C);
   static const textBody = Color(0xFF3A4B48);
   static const textMuted = Color(0xFF6B7A77);
@@ -39,6 +39,13 @@ abstract final class AppColors {
   static const info = teal500;
   static const onPrimary = Color(0xFFFFFFFF);
   static const onSand = Color(0xFF10302C);
+
+  // Argon splash — a cool blue set used only by the launch splash
+  // (LifeQualitySplashScreen). Kept apart from the teal brand on purpose.
+  static const argonBgTop = Color(0xFFF4F8FB);
+  static const argonBgBottom = Color(0xFFE5EFF8);
+  static const argonBlue = Color(0xFF5A95C7);
+  static const argonInk = Color(0xFF1E3A5F);
 
   // Third-party sign-in buttons: colours fixed by Google's and Apple's
   // branding guidelines, not ours.
@@ -112,6 +119,13 @@ abstract final class AppMotion {
 
   /// One full breath of the splash logo (rings grow and fade, mark swells).
   static const breath = Duration(milliseconds: 4000);
+
+  /// One breath of the difficult-moment circle: inhale 4 s, hold 4 s,
+  /// exhale 6 s (habit-tracking design, step 1). Milliseconds, so the whole
+  /// cycle stays a compile-time constant.
+  static const breatheInMs = 4000;
+  static const breatheHoldMs = 4000;
+  static const breatheOutMs = 6000;
 
   /// Day-counter ring filling while its number counts up.
   static const ringFill = Duration(milliseconds: 1200);

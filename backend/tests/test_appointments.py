@@ -21,6 +21,8 @@ from .conftest import bearer, register
 SLOT = "2026-10-19T08:00:00Z"  # 09:00 in Algiers
 NEXT = "2026-10-19T08:15:00Z"
 THIRD = "2026-10-19T08:30:00Z"
+# 30 days after SLOT: the default follow-up day (a Wednesday).
+FOLLOW_UP = "2026-11-18T08:00:00Z"
 
 
 def hold(client, session, doctor, start=SLOT):
@@ -229,11 +231,11 @@ def test_list_shows_only_my_appointments_oldest_first(client, sms):
     doctor = make_doctor()
     a = verified_patient(client, sms, "0661111111")
     b = verified_patient(client, sms, "0662222222")
-    booked(client, a, doctor, NEXT)
     booked(client, a, doctor)
+    booked(client, a, doctor, FOLLOW_UP)
     booked(client, b, doctor, THIRD)
     mine = client.get("/v1/appointments", headers=headers(a)).json()
-    assert [x["start"] for x in mine] == [SLOT, NEXT]
+    assert [x["start"] for x in mine] == [SLOT, FOLLOW_UP]
     assert len(client.get("/v1/appointments", headers=headers(b)).json()) == 1
 
 

@@ -102,6 +102,23 @@ def test_checking_in_marks_the_patient_as_arrived(client, sms):
     assert audit_actions().count("appointment.checked_in") == 1
 
 
+def test_agenda_says_when_the_visit_was_paid(client, sms):
+    """The waiting room puts first those who paid before arriving."""
+    doc = doctor_with_password()
+    verified_patient(client, sms)
+    add_appointment(doc.user_id, user_id(), TODAY_EVENING, checkin_code=CODE)
+    h = doc_headers(client)
+    arrived = post(client, CODE, h).json()
+    assert (arrived["paid"], arrived["paid_at"]) == (False, None)
+    advance(minutes=5)
+    r = client.post(f"/v1/staff/appointments/{arrived['id']}/paid", json={"paid": True}, headers=h)
+    assert r.status_code == 200, r.text
+    [item] = client.get("/v1/staff/agenda?day=2026-10-17", headers=h).json()
+    assert item["paid"] is True
+    assert item["paid_at"] == "2026-10-17T18:05:00Z"
+    assert item["paid_at"] > item["checked_in_at"]
+
+
 def test_the_code_may_be_typed_loosely(client, sms):
     doc = doctor_with_password()
     verified_patient(client, sms)

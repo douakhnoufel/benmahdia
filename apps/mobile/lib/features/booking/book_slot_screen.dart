@@ -62,7 +62,22 @@ class _BookSlotScreenState extends ConsumerState<BookSlotScreen> {
       repo.calendar(widget.doctor),
       repo.followUp(),
     ).wait;
-    return (days: days, followUp: followUp);
+    if (followUp == null) return (days: days, followUp: null);
+    // Only the days around the follow-up can be booked (enforced by the API).
+    final now = repo.now();
+    return (
+      days: [
+        for (final d in days)
+          followUp.allows(d.day, now)
+              ? d
+              : DaySlots(
+                  day: d.day,
+                  slots: const [],
+                  closure: DayClosure.outsideFollowUp,
+                ),
+      ],
+      followUp: followUp,
+    );
   }
 
   /// The day the strip opens on: the free day nearest the follow-up, or the
@@ -822,9 +837,11 @@ class _NoSlots extends StatelessWidget {
           Text(l10n.bookNoSlots, style: text.titleLarge),
           const SizedBox(height: AppSpace.xs),
           Text(
-            closure == DayClosure.tooSoon
-                ? l10n.bookTooSoon(noticeHours)
-                : l10n.bookClosed,
+            switch (closure) {
+              DayClosure.tooSoon => l10n.bookTooSoon(noticeHours),
+              DayClosure.outsideFollowUp => l10n.bookOutsideFollowUp,
+              _ => l10n.bookClosed,
+            },
             textAlign: TextAlign.center,
             style: text.bodyMedium?.copyWith(color: AppColors.textMuted),
           ),

@@ -18,6 +18,8 @@ URL = "/v1/staff/availability"
 MONDAY = date(2026, 10, 19)
 MONDAY_9 = datetime(2026, 10, 19, 8, 0)  # 09:00 Algiers
 NINE, NOON, TWO, FOUR = 9 * 60, 12 * 60, 14 * 60, 16 * 60
+# The seeded clinic hours: 07:30-14:30, Saturday to Thursday.
+OPEN, CLOSE = 7 * 60 + 30, 14 * 60 + 30
 
 
 def window(weekday, start, end):
@@ -42,8 +44,8 @@ def test_reads_the_doctors_hours(client):
     assert r.status_code == 200
     body = r.json()
     assert (body["slot_minutes"], body["notice_hours"]) == (15, 24)
-    assert len(body["windows"]) == 12
-    assert body["windows"][0] == window(0, NINE, NOON)
+    assert len(body["windows"]) == 6
+    assert body["windows"][0] == window(0, OPEN, CLOSE)
     assert body["blocked_days"] == body["conflicts"] == []
 
 
@@ -104,7 +106,7 @@ def test_slot_length_and_notice(client, patient):
     assert monday_slots(client, patient, doc.user_id)["closure"] == "too_soon"
     r = client.put(f"{URL}/settings", json={"slot_minutes": 10, "notice_hours": 0}, headers=h)
     slots = monday_slots(client, patient, doc.user_id)["slots"]
-    assert [s["start"] for s in slots[:2]] == ["2026-10-19T08:00:00Z", "2026-10-19T08:10:00Z"]
+    assert [s["start"] for s in slots[:2]] == ["2026-10-19T06:30:00Z", "2026-10-19T06:40:00Z"]
     assert client.put(f"{URL}/settings", json={"slot_minutes": 20, "notice_hours": 24}, headers=h).status_code == 422
     assert client.put(f"{URL}/settings", json={"slot_minutes": 15, "notice_hours": 169}, headers=h).status_code == 422
     assert client.put(f"{URL}/settings", json={"slot_minutes": 15, "notice_hours": -1}, headers=h).status_code == 422
@@ -153,7 +155,7 @@ def test_a_doctor_only_changes_their_own_hours(client):
     assert (r.status_code, r.json()["detail"]["code"]) == (404, "blocked_day_not_found")
     client.put(f"{URL}/windows", json={"windows": [window(2, NINE, NOON)]}, headers=theirs)
     body = client.get(URL, headers=mine).json()
-    assert len(body["windows"]) == 12 and len(body["blocked_days"]) == 1
+    assert len(body["windows"]) == 6 and len(body["blocked_days"]) == 1
     assert client.get(URL, headers=theirs).json()["blocked_days"] == []
 
 

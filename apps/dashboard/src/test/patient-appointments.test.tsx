@@ -224,3 +224,35 @@ describe('Patient file: notes', () => {
     expect(await within(region).findByRole('alert')).toHaveTextContent('Enregistrement impossible. Réessayez.');
   });
 });
+
+describe('Patient file: next visit interval', () => {
+  it('lets the doctor pick 15, 30 or 60 days on their own visit only', async () => {
+    const sent: { url: string; method?: string; body?: string }[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: URL, init?: RequestInit) => {
+        sent.push({ url: String(input), method: init?.method, body: init?.body as string | undefined });
+        if (String(input).endsWith('/follow-up')) {
+          return new Response(JSON.stringify({ appointment_id: 'a1', next_follow_up_days: 15 }), { status: 200 });
+        }
+        return new Response(JSON.stringify(history), { status: 200 });
+      }),
+    );
+    renderIn();
+    const region = await card();
+    const rows = await within(region).findAllByRole('listitem');
+    // Own confirmed visit: picker shown, default 30. Colleague's visit: none.
+    const picker = within(rows[0]).getByLabelText('Prochain rendez-vous dans');
+    expect(picker).toHaveValue('30');
+    expect(within(rows[1]).queryByLabelText('Prochain rendez-vous dans')).toBeNull();
+    // No-show and cancelled visits have no follow-up.
+    expect(within(rows[2]).queryByLabelText('Prochain rendez-vous dans')).toBeNull();
+    expect(within(rows[3]).queryByLabelText('Prochain rendez-vous dans')).toBeNull();
+
+    await userEvent.selectOptions(picker, '15');
+    expect(await within(rows[0]).findByRole('status')).toHaveTextContent('Enregistré');
+    const put = sent.find((c) => c.url.endsWith('/v1/staff/appointments/a1/follow-up'));
+    expect(put?.method).toBe('PUT');
+    expect(JSON.parse(put!.body!)).toEqual({ days: 15 });
+  });
+});
