@@ -12,6 +12,7 @@ from .routers import (
     articles,
     auth,
     checkins,
+    cravings,
     doctors,
     habits,
     identity,
@@ -54,6 +55,7 @@ def create_app() -> FastAPI:
     app.include_router(checkins.router)
     app.include_router(addiction_checks.router)
     app.include_router(habits.router)
+    app.include_router(cravings.router)
     app.include_router(articles.router)
     app.include_router(medications.router)
     app.include_router(medications.staff_router)
@@ -68,6 +70,7 @@ def create_app() -> FastAPI:
     app.include_router(staff_recovery.router)
     app.include_router(addiction_checks.staff_router)
     app.include_router(habits.staff_router)
+    app.include_router(cravings.staff_router)
     app.include_router(articles.staff_router)
     app.include_router(staff_identity.router)
     app.include_router(admin.router)
