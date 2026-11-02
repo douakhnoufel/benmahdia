@@ -1,3 +1,5 @@
+import uuid
+
 from app.config import get_settings
 from app.social import SocialVerifier
 
@@ -79,3 +81,29 @@ def test_add_phone_needs_its_own_proof(client, sms, social):
 def test_add_phone_needs_login(client, sms):
     p = proof(client, sms, phone="0771234567", purpose="attach_phone")
     assert client.put("/v1/me/phone", json={"phone_proof": p}).status_code == 401
+
+
+def _set_email(user_id, email):
+    from sqlalchemy.orm import Session
+
+    from app.db import engine
+    from app.models import User
+
+    with Session(engine) as db:
+        db.get(User, uuid.UUID(user_id)).email = email
+        db.commit()
+
+
+def test_google_fills_a_missing_email_on_sign_in(client, social):
+    first = google(client, social.google()).json()
+    assert first["user"]["email"] == "patient@example.com"
+    _set_email(first["user"]["id"], None)
+    again = google(client, social.google()).json()
+    assert again["user"]["email"] == "patient@example.com"
+
+
+def test_google_keeps_the_email_the_patient_chose(client, social):
+    first = google(client, social.google()).json()
+    _set_email(first["user"]["id"], "mine@example.org")
+    again = google(client, social.google()).json()
+    assert again["user"]["email"] == "mine@example.org"

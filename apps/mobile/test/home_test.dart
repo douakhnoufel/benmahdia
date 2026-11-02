@@ -206,7 +206,9 @@ void main() {
       expect(find.byType(AddictionFormScreen), findsOneWidget);
 
       final save = find.widgetWithText(FilledButton, 'حفظ');
+      await tester.ensureVisible(save);
       expect(tester.widget<FilledButton>(save).onPressed, isNull);
+      await tester.ensureVisible(find.text('مادة أخرى'));
       await tester.tap(find.text('مادة أخرى'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('القمار'));

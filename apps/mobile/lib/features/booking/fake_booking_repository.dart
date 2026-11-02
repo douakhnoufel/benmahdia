@@ -42,8 +42,8 @@ class FakeBookingRepository implements BookingRepository {
   /// Days from a visit to the suggested follow-up.
   static const _followUpDays = 30;
 
-  /// Consultation hours, in minutes after midnight.
-  static const _hours = [(9 * 60, 12 * 60), (14 * 60, 16 * 60)];
+  /// Consultation hours, in minutes after midnight: 07:30-14:30.
+  static const _hours = [(7 * 60 + 30, 14 * 60 + 30)];
 
   @override
   DateTime now() => _clock();
@@ -95,12 +95,14 @@ class FakeBookingRepository implements BookingRepository {
     }
     final earliest = now().add(notice);
     final slots = <Slot>[];
-    var index = 0;
     for (final (from, to) in _hours) {
       for (var m = from; m < to; m += doctor.slotMinutes) {
         final start = DateTime(day.year, day.month, day.day, m ~/ 60, m % 60);
-        // Sample pattern standing in for other patients' bookings.
-        final takenByOthers = (day.day * 7 + index * 3) % 5 == 0;
+        // Sample pattern standing in for other patients' bookings, tied to
+        // the time of day (counted from 09:00) so it does not move when the
+        // hours change.
+        final step = (m - 9 * 60) ~/ doctor.slotMinutes;
+        final takenByOthers = (day.day * 7 + step * 3) % 5 == 0;
         slots.add(
           Slot(
             start: start,
@@ -110,7 +112,6 @@ class FakeBookingRepository implements BookingRepository {
                 !start.isBefore(earliest),
           ),
         );
-        index++;
       }
     }
     if (slots.every((s) => s.start.isBefore(earliest))) {
@@ -124,6 +125,10 @@ class FakeBookingRepository implements BookingRepository {
     final day = _day(doctor, DateTime(start.year, start.month, start.day));
     final free = day.slots.any((s) => s.start == start && s.free);
     if (!free) throw const SlotUnavailable();
+    final next = await followUp();
+    if (next != null && !next.allows(start, now())) {
+      throw const SlotUnavailable();
+    }
     _reserved.add(start);
     return Hold(
       id: 'h${_nextId++}',

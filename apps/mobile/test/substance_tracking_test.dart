@@ -11,6 +11,7 @@ import 'package:benmahdia_mobile/features/recovery/recovery_repository.dart';
 import 'package:benmahdia_mobile/features/recovery/recovery_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:benmahdia_mobile/features/recovery/option_cards.dart';
 
 import 'helpers.dart';
 
@@ -82,20 +83,6 @@ void main() {
     await _scrollTo(tester, find.text('أسبوع كامل. كل يوم يقوّي عزيمتك.'));
   });
 
-  testWidgets('the patient picks a higher small goal', (tester) async {
-    final recovery = await _pump(tester);
-    await _scrollTo(tester, find.text('غيّر الهدف'));
-    await tester.tap(find.text('غيّر الهدف'));
-    await tester.pumpAndSettle();
-    expect(find.text('هدفك الصغير التالي'), findsOneWidget);
-    // Steps already reached (1, 3, 7) are not offered.
-    expect(find.widgetWithText(ChoiceChip, '7 أيام'), findsNothing);
-    await tester.tap(find.widgetWithText(ChoiceChip, '28 يوماً'));
-    await tester.pumpAndSettle();
-    expect(recovery.storedAddictions.single.goalDays, 28);
-    expect(find.textContaining('28 يوماً'), findsWidgets);
-  });
-
   testWidgets('"used" in the daily check opens relapse logging', (
     tester,
   ) async {
@@ -151,6 +138,24 @@ void main() {
     await _scrollTo(tester, find.text('النيكوتين'));
   });
 
+  testWidgets('several substances can be added at once', (tester) async {
+    await _pump(tester);
+    await _scrollTo(tester, find.text('أضف إدماناً آخر'));
+    await tester.tap(find.text('أضف إدماناً آخر'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('النيكوتين'));
+    await tester.tap(find.text('القنب (الحشيش)'));
+    await tester.pump();
+    final save = find.widgetWithText(FilledButton, 'حفظ');
+    await tester.ensureVisible(save);
+    await tester.pumpAndSettle();
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+    await _scrollTo(tester, find.text('القنب (الحشيش)'));
+    expect(find.text('القنب (الحشيش)'), findsWidgets);
+    expect(find.text('النيكوتين'), findsWidgets);
+  });
+
   testWidgets('good habits: tick, add from the list, remove', (tester) async {
     final recovery = await _pump(tester);
     await _scrollTo(tester, find.text('عاداتي الجيدة'));
@@ -171,8 +176,8 @@ void main() {
     await tester.tap(find.text('أضف عادة'));
     await tester.pumpAndSettle();
     // The habit already kept is not offered again.
-    expect(find.widgetWithText(ChoiceChip, 'الرياضة أو المشي'), findsNothing);
-    await tester.tap(find.widgetWithText(ChoiceChip, 'تنظيف الأسنان'));
+    expect(find.widgetWithText(OptionCard, 'الرياضة أو المشي'), findsNothing);
+    await tester.tap(find.widgetWithText(OptionCard, 'تنظيف الأسنان'));
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'حفظ'));
     await tester.pumpAndSettle();
@@ -194,7 +199,7 @@ void main() {
     await _scrollTo(tester, find.text('أضف عادة'));
     await tester.tap(find.text('أضف عادة'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(ChoiceChip, 'بكلماتي'));
+    await tester.tap(find.widgetWithText(OptionCard, 'بكلماتي'));
     await tester.pump();
     final save = find.widgetWithText(FilledButton, 'حفظ');
     expect(tester.widget<FilledButton>(save).onPressed, isNull);

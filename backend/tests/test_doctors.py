@@ -74,19 +74,19 @@ def test_calendar_shape_and_rules(client, sms):
     assert day_of(cal, date(2026, 10, 23))["closure"] == "closed"
     monday = day_of(cal, MONDAY)
     assert monday["closure"] == "none"
-    # 09:00-12:00 and 14:00-16:00 in 15-minute slots.
-    assert len(monday["slots"]) == 12 + 8
+    # 07:30-14:30 in 15-minute slots.
+    assert len(monday["slots"]) == 28
     assert all(s["free"] for s in monday["slots"])
-    # 09:00 Algiers (UTC+1) is 08:00 UTC.
-    assert monday["slots"][0]["start"] == "2026-10-19T08:00:00Z"
-    assert monday["slots"][12]["start"] == "2026-10-19T13:00:00Z"
+    # 07:30 Algiers (UTC+1) is 06:30 UTC; the last slot starts at 14:15.
+    assert monday["slots"][0]["start"] == "2026-10-19T06:30:00Z"
+    assert monday["slots"][-1]["start"] == "2026-10-19T13:15:00Z"
 
 
 def test_slot_length_follows_the_doctor(client, sms):
     doctor = make_doctor(slot_minutes=10)
     session = verified_patient(client, sms)
     cal = client.get(f"/v1/doctors/{doctor.user_id}/calendar", headers=headers(session)).json()
-    assert len(day_of(cal, MONDAY)["slots"]) == 18 + 12
+    assert len(day_of(cal, MONDAY)["slots"]) == 42
 
 
 def test_blocked_day_is_closed(client, sms):
@@ -101,18 +101,19 @@ def test_booked_slot_is_not_free_and_reveals_nothing(client, sms):
     doctor = make_doctor()
     other = verified_patient(client, sms, phone="0770000001")
     session = verified_patient(client, sms)
-    add_appointment(doctor.user_id, user_id("0770000001"), datetime(2026, 10, 19, 8, 0))
+    add_appointment(doctor.user_id, user_id("0770000001"), datetime(2026, 10, 19, 6, 30))
     r = client.get(f"/v1/doctors/{doctor.user_id}/calendar", headers=headers(session))
     first = day_of(r.json(), MONDAY)["slots"][0]
-    assert first == {"start": "2026-10-19T08:00:00Z", "free": False}
+    assert first == {"start": "2026-10-19T06:30:00Z", "free": False}
     assert "patient" not in r.text and str(user_id("0770000001")) not in r.text
 
 
 def test_overlapping_slot_sizes_block_each_other(client, sms):
     doctor = make_doctor(slot_minutes=10)
     session = verified_patient(client, sms)
-    # A 15 min visit from 08:00 covers the 08:00 and 08:10 slots, not 08:20.
-    add_appointment(doctor.user_id, user_id(), datetime(2026, 10, 19, 8, 0), minutes=15)
+    # A 15 min visit from 06:30 UTC (the first slot) covers the 06:30 and
+    # 06:40 slots, not 06:50.
+    add_appointment(doctor.user_id, user_id(), datetime(2026, 10, 19, 6, 30), minutes=15)
     slots = day_of(
         client.get(f"/v1/doctors/{doctor.user_id}/calendar", headers=headers(session)).json(), MONDAY
     )["slots"]
@@ -124,9 +125,9 @@ def test_active_hold_blocks_but_expired_hold_does_not(client, sms):
     session = verified_patient(client, sms)
     me = user_id()
     now = clock.now()
-    add_appointment(doctor.user_id, me, datetime(2026, 10, 19, 8, 0),
+    add_appointment(doctor.user_id, me, datetime(2026, 10, 19, 6, 30),
                     status=AppointmentStatus.awaiting_payment, hold_expires_at=now + timedelta(minutes=5))
-    add_appointment(doctor.user_id, me, datetime(2026, 10, 19, 8, 15),
+    add_appointment(doctor.user_id, me, datetime(2026, 10, 19, 6, 45),
                     status=AppointmentStatus.awaiting_payment, hold_expires_at=now - timedelta(minutes=1))
     slots = day_of(
         client.get(f"/v1/doctors/{doctor.user_id}/calendar", headers=headers(session)).json(), MONDAY

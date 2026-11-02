@@ -4,7 +4,16 @@ from sqlalchemy.orm import Session
 
 from app import security
 from app.db import engine
-from app.models import AccountStatus, AppointmentStatus, DoctorProfile, PaymentMethod, Role, User
+from app.models import (
+    AccountStatus,
+    Appointment,
+    AppointmentStatus,
+    AuditLog,
+    DoctorProfile,
+    PaymentMethod,
+    Role,
+    User,
+)
 
 from .booking_helpers import add_appointment, make_doctor, user_id, verified_patient
 from .conftest import advance, bearer, register
@@ -299,3 +308,70 @@ def test_holds_are_for_staff_only(client, sms):
     assert client.get("/v1/staff/holds").status_code == 401
     session = verified_patient(client, sms)
     assert client.get("/v1/staff/holds", headers=bearer(session)).status_code == 403
+
+
+# --- delete patient ---------------------------------------------------------
+
+
+def test_delete_patient_hard_deletes_and_cascades(client, sms):
+    doc = doctor_with_password()
+    verified_patient(client, sms, "0661111111")
+    pid = user_id("0661111111")
+    add_appointment(doc.user_id, pid, MONDAY_9)
+
+    r = client.delete(f"/v1/staff/patients/{pid}", headers=doc_headers(client))
+    assert r.status_code == 204, r.text
+
+    with Session(engine) as db:
+        assert db.get(User, pid) is None
+        # The audit trail has no FK to the user, so the "who deleted whom" row
+        # survives the delete (checked on every backend).
+        assert db.query(AuditLog).filter(
+            AuditLog.action == "patient.hard_deleted", AuditLog.target == str(pid)
+        ).count() == 1
+        # The clinical data is removed by the database's ON DELETE CASCADE.
+        # SQLite (the default test engine) does not enforce foreign keys, so
+        # the cascade can only be exercised against PostgreSQL, as in prod.
+        if engine.dialect.name == "postgresql":
+            assert db.query(Appointment).filter(Appointment.patient_id == pid).count() == 0
+
+
+def test_any_clinic_doctor_can_delete_a_patient(client, sms):
+    doctor_with_password()
+    other_doctor()
+    verified_patient(client, sms, "0661111111")
+    pid = user_id("0661111111")
+    r = client.delete(
+        f"/v1/staff/patients/{pid}", headers=doc_headers(client, "other@example.invalid")
+    )
+    assert r.status_code == 204, r.text
+
+
+def test_delete_patient_refuses_non_patient_accounts(client, sms):
+    doc = doctor_with_password()
+    other = other_doctor()
+    # A doctor account is never deletable through this endpoint.
+    r = client.delete(f"/v1/staff/patients/{other}", headers=doc_headers(client))
+    assert r.status_code == 404
+    with Session(engine) as db:
+        assert db.get(User, other) is not None
+
+
+def test_delete_patient_missing_is_404(client, sms):
+    doctor_with_password()
+    import uuid as _uuid
+
+    r = client.delete(f"/v1/staff/patients/{_uuid.uuid4()}", headers=doc_headers(client))
+    assert r.status_code == 404
+
+
+def test_delete_patient_needs_staff(client, sms):
+    doctor_with_password()
+    session = verified_patient(client, sms, "0661111111")
+    pid = user_id("0661111111")
+    # No token at all.
+    assert client.delete(f"/v1/staff/patients/{pid}").status_code == 401
+    # A patient token cannot delete anyone, not even itself.
+    assert client.delete(f"/v1/staff/patients/{pid}", headers=bearer(session)).status_code == 403
+    with Session(engine) as db:
+        assert db.get(User, pid) is not None

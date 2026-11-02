@@ -283,6 +283,10 @@ def _social_session(
         user = link.user
         if not user.active:
             raise ApiError(403, "account_deleted")
+        # Keep the contact email the patient chose; fill it only when empty,
+        # and only from an address the provider verified.
+        if user.email is None and identity.email:
+            user.email = identity.email.lower()
     if apple_refresh:
         link.apple_refresh_token = apple_refresh
     db.flush()

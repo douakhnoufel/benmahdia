@@ -7,22 +7,42 @@ import 'identity_models.dart';
 /// Algerian passport.
 const algeria = 'DZA';
 
+/// Which side of the national ID card is being scanned. The passport has a
+/// single machine-readable page, so it ignores this.
+enum IdSide { front, back }
+
 /// What a live camera frame of [type] gives, or null when it is not a full,
-/// trustworthy read yet: a passport needs valid machine-readable lines, a
-/// national ID card its 18-digit number and a birth date. A passport from
-/// another country comes back with its [ScannedId.issuer]: see
-/// [isAcceptedPassport].
-ScannedId? readFrame(String text, IdDocType type, {required DateTime today}) {
+/// trustworthy read yet. A passport needs valid machine-readable lines. The
+/// national ID card is read on both sides: the front gives the 18-digit
+/// number and the birth date; the back's TD1 machine-readable zone gives the
+/// Latin name and the birth date, and is accepted only for an Algerian card.
+/// A passport from another country comes back with its [ScannedId.issuer]:
+/// see [isAcceptedPassport].
+ScannedId? readFrame(
+  String text,
+  IdDocType type, {
+  IdSide side = IdSide.front,
+  required DateTime today,
+}) {
   switch (type) {
     case IdDocType.passport:
       return parseMrz(text, today: today);
     case IdDocType.nationalId:
-      final read = parseIdText(text, today: today);
-      final number = read.idNumber;
-      if (number == null || number.length != 18 || read.birthDate == null) {
-        return null;
+      switch (side) {
+        case IdSide.front:
+          final read = parseIdText(text, today: today);
+          final number = read.idNumber;
+          if (number == null || number.length != 18 || read.birthDate == null) {
+            return null;
+          }
+          return read;
+        case IdSide.back:
+          final read = parseMrzTd1(text, today: today);
+          if (read == null || read.issuer != algeria || read.fullName == null) {
+            return null;
+          }
+          return read;
       }
-      return read;
   }
 }
 

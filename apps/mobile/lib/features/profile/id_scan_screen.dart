@@ -32,9 +32,13 @@ final class IdScanCameraUnavailable extends IdScanResult {
 /// details come back twice in a row, the screen closes with them. No picture
 /// is ever written to the phone.
 class IdScanScreen extends StatefulWidget {
-  const IdScanScreen({super.key, required this.type});
+  const IdScanScreen({super.key, required this.type, this.side = IdSide.front});
 
   final IdDocType type;
+
+  /// Which side of the national ID card this pass reads. Ignored for a
+  /// passport (one machine-readable page).
+  final IdSide side;
 
   @override
   State<IdScanScreen> createState() => _IdScanScreenState();
@@ -97,7 +101,10 @@ class _IdScanScreenState extends State<IdScanScreen>
         imageFormatGroup: mlKitFormatGroup,
       );
       await camera.initialize();
-      if (!mounted) { unawaited(camera.dispose()); return; }
+      if (!mounted) {
+        unawaited(camera.dispose());
+        return;
+      }
       await camera.startImageStream((frame) => _onFrame(camera, frame));
       setState(() => _camera = camera);
     } on CameraException catch (e) {
@@ -137,7 +144,12 @@ class _IdScanScreenState extends State<IdScanScreen>
       if (text.trim().length > 20 && !_seenText) {
         setState(() => _seenText = true);
       }
-      var frameRead = readFrame(text, widget.type, today: DateTime.now());
+      var frameRead = readFrame(
+        text,
+        widget.type,
+        side: widget.side,
+        today: DateTime.now(),
+      );
       if (frameRead != null &&
           widget.type == IdDocType.passport &&
           !isAcceptedPassport(frameRead)) {
@@ -180,6 +192,8 @@ class _IdScanScreenState extends State<IdScanScreen>
         ? l10n.scanHold
         : passport
         ? l10n.scanPlacePassport
+        : widget.side == IdSide.back
+        ? l10n.scanPlaceCardBack
         : l10n.scanPlaceCard;
 
     return CameraScaffold(

@@ -7,10 +7,12 @@ from .config import get_settings
 from .routers import (
     addiction_checks,
     admin,
+    admin_export,
     appointments,
     articles,
     auth,
     checkins,
+    cravings,
     doctors,
     habits,
     identity,
@@ -44,6 +46,8 @@ def create_app() -> FastAPI:
         allow_origins=settings.cors_origins,
         allow_methods=["GET", "POST", "PUT", "DELETE"],
         allow_headers=["authorization", "content-type"],
+        # The dashboard reads the export's file name.
+        expose_headers=["content-disposition"],
     )
     app.include_router(auth.router)
     app.include_router(me.router)
@@ -51,6 +55,7 @@ def create_app() -> FastAPI:
     app.include_router(checkins.router)
     app.include_router(addiction_checks.router)
     app.include_router(habits.router)
+    app.include_router(cravings.router)
     app.include_router(articles.router)
     app.include_router(medications.router)
     app.include_router(medications.staff_router)
@@ -65,9 +70,11 @@ def create_app() -> FastAPI:
     app.include_router(staff_recovery.router)
     app.include_router(addiction_checks.staff_router)
     app.include_router(habits.staff_router)
+    app.include_router(cravings.staff_router)
     app.include_router(articles.staff_router)
     app.include_router(staff_identity.router)
     app.include_router(admin.router)
+    app.include_router(admin_export.router)
 
     @app.get("/health", tags=["health"])
     def health() -> dict[str, str]:

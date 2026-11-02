@@ -310,6 +310,19 @@ describe('Signups: reviewing a declared ID', () => {
     expect(await screen.findByText('Passeport algérien')).toBeInTheDocument();
   });
 
+  it('shows the Latin name from a two-sided national ID scan', async () => {
+    backend((url) =>
+      url.pathname.endsWith('/identity')
+        ? { status: 200, body: { ...identity, full_name: 'كريم بن علي', full_name_latin: 'KARIM BENALI' } }
+        : undefined,
+    );
+    renderIn(<Signups />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Examiner' }));
+    expect(await screen.findByText('كريم بن علي')).toBeInTheDocument();
+    expect(screen.getByText('KARIM BENALI')).toBeInTheDocument();
+    expect(screen.getByText('Nom en latin')).toBeInTheDocument();
+  });
+
   it('is available in Arabic', async () => {
     backend();
     renderIn(<Signups />, 'ar');
@@ -319,15 +332,26 @@ describe('Signups: reviewing a declared ID', () => {
 });
 
 describe('Signups', () => {
-  it('approves a sign-up and removes it from the list', async () => {
+  const noId = { id: 's1', phone: '+213661234567', created_at: '2026-10-17T10:00:00Z', id_status: 'none' };
+
+  it('offers no approval before an ID is declared, only the refusal', async () => {
+    mockFetch(() => ({ status: 200, body: [noId] }));
+    renderIn(<Signups />);
+    await screen.findByText('+213661234567');
+    expect(screen.queryByRole('button', { name: 'Approuver' })).toBeNull();
+    expect(screen.getByText(/Approbation impossible avant la déclaration/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Refuser' })).toBeInTheDocument();
+  });
+
+  it('refuses a sign-up with no ID and removes it from the list', async () => {
     const calls = mockFetch((url) =>
-      url.pathname.endsWith('/approve')
-        ? { status: 200, body: { id: 's1', phone: '+213661234567', created_at: '2026-10-17T10:00:00Z' } }
-        : { status: 200, body: [{ id: 's1', phone: '+213661234567', created_at: '2026-10-17T10:00:00Z' }] },
+      url.pathname.endsWith('/reject')
+        ? { status: 200, body: { ...noId, id_status: 'rejected' } }
+        : { status: 200, body: [noId] },
     );
     renderIn(<Signups />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Approuver' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Refuser' }));
     expect(await screen.findByText('Aucune inscription en attente.')).toBeInTheDocument();
-    expect(calls[1].url.pathname).toBe('/v1/staff/signups/s1/approve');
+    expect(calls[1].url.pathname).toBe('/v1/staff/signups/s1/reject');
   });
 });

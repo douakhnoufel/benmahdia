@@ -3,17 +3,19 @@ import { isSignedIn, onSessionChange, signOut } from './api';
 import { useI18n, type StringKey } from './i18n';
 import { api, type Me } from './api';
 import { Button } from './components/ui';
+import { ClinicLogo } from './components/ClinicLogo';
 import { Alerts } from './pages/Alerts';
 import { Articles } from './pages/Articles';
 import { AvailabilityPage } from './pages/Availability';
 import { Login } from './pages/Login';
 import { Patients } from './pages/Patients';
 import { Payments } from './pages/Payments';
+import { Export } from './pages/Export';
 import { Prices } from './pages/Prices';
 import { Signups } from './pages/Signups';
 import { Today } from './pages/Today';
 
-type Page = 'today' | 'patients' | 'signups' | 'alerts' | 'articles' | 'availability' | 'payments' | 'prices';
+type Page = 'today' | 'patients' | 'signups' | 'alerts' | 'articles' | 'availability' | 'payments' | 'prices' | 'export';
 const doctorPages: Page[] = ['today', 'patients', 'signups', 'alerts', 'articles', 'availability', 'payments'];
 
 export function App() {
@@ -23,10 +25,10 @@ export function App() {
   // A patient opened from an alert; the patient list shows their file.
   const [opened, setOpened] = useState<{ id: string; phone: string | null } | null>(null);
   const [unread, setUnread] = useState(0);
-  // Who is signed in: the super admin also sees the Prices page. The API
+  // Who is signed in: the super admin also sees the Prices and Export pages. The API
   // checks the role on every route either way.
   const [me, setMe] = useState<Me | null>(null);
-  const pages: Page[] = me?.role === 'super_admin' ? [...doctorPages, 'prices'] : doctorPages;
+  const pages: Page[] = me?.role === 'super_admin' ? [...doctorPages, 'prices', 'export'] : doctorPages;
   const countUnread = () => {
     api.alerts(true).then((a) => setUnread(a.length), () => undefined);
   };
@@ -61,7 +63,10 @@ export function App() {
     <div className="min-h-screen">
       <header className="border-b border-border bg-surface">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-lg px-xl py-md">
-          <h1 className="text-h3 text-ink-strong">{t('appName')}</h1>
+          <div className="flex items-center gap-sm">
+            <ClinicLogo size="sm" />
+            <h1 className="text-h3 text-ink-strong">{t('appName')}</h1>
+          </div>
           <nav className="flex flex-wrap gap-sm">
             {pages.map((p) => (
               <Button key={p} variant={p === page ? 'primary' : 'ghost'} aria-current={p === page ? 'page' : undefined}
@@ -92,6 +97,7 @@ export function App() {
         {page === 'availability' && <AvailabilityPage />}
         {page === 'payments' && <Payments />}
         {page === 'prices' && <Prices />}
+        {page === 'export' && <Export />}
         {page === 'alerts' && (
           <Alerts
             onChange={countUnread}

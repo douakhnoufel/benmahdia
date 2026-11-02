@@ -23,6 +23,7 @@ def me(user: User) -> schemas.Me:
         role=user.role,
         status=user.status,
         phone=user.phone,
+        email=user.email,
         language=user.language,
         has_password=user.password_hash is not None,
         providers=sorted(i.provider.value for i in user.identities),

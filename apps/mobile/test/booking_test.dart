@@ -16,8 +16,12 @@ import 'helpers.dart';
 
 // Saturday 17 October 2026, 17:10 clinic time.
 final _now = DateTime(2026, 10, 17, 17, 10);
-// Monday 19 October 09:00: the first free slot after the 24 h notice.
+// Monday 19 October 09:00: a free slot after the 24 h notice (07:45 is the
+// first one).
 final _monday9 = DateTime(2026, 10, 19, 9);
+// The sample patient's follow-up day (Tuesday 17 November, 09:00): after a
+// visit, the next one can be booked only within two days of it.
+final _followUp9 = DateTime(2026, 11, 17, 9);
 
 const _doctorAr = 'د. بن مهدية حسين';
 const _second = Duration(seconds: 1);
@@ -94,11 +98,38 @@ void main() {
 
       expect(find.text(_doctorAr), findsOneWidget);
       expect(find.textContaining('2000 دج'), findsOneWidget);
-      expect(find.text('أقرب موعد: الاثنين 19 أكتوبر · 09:00'), findsOneWidget);
+      expect(find.text('أقرب موعد: الاثنين 19 أكتوبر · 07:45'), findsOneWidget);
 
       // A single doctor is picked already.
       await tester.tap(find.text('اختيار اليوم والوقت'));
+      await tester.pumpAndSettle();
+      // The no-show policy warning stands between the doctor and the slots.
+      expect(find.text('تنبيه مهم'), findsOneWidget);
+      expect(next, isNull);
+      await tester.tap(find.text('فهمت، متابعة'));
+      await tester.pumpAndSettle();
       expect(next?.id, 'benmahdia');
+    });
+
+    testWidgets('the policy warning can be dismissed without booking', (
+      tester,
+    ) async {
+      Doctor? next;
+      await pumpApp(
+        tester,
+        BookDoctorScreen(onNext: (d) => next = d),
+        overrides: _with(_repo()),
+      );
+      await pumpFor(tester, _second);
+      await tester.tap(find.text('اختيار اليوم والوقت'));
+      await tester.pumpAndSettle();
+      expect(find.text('تنبيه مهم'), findsOneWidget);
+      // Backing out leaves the patient on the doctor step, nothing booked.
+      await tester.tap(find.text('تراجع'));
+      await tester.pumpAndSettle();
+      expect(find.text('تنبيه مهم'), findsNothing);
+      expect(next, isNull);
+      expect(find.text('اختيار اليوم والوقت'), findsOneWidget);
     });
 
     testWidgets('French', (tester) async {
@@ -112,7 +143,7 @@ void main() {
       expect(find.text('Dr Benmahdia Hocine'), findsOneWidget);
       expect(find.textContaining('2000 DA'), findsOneWidget);
       expect(
-        find.text('Prochain créneau : lundi 19 octobre · 09:00'),
+        find.text('Prochain créneau : lundi 19 octobre · 07:45'),
         findsOneWidget,
       );
     });
@@ -219,7 +250,25 @@ void main() {
       expect(f?.overdueOn(_now), isTrue);
     });
 
-    testWidgets('opens on the suggested day; earlier days stay open', (
+    test('only two days around the follow-up can be booked', () async {
+      final repo = _repo();
+      final doctor = await _doctor(repo);
+      final f = (await repo.followUp())!;
+      expect(f.windowDays, 2);
+      // Target Tue 17 Nov: 15th and 19th are in, 14th and 20th are out.
+      expect(f.allows(DateTime(2026, 11, 15), _now), isTrue);
+      expect(f.allows(DateTime(2026, 11, 19), _now), isTrue);
+      expect(f.allows(DateTime(2026, 11, 14), _now), isFalse);
+      expect(f.allows(DateTime(2026, 11, 20), _now), isFalse);
+      // The same week as the last visit is refused.
+      await expectLater(
+        repo.hold(doctor, _monday9),
+        throwsA(isA<SlotUnavailable>()),
+      );
+      expect((await repo.hold(doctor, _followUp9)).start, _followUp9);
+    });
+
+    testWidgets('opens on the suggested day; two days around it stay open', (
       tester,
     ) async {
       final repo = _repo();
@@ -236,7 +285,7 @@ void main() {
       expect(
         find.text(
           'بعد 30 يوماً من موعدك يوم الأحد 18 أكتوبر. '
-          'يمكنك اختيار يوم قبله أو بعده.',
+          'يمكنك الحجز قبله أو بعده بيومين على الأكثر.',
         ),
         findsOneWidget,
       );
@@ -326,7 +375,7 @@ void main() {
       expect(
         find.text(
           '30 jours après votre rendez-vous du dimanche 18 octobre. '
-          'Vous pouvez choisir un jour avant ou après.',
+          "Vous pouvez réserver jusqu'à deux jours avant ou après.",
         ),
         findsOneWidget,
       );
@@ -360,7 +409,7 @@ void main() {
 
   group('BookConfirmScreen', () {
     Future<Hold> held(FakeBookingRepository repo) async =>
-        repo.hold(await _doctor(repo), _monday9);
+        repo.hold(await _doctor(repo), _followUp9);
 
     testWidgets('counts down the hold', (tester) async {
       final repo = _repo();
@@ -488,8 +537,8 @@ void main() {
       await tester.tap(find.text('اختر وقتاً آخر'));
       expect(expired, 1);
       // Free again for anyone.
-      final again = await repo.hold(doctor, _monday9);
-      expect(again.start, _monday9);
+      final again = await repo.hold(doctor, _followUp9);
+      expect(again.start, _followUp9);
     });
   });
 
@@ -563,7 +612,7 @@ void main() {
     testWidgets('cancels a later appointment after confirming', (tester) async {
       final repo = _repo();
       await repo.confirm(
-        await repo.hold(await _doctor(repo), _monday9),
+        await repo.hold(await _doctor(repo), _followUp9),
         PaymentMethod.edahabia,
       );
       await pumpApp(
@@ -619,6 +668,8 @@ void main() {
     await tester.tap(find.text('go'));
     await pumpFor(tester, _second);
     await tester.tap(find.text('اختيار اليوم والوقت'));
+    await pumpFor(tester, _second);
+    await tester.tap(find.text('فهمت، متابعة'));
     await pumpFor(tester, _second);
     await tester.tap(find.text('09:00'));
     await pumpFor(tester, _second);

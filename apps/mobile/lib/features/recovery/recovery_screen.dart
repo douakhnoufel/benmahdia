@@ -13,6 +13,7 @@ import '../articles/articles_screen.dart';
 import '../booking/booking_models.dart';
 import '../booking/booking_repository.dart';
 import '../booking/booking_widgets.dart';
+import '../craving/moment_entry_card.dart';
 import '../home/home_scope.dart';
 import 'addiction_form_screen.dart';
 import 'daily_check_screen.dart';
@@ -310,25 +311,6 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     }
   }
 
-  Future<void> _changeGoal(Addiction addiction) async {
-    final now = _repo.now();
-    final picked = await showGoalSheet(
-      context,
-      days: addiction.days(now),
-      chosen: addiction.goalDays,
-    );
-    if (picked == null) return;
-    final updated = await _saving(
-      () => _repo.setGoal(addiction, picked == 0 ? null : picked),
-    );
-    if (updated == null || !mounted) return;
-    setState(() {
-      _addictions = [
-        for (final a in _addictions) a.id == addiction.id ? updated : a,
-      ];
-    });
-  }
-
   void _replaceHabit(Habit updated) => setState(() {
     _habits = [for (final h in _habits) h.id == updated.id ? updated : h];
   });
@@ -425,27 +407,40 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
           AddictionFormScreen(
             today: _repo.now(),
             profiles: _profiles,
-            onSave: (entry) async {
-              final Addiction added;
-              try {
-                added = await _repo.addAddiction(
-                  type: entry.type,
-                  profile: entry.profile,
-                  substance: entry.substance,
-                  cleanSince: entry.cleanSince,
-                );
-              } on RecoveryUnavailable {
-                if (!mounted) return;
+            onSave: (entries) async {
+              final saved = <Addiction>[];
+              var failed = false;
+              for (final entry in entries) {
+                try {
+                  final added = await _repo.addAddiction(
+                    type: entry.type,
+                    profile: entry.profile,
+                    substance: entry.substance,
+                    cleanSince: entry.cleanSince,
+                  );
+                  saved.add(added);
+                } on RecoveryUnavailable {
+                  failed = true;
+                  break;
+                }
+              }
+              if (!mounted) return;
+              if (saved.isNotEmpty) {
+                setState(() => _addictions = [..._addictions, ...saved]);
+              }
+              if (failed && saved.isEmpty) {
                 messenger.showSnackBar(
                   SnackBar(content: Text(l10n.recoverySaveError)),
                 );
                 return;
               }
-              if (!mounted) return;
-              setState(() => _addictions = [..._addictions, added]);
               navigator.pop();
               messenger.showSnackBar(
-                SnackBar(content: Text(l10n.addictionSaved)),
+                SnackBar(
+                  content: Text(
+                    failed ? l10n.recoverySaveError : l10n.addictionSaved,
+                  ),
+                ),
               );
             },
           ),
@@ -482,6 +477,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
         children: [
           StaggeredReveal(
             children: [
+              const MomentEntryCard(),
               if (_addictions.isEmpty)
                 _EmptyCounters(onAdd: _addAddiction)
               else ...[
@@ -492,7 +488,6 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
                     note: profileOf(a, _profiles)?.noteFor(a.days(now)),
                     now: now,
                     onRelapse: () => _relapse(a),
-                    onChangeGoal: () => _changeGoal(a),
                   ),
                 TextButton.icon(
                   onPressed: _addAddiction,

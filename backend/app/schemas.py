@@ -70,6 +70,7 @@ class Me(BaseModel):
     role: Role
     status: AccountStatus
     phone: str | None
+    email: str | None
     language: str
     has_password: bool
     providers: list[str]

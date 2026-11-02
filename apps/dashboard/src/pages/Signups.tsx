@@ -62,10 +62,10 @@ export function Signups() {
                             {t(open === s.id ? 'close' : 'review')}
                           </Button>
                         ) : (
-                          <div className="flex gap-sm">
-                            <Button disabled={busy === s.id} onClick={() => decide(s, () => api.approve(s.id))}>
-                              {t('approve')}
-                            </Button>
+                          // Nothing declared yet: the server refuses an approval (409
+                          // id_not_declared), so only the refusal is offered.
+                          <div className="flex flex-wrap items-center gap-sm">
+                            <span className="text-label text-ink-muted">{t('approveNeedsId')}</span>
                             <Button variant="danger" disabled={busy === s.id} onClick={() => decide(s, () => api.reject(s.id))}>
                               {t('reject')}
                             </Button>
@@ -157,6 +157,14 @@ function Review({
           </dd>
           <dt className="text-label text-ink-muted">{t('fullName')}</dt>
           <dd className="text-body-lg text-ink-strong">{d.full_name}</dd>
+          {d.full_name_latin ? (
+            <>
+              <dt className="text-label text-ink-muted">{t('fullNameLatin')}</dt>
+              <dd className="text-body-lg text-ink-strong" dir="ltr">
+                {d.full_name_latin}
+              </dd>
+            </>
+          ) : null}
           <dt className="text-label text-ink-muted">{t('birthDate')}</dt>
           <dd className="text-body-lg text-ink-strong" dir="ltr">{d.birth_date}</dd>
           <dt className="text-label text-ink-muted">{t('submissionsCount')}</dt>

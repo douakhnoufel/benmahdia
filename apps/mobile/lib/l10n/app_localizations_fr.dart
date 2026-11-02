@@ -39,6 +39,64 @@ class AppLocalizationsFr extends AppLocalizations {
   String get langFrench => 'Français';
 
   @override
+  String get logout => 'Se déconnecter';
+
+  @override
+  String get navProfile => 'Profil';
+
+  @override
+  String get accountTitle => 'Profil et réglages';
+
+  @override
+  String get profilePhone => 'Numéro de téléphone';
+
+  @override
+  String get profileEmail => 'E-mail de contact';
+
+  @override
+  String get profileNone => 'Non renseigné';
+
+  @override
+  String get profileEmailHint =>
+      'Pour vous joindre. Ce n\'est pas un moyen de connexion. Laissez vide pour l\'effacer.';
+
+  @override
+  String get profileEmailInvalid => 'Cette adresse e-mail n\'est pas valide.';
+
+  @override
+  String get profileSave => 'Enregistrer';
+
+  @override
+  String get profileCancel => 'Annuler';
+
+  @override
+  String get profileSaveFailed => 'Enregistrement impossible. Réessayez.';
+
+  @override
+  String get profileIdStatus => 'Pièce d\'identité';
+
+  @override
+  String get profileIdNone => 'Pas encore déclarée';
+
+  @override
+  String get accountIdDeclared => 'Déclarée, en cours de vérification';
+
+  @override
+  String get profileIdApproved => 'Pièce déclarée';
+
+  @override
+  String get profileIdRejected => 'Refusée : déclarez-la à nouveau';
+
+  @override
+  String get profileLanguage => 'Langue';
+
+  @override
+  String get profileLoadFailed => 'Impossible de charger votre compte.';
+
+  @override
+  String get profileRetry => 'Toucher pour réessayer';
+
+  @override
   String get splashLine1 => 'Pas à pas vers le rétablissement';
 
   @override
@@ -291,6 +349,13 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le premier médecin avec qui vous réservez devient votre médecin traitant à la clinique.';
 
   @override
+  String get bookNoDoctorTitle => 'Aucun médecin disponible pour le moment';
+
+  @override
+  String get bookNoDoctorBody =>
+      'Aucun médecin n\'est ouvert à la réservation pour l\'instant. Appelez le cabinet pour prendre rendez-vous.';
+
+  @override
   String get bookClinic => 'Clinique Benmahdia';
 
   @override
@@ -320,6 +385,19 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get bookChooseTime => 'Choisir le jour et l\'heure';
+
+  @override
+  String get bookPolicyTitle => 'Avertissement important';
+
+  @override
+  String get bookPolicyBody =>
+      'Si vous réservez en choisissant de payer à la clinique et que vous ne venez pas, votre compte peut être ajouté à la liste noire. Ne réservez que si vous êtes sûr de pouvoir venir.\n\nSi vous payez en ligne, nous offrons un remboursement ou un report du rendez-vous.';
+
+  @override
+  String get bookPolicyContinue => 'J\'ai compris, continuer';
+
+  @override
+  String get bookPolicyBack => 'Retour';
 
   @override
   String get bookSlotTitle => 'Jour et heure';
@@ -643,8 +721,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String bookFollowUpBody(String span, String date) {
-    return '$span après votre rendez-vous du $date. Vous pouvez choisir un jour avant ou après.';
+    return '$span après votre rendez-vous du $date. Vous pouvez réserver jusqu\'à deux jours avant ou après.';
   }
+
+  @override
+  String get bookOutsideFollowUp =>
+      'Votre médecin a fixé votre suivi : seuls les deux jours avant et après la date conseillée sont ouverts.';
 
   @override
   String get bookFollowUpOverdueTitle => 'C\'est le moment de votre suivi';
@@ -921,6 +1003,15 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get profileFullName => 'Nom complet';
+
+  @override
+  String get profileFullNameArabic => 'Nom complet (en arabe)';
+
+  @override
+  String get profileFullNameLatin => 'Nom en latin (comme sur la carte)';
+
+  @override
+  String get profileFullNameLatinHint => 'Lu au dos de la carte';
 
   @override
   String get profileBirthDate => 'Date de naissance (AAAA-MM-JJ)';
@@ -1266,6 +1357,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Choisissez le type et la date de votre dernière consommation. Votre médecin vérifiera ces informations.';
 
   @override
+  String get addictionGoalsAuto =>
+      'La clinique fixe vos petits objectifs pour vous.';
+
+  @override
   String get addictionTypeLabel => 'Type';
 
   @override
@@ -1316,7 +1411,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profilePassportNumber => 'Numéro de passeport';
 
   @override
-  String get scanPlaceCard => 'Placez la carte dans le cadre';
+  String get scanPlaceCard => 'Placez l\'avant de la carte dans le cadre';
+
+  @override
+  String get scanPlaceCardBack =>
+      'Retournez la carte et placez le dos dans le cadre';
 
   @override
   String get scanPlacePassport =>
@@ -1605,4 +1704,142 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get milestoneContinue => 'Continuer';
+
+  @override
+  String get momentEntryTitle => 'Un moment difficile';
+
+  @override
+  String get momentEntrySub =>
+      'Une envie forte ? Prenez quelques minutes pour la laisser passer.';
+
+  @override
+  String get momentTitle => 'Un moment difficile';
+
+  @override
+  String get momentIntro =>
+      'Une envie monte puis redescend, comme une vague. Vous n\'avez rien d\'autre à faire que la laisser passer.';
+
+  @override
+  String get momentIntensityTitle => 'Quelle est la force de l\'envie ?';
+
+  @override
+  String get momentScaleLow => 'Faible';
+
+  @override
+  String get momentScaleHigh => 'Très forte';
+
+  @override
+  String momentIntensityOption(int n) {
+    return '$n sur 10';
+  }
+
+  @override
+  String get momentHaltTitle =>
+      'Qu\'est-ce qui se passe en ce moment ? (facultatif)';
+
+  @override
+  String get momentHaltHungry => 'Faim';
+
+  @override
+  String get momentHaltAngry => 'Colère';
+
+  @override
+  String get momentHaltLonely => 'Solitude';
+
+  @override
+  String get momentHaltTired => 'Fatigue';
+
+  @override
+  String get momentStart => 'Commencer à respirer';
+
+  @override
+  String get momentInhale => 'Inspirez';
+
+  @override
+  String get momentHold => 'Retenez';
+
+  @override
+  String get momentExhale => 'Expirez';
+
+  @override
+  String momentTimer(String time) {
+    return 'Depuis $time';
+  }
+
+  @override
+  String get momentTipTitle => 'À essayer maintenant';
+
+  @override
+  String get momentTipBody =>
+      'Mangez quelque chose de piquant (harissa, piment). Le goût fort occupe vos sens et aide l\'envie à passer.';
+
+  @override
+  String get momentTipCaution =>
+      'À éviter en cas d\'ulcère, de reflux ou de médicament qui irrite l\'estomac. Demandez conseil à votre médecin.';
+
+  @override
+  String get momentPlanTitle => 'Mon plan si-alors';
+
+  @override
+  String get momentPlanIf => 'Si...';
+
+  @override
+  String get momentPlanThen => 'Alors je...';
+
+  @override
+  String get momentPlanEmpty =>
+      'Écrivez ce que vous ferez quand l\'envie arrive. Par exemple : si je me sens seul, j\'appelle un proche.';
+
+  @override
+  String momentPlanLine(String ifText, String thenText) {
+    return 'Si $ifText, alors $thenText';
+  }
+
+  @override
+  String get momentPlanAdd => 'Écrire mon plan';
+
+  @override
+  String get momentPlanEdit => 'Modifier';
+
+  @override
+  String get momentPlanSave => 'Enregistrer';
+
+  @override
+  String get momentPassed => 'L\'envie est passée';
+
+  @override
+  String get momentAfterTitle =>
+      'Et maintenant, quelle est la force de l\'envie ?';
+
+  @override
+  String get momentFinish => 'Terminer';
+
+  @override
+  String get momentSaveFailed => 'Enregistrement impossible. Réessayez.';
+
+  @override
+  String get momentResultTitle => 'Ce moment est passé, et c\'est un vrai pas.';
+
+  @override
+  String get momentBefore => 'Avant';
+
+  @override
+  String get momentAfter => 'Après';
+
+  @override
+  String get momentResultDown =>
+      'L\'envie a baissé. Gardez ce souvenir pour la prochaine fois.';
+
+  @override
+  String get momentResultSame =>
+      'L\'envie n\'a pas encore baissé, et c\'est possible. Elle finira par redescendre. Vous pouvez en parler à votre médecin.';
+
+  @override
+  String get momentClose => 'Fermer';
+
+  @override
+  String get sharingOnlyYou => 'Vous seul';
+
+  @override
+  String get sharingDoctor => 'Votre médecin voit ceci';
 }

@@ -160,6 +160,8 @@ void main() {
       );
 
       await _type(tester, 'profile-name', 'Karim  Benali');
+      // The back MRZ fills the Latin name; the patient writes the Arabic one.
+      await _type(tester, 'profile-name-latin', 'KARIM BENALI');
       await _tap(tester, 'profile-selfie');
       await _tap(tester, 'profile-submit');
 
@@ -167,6 +169,7 @@ void main() {
       final sent = identity.submitted.single;
       expect(sent.draft.idNumber, '123456789012345678');
       expect(sent.draft.fullName, 'Karim Benali');
+      expect(sent.draft.fullNameLatin, 'KARIM BENALI');
       expect(sent.draft.birthIso, '1990-05-17');
       expect(sent.draft.idType, IdDocType.nationalId);
       expect(sent.selfie, camera.shot);

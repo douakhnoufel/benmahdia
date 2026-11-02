@@ -152,6 +152,120 @@ abstract class AppLocalizations {
   /// **'Français'**
   String get langFrench;
 
+  /// No description provided for @logout.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل الخروج'**
+  String get logout;
+
+  /// No description provided for @navProfile.
+  ///
+  /// In ar, this message translates to:
+  /// **'حسابي'**
+  String get navProfile;
+
+  /// No description provided for @accountTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'الحساب والإعدادات'**
+  String get accountTitle;
+
+  /// No description provided for @profilePhone.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم الهاتف'**
+  String get profilePhone;
+
+  /// No description provided for @profileEmail.
+  ///
+  /// In ar, this message translates to:
+  /// **'البريد الإلكتروني للتواصل'**
+  String get profileEmail;
+
+  /// No description provided for @profileNone.
+  ///
+  /// In ar, this message translates to:
+  /// **'غير محدد'**
+  String get profileNone;
+
+  /// No description provided for @profileEmailHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'للتواصل معك فقط، وليس وسيلة لتسجيل الدخول. اتركه فارغا لحذفه.'**
+  String get profileEmailHint;
+
+  /// No description provided for @profileEmailInvalid.
+  ///
+  /// In ar, this message translates to:
+  /// **'عنوان البريد الإلكتروني غير صالح.'**
+  String get profileEmailInvalid;
+
+  /// No description provided for @profileSave.
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ'**
+  String get profileSave;
+
+  /// No description provided for @profileCancel.
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء'**
+  String get profileCancel;
+
+  /// No description provided for @profileSaveFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر الحفظ. حاول مجددا.'**
+  String get profileSaveFailed;
+
+  /// No description provided for @profileIdStatus.
+  ///
+  /// In ar, this message translates to:
+  /// **'بطاقة الهوية'**
+  String get profileIdStatus;
+
+  /// No description provided for @profileIdNone.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُصرَّح بها بعد'**
+  String get profileIdNone;
+
+  /// No description provided for @accountIdDeclared.
+  ///
+  /// In ar, this message translates to:
+  /// **'مُصرَّح بها، قيد المراجعة'**
+  String get accountIdDeclared;
+
+  /// No description provided for @profileIdApproved.
+  ///
+  /// In ar, this message translates to:
+  /// **'هوية مُصرَّح بها'**
+  String get profileIdApproved;
+
+  /// No description provided for @profileIdRejected.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرفوضة: صرّح بها مجددا'**
+  String get profileIdRejected;
+
+  /// No description provided for @profileLanguage.
+  ///
+  /// In ar, this message translates to:
+  /// **'اللغة'**
+  String get profileLanguage;
+
+  /// No description provided for @profileLoadFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر تحميل حسابك.'**
+  String get profileLoadFailed;
+
+  /// No description provided for @profileRetry.
+  ///
+  /// In ar, this message translates to:
+  /// **'اضغط لإعادة المحاولة'**
+  String get profileRetry;
+
   /// No description provided for @splashLine1.
   ///
   /// In ar, this message translates to:
@@ -584,6 +698,18 @@ abstract class AppLocalizations {
   /// **'أول طبيب تحجز معه يصبح طبيبك المتابع في العيادة.'**
   String get bookDoctorBody;
 
+  /// No description provided for @bookNoDoctorTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد طبيب متاح للحجز الآن'**
+  String get bookNoDoctorTitle;
+
+  /// No description provided for @bookNoDoctorBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد أي طبيب مفتوح للحجز حالياً. اتصل بالعيادة لتحديد موعد.'**
+  String get bookNoDoctorBody;
+
   /// No description provided for @bookClinic.
   ///
   /// In ar, this message translates to:
@@ -625,6 +751,30 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'اختيار اليوم والوقت'**
   String get bookChooseTime;
+
+  /// No description provided for @bookPolicyTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تنبيه مهم'**
+  String get bookPolicyTitle;
+
+  /// No description provided for @bookPolicyBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'إذا حجزت واخترت الدفع في العيادة ولم تحضر، قد يُدرَج حسابك في القائمة السوداء. لا تحجز إلا إذا كنت متأكداً من الحضور.\n\nأما إذا دفعت عبر الإنترنت، فنوفّر لك استرجاع المبلغ أو إعادة جدولة الموعد.'**
+  String get bookPolicyBody;
+
+  /// No description provided for @bookPolicyContinue.
+  ///
+  /// In ar, this message translates to:
+  /// **'فهمت، متابعة'**
+  String get bookPolicyContinue;
+
+  /// No description provided for @bookPolicyBack.
+  ///
+  /// In ar, this message translates to:
+  /// **'تراجع'**
+  String get bookPolicyBack;
 
   /// No description provided for @bookSlotTitle.
   ///
@@ -1097,8 +1247,14 @@ abstract class AppLocalizations {
   /// No description provided for @bookFollowUpBody.
   ///
   /// In ar, this message translates to:
-  /// **'بعد {span} من موعدك يوم {date}. يمكنك اختيار يوم قبله أو بعده.'**
+  /// **'بعد {span} من موعدك يوم {date}. يمكنك الحجز قبله أو بعده بيومين على الأكثر.'**
   String bookFollowUpBody(String span, String date);
+
+  /// No description provided for @bookOutsideFollowUp.
+  ///
+  /// In ar, this message translates to:
+  /// **'حدّد طبيبك موعد متابعتك: الحجز متاح فقط قبل اليوم المقترح أو بعده بيومين.'**
+  String get bookOutsideFollowUp;
 
   /// No description provided for @bookFollowUpOverdueTitle.
   ///
@@ -1555,6 +1711,24 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'الاسم الكامل'**
   String get profileFullName;
+
+  /// No description provided for @profileFullNameArabic.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاسم الكامل (بالعربية)'**
+  String get profileFullNameArabic;
+
+  /// No description provided for @profileFullNameLatin.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاسم باللاتينية (كما في البطاقة)'**
+  String get profileFullNameLatin;
+
+  /// No description provided for @profileFullNameLatinHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'يُقرأ من ظهر البطاقة'**
+  String get profileFullNameLatinHint;
 
   /// No description provided for @profileBirthDate.
   ///
@@ -2144,6 +2318,12 @@ abstract class AppLocalizations {
   /// **'اختر النوع وتاريخ آخر تعاطٍ. سيراجع طبيبك هذه المعلومات.'**
   String get addictionFormBody;
 
+  /// No description provided for @addictionGoalsAuto.
+  ///
+  /// In ar, this message translates to:
+  /// **'نحدّد لك أهدافك الصغيرة تلقائياً.'**
+  String get addictionGoalsAuto;
+
   /// No description provided for @addictionTypeLabel.
   ///
   /// In ar, this message translates to:
@@ -2243,8 +2423,14 @@ abstract class AppLocalizations {
   /// No description provided for @scanPlaceCard.
   ///
   /// In ar, this message translates to:
-  /// **'ضع البطاقة داخل الإطار'**
+  /// **'ضع وجه البطاقة داخل الإطار'**
   String get scanPlaceCard;
+
+  /// No description provided for @scanPlaceCardBack.
+  ///
+  /// In ar, this message translates to:
+  /// **'اقلب البطاقة وضع ظهرها داخل الإطار'**
+  String get scanPlaceCardBack;
 
   /// No description provided for @scanPlacePassport.
   ///
@@ -2755,6 +2941,252 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'متابعة'**
   String get milestoneContinue;
+
+  /// No description provided for @momentEntryTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لحظة صعبة'**
+  String get momentEntryTitle;
+
+  /// No description provided for @momentEntrySub.
+  ///
+  /// In ar, this message translates to:
+  /// **'رغبة قوية؟ امنح نفسك بضع دقائق لتمرّ.'**
+  String get momentEntrySub;
+
+  /// No description provided for @momentTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لحظة صعبة'**
+  String get momentTitle;
+
+  /// No description provided for @momentIntro.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرغبة ترتفع ثم تنخفض كالموجة. لا يُطلب منك سوى أن تتركها تمرّ.'**
+  String get momentIntro;
+
+  /// No description provided for @momentIntensityTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'ما مدى قوة الرغبة؟'**
+  String get momentIntensityTitle;
+
+  /// No description provided for @momentScaleLow.
+  ///
+  /// In ar, this message translates to:
+  /// **'خفيفة'**
+  String get momentScaleLow;
+
+  /// No description provided for @momentScaleHigh.
+  ///
+  /// In ar, this message translates to:
+  /// **'قوية جداً'**
+  String get momentScaleHigh;
+
+  /// No description provided for @momentIntensityOption.
+  ///
+  /// In ar, this message translates to:
+  /// **'{n} من 10'**
+  String momentIntensityOption(int n);
+
+  /// No description provided for @momentHaltTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'ما الذي يحدث الآن؟ (اختياري)'**
+  String get momentHaltTitle;
+
+  /// No description provided for @momentHaltHungry.
+  ///
+  /// In ar, this message translates to:
+  /// **'جوع'**
+  String get momentHaltHungry;
+
+  /// No description provided for @momentHaltAngry.
+  ///
+  /// In ar, this message translates to:
+  /// **'غضب'**
+  String get momentHaltAngry;
+
+  /// No description provided for @momentHaltLonely.
+  ///
+  /// In ar, this message translates to:
+  /// **'وحدة'**
+  String get momentHaltLonely;
+
+  /// No description provided for @momentHaltTired.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعب'**
+  String get momentHaltTired;
+
+  /// No description provided for @momentStart.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ التنفس'**
+  String get momentStart;
+
+  /// No description provided for @momentInhale.
+  ///
+  /// In ar, this message translates to:
+  /// **'شهيق'**
+  String get momentInhale;
+
+  /// No description provided for @momentHold.
+  ///
+  /// In ar, this message translates to:
+  /// **'احبس النفس'**
+  String get momentHold;
+
+  /// No description provided for @momentExhale.
+  ///
+  /// In ar, this message translates to:
+  /// **'زفير'**
+  String get momentExhale;
+
+  /// No description provided for @momentTimer.
+  ///
+  /// In ar, this message translates to:
+  /// **'منذ {time}'**
+  String momentTimer(String time);
+
+  /// No description provided for @momentTipTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'جرّب الآن'**
+  String get momentTipTitle;
+
+  /// No description provided for @momentTipBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'تناول شيئاً حارّاً (هريسة، فلفل حار). الطعم القوي يشغل حواسك ويساعد الرغبة على المرور.'**
+  String get momentTipBody;
+
+  /// No description provided for @momentTipCaution.
+  ///
+  /// In ar, this message translates to:
+  /// **'تجنّب ذلك عند وجود قرحة أو ارتجاع، أو عند تناول دواء يهيّج المعدة. استشر طبيبك.'**
+  String get momentTipCaution;
+
+  /// No description provided for @momentPlanTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'خطتي: إذا... فإنني'**
+  String get momentPlanTitle;
+
+  /// No description provided for @momentPlanIf.
+  ///
+  /// In ar, this message translates to:
+  /// **'إذا...'**
+  String get momentPlanIf;
+
+  /// No description provided for @momentPlanThen.
+  ///
+  /// In ar, this message translates to:
+  /// **'فإنني...'**
+  String get momentPlanThen;
+
+  /// No description provided for @momentPlanEmpty.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب ما ستفعله عند ظهور الرغبة. مثال: إذا شعرت بالوحدة، أتصل بأحد المقرّبين.'**
+  String get momentPlanEmpty;
+
+  /// No description provided for @momentPlanLine.
+  ///
+  /// In ar, this message translates to:
+  /// **'إذا {ifText}، فإنني {thenText}'**
+  String momentPlanLine(String ifText, String thenText);
+
+  /// No description provided for @momentPlanAdd.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب خطتي'**
+  String get momentPlanAdd;
+
+  /// No description provided for @momentPlanEdit.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل'**
+  String get momentPlanEdit;
+
+  /// No description provided for @momentPlanSave.
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ'**
+  String get momentPlanSave;
+
+  /// No description provided for @momentPassed.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرّت الرغبة'**
+  String get momentPassed;
+
+  /// No description provided for @momentAfterTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'والآن، ما مدى قوة الرغبة؟'**
+  String get momentAfterTitle;
+
+  /// No description provided for @momentFinish.
+  ///
+  /// In ar, this message translates to:
+  /// **'إنهاء'**
+  String get momentFinish;
+
+  /// No description provided for @momentSaveFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر الحفظ. حاول مرة أخرى.'**
+  String get momentSaveFailed;
+
+  /// No description provided for @momentResultTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذه اللحظة مرّت، وهذه خطوة حقيقية.'**
+  String get momentResultTitle;
+
+  /// No description provided for @momentBefore.
+  ///
+  /// In ar, this message translates to:
+  /// **'قبل'**
+  String get momentBefore;
+
+  /// No description provided for @momentAfter.
+  ///
+  /// In ar, this message translates to:
+  /// **'بعد'**
+  String get momentAfter;
+
+  /// No description provided for @momentResultDown.
+  ///
+  /// In ar, this message translates to:
+  /// **'انخفضت الرغبة. احتفظ بهذه التجربة للمرة القادمة.'**
+  String get momentResultDown;
+
+  /// No description provided for @momentResultSame.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تنخفض الرغبة بعد، وهذا وارد. ستنخفض مع الوقت. يمكنك الحديث عن ذلك مع طبيبك.'**
+  String get momentResultSame;
+
+  /// No description provided for @momentClose.
+  ///
+  /// In ar, this message translates to:
+  /// **'إغلاق'**
+  String get momentClose;
+
+  /// No description provided for @sharingOnlyYou.
+  ///
+  /// In ar, this message translates to:
+  /// **'أنت فقط'**
+  String get sharingOnlyYou;
+
+  /// No description provided for @sharingDoctor.
+  ///
+  /// In ar, this message translates to:
+  /// **'يراه طبيبك'**
+  String get sharingDoctor;
 }
 
 class _AppLocalizationsDelegate

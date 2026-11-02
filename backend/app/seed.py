@@ -18,8 +18,8 @@ from . import security
 from .quotes_seed import seed_quotes
 from .models import Availability, DoctorProfile, Role, User
 
-# Closed on Fridays (weekday 4), 09:00-12:00 and 14:00-16:00 otherwise.
-HOURS = [(9 * 60, 12 * 60), (14 * 60, 16 * 60)]
+# Closed on Fridays (weekday 4), 07:30-14:30 otherwise.
+HOURS = [(7 * 60 + 30, 14 * 60 + 30)]
 WEEKDAYS = [0, 1, 2, 3, 5, 6]
 
 

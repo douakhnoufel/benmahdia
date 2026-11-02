@@ -42,6 +42,7 @@ class ApiIdentityRepository implements IdentityRepository {
         'id_type': draft.idType.apiValue,
         'id_number': draft.idNumber,
         'full_name': draft.fullName,
+        'full_name_latin': ?draft.fullNameLatin,
         'birth_date': draft.birthIso,
         'selfie_jpeg_base64': base64Encode(selfieJpeg),
       },

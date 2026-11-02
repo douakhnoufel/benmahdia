@@ -35,7 +35,12 @@ class IdentityIn(BaseModel):
     # The document read: the national ID card (default) or a passport.
     id_type: Literal["national_id", "passport"] = "national_id"
     id_number: str = Field(min_length=1, max_length=64)
+    # The main name the patient confirmed: Arabic for a national ID (read from
+    # the front), the MRZ transliteration for a passport.
     full_name: str = Field(min_length=1, max_length=160)
+    # The Latin transliteration read from a national ID's back MRZ, when the
+    # card was scanned on both sides. None for a passport or a typed-in name.
+    full_name_latin: str | None = Field(default=None, max_length=160)
     birth_date: date
     # The live selfie for the doctor, JPEG, base64 (about 2 MB at most).
     selfie_jpeg_base64: str = Field(min_length=1, max_length=3_000_000)
@@ -125,6 +130,7 @@ def declare(
     if not _ID_NUMBER.fullmatch(number):
         raise ApiError(422, "invalid_id_number")
     name = _clean_name(body.full_name)
+    name_latin = _clean_name(body.full_name_latin) if body.full_name_latin else None
     birth = _clean_birth(body.birth_date)
     jpeg = _selfie_bytes(body.selfie_jpeg_base64, settings)
 
@@ -150,6 +156,11 @@ def declare(
     new_file = selfies.save(jpeg, user.id)
     old_file = existing.selfie_file if existing else None
     name_enc = idcrypto.encrypt(name.encode(), kind="name", owner=owner)
+    name_latin_enc = (
+        idcrypto.encrypt(name_latin.encode(), kind="name", owner=owner)
+        if name_latin is not None
+        else None
+    )
     birth_enc = idcrypto.encrypt(birth.isoformat().encode(), kind="birth", owner=owner)
     now = clock.now()
     if existing is None:
@@ -159,6 +170,7 @@ def declare(
                 id_hmac=digest,
                 id_type=body.id_type,
                 name_enc=name_enc,
+                name_latin_enc=name_latin_enc,
                 birth_enc=birth_enc,
                 selfie_file=new_file,
                 status=IdStatus.declared,
@@ -170,6 +182,7 @@ def declare(
         existing.id_hmac = digest
         existing.id_type = body.id_type
         existing.name_enc = name_enc
+        existing.name_latin_enc = name_latin_enc
         existing.birth_enc = birth_enc
         existing.selfie_file = new_file
         existing.status = IdStatus.declared

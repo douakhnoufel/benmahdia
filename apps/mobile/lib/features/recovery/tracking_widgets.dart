@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_tokens.dart';
 import '../booking/booking_widgets.dart';
+import 'option_cards.dart';
 import 'recovery_models.dart';
 import 'recovery_widgets.dart';
 
@@ -207,60 +208,6 @@ class EarlyNoteBox extends StatelessWidget {
   }
 }
 
-/// Lets the patient choose their next small goal (PRD 5.6): a step not
-/// reached yet, or automatic. Returns the chosen days, 0 for automatic, or
-/// null when dismissed.
-Future<int?> showGoalSheet(
-  BuildContext context, {
-  required int days,
-  required int? chosen,
-}) {
-  return showModalBottomSheet<int>(
-    context: context,
-    showDragHandle: true,
-    builder: (context) {
-      final l10n = AppLocalizations.of(context);
-      final text = Theme.of(context).textTheme;
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpace.screenHorizontal,
-          0,
-          AppSpace.screenHorizontal,
-          AppSpace.xl,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: AppSpace.md,
-          children: [
-            Text(l10n.goalTitle, style: text.headlineMedium),
-            Wrap(
-              spacing: AppSpace.sm,
-              runSpacing: AppSpace.sm,
-              children: [
-                ChoiceChip(
-                  label: Text(
-                    '${l10n.goalAuto} · ${l10n.bookDays(nextGoal(days))}',
-                  ),
-                  selected: chosen == null,
-                  onSelected: (_) => Navigator.of(context).pop(0),
-                ),
-                for (final step in goalSteps)
-                  if (step > days)
-                    ChoiceChip(
-                      label: Text(l10n.bookDays(step)),
-                      selected: chosen == step,
-                      onSelected: (_) => Navigator.of(context).pop(step),
-                    ),
-              ],
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
-
 /// What the patient chose in the add-habit sheet.
 typedef NewHabit = ({HabitKind kind, String? text, DayTime? reminder});
 
@@ -322,22 +269,22 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
         spacing: AppSpace.md,
         children: [
           Text(l10n.habitsAdd, style: text.headlineMedium),
-          Wrap(
-            spacing: AppSpace.sm,
-            runSpacing: AppSpace.sm,
+          OptionGrid(
             children: [
               for (final MapEntry(key: kind, value: label)
                   in widget.catalog.entries)
                 if (!widget.kept.contains(kind))
-                  ChoiceChip(
-                    label: Text(label.of(lang)),
+                  OptionCard(
+                    icon: habitIcon(kind),
+                    label: label.of(lang),
                     selected: _kind == kind,
-                    onSelected: (_) => setState(() => _kind = kind),
+                    onTap: () => setState(() => _kind = kind),
                   ),
-              ChoiceChip(
-                label: Text(l10n.habitsOwn),
+              OptionCard(
+                icon: habitIcon(HabitKind.custom),
+                label: l10n.habitsOwn,
                 selected: _kind == HabitKind.custom,
-                onSelected: (_) => setState(() => _kind = HabitKind.custom),
+                onTap: () => setState(() => _kind = HabitKind.custom),
               ),
             ],
           ),

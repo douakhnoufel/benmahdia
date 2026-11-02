@@ -154,46 +154,53 @@ def test_paid_event_amount_and_currency_are_not_compared(client, sms, chargily):
 # --- webhook: expired holds (R-47) ------------------------------------------------
 
 
-@pytest.mark.xfail(strict=True, reason="QA PAY-01: paid webhook confirms a hold that already expired (payments.py:110 ignores hold_expires_at)")
-def test_paid_webhook_after_the_hold_expired_does_not_confirm(client, sms, chargily):
-    """R-47. The hold ran out (the calendar already shows the slot as free and
-    /confirm and /checkout both answer hold_expired), but nobody has purged
-    the row yet. The late payment must not turn it into an appointment; it
-    should be flagged for refund like any payment that lost its slot."""
+def test_late_payment_confirms_while_nobody_took_the_slot(client, sms, chargily):
+    """R-47, decided 2026-10-30 (PAY-01). The hold ran out but the card
+    checkout was still open and the slot is still free: the paid webhook
+    confirms it."""
     _, _, h = paid_card_appointment(client, sms, chargily)
     expire_holds()
     assert send(client, event("checkout.paid", "chk_1")).status_code == 200
-    a = appointment(h["id"])
-    assert a is None or a.status != AppointmentStatus.confirmed
+    assert appointment(h["id"]).status == AppointmentStatus.confirmed
+    assert audit_count("payment.needs_refund") == 0
+
+
+def test_late_payment_is_refunded_once_somebody_took_the_slot(client, sms, chargily):
+    """R-47. Another patient held the same slot after the run-out: the late
+    payment cannot confirm it and is flagged for refund. The new hold stays."""
+    doctor, _, h = paid_card_appointment(client, sms, chargily)
+    expire_holds()
+    other = verified_patient(client, sms, PHONE_B)
+    taken = held(client, other, doctor)
+    assert send(client, event("checkout.paid", "chk_1")).status_code == 200
+    assert appointment(h["id"]) is None
+    assert appointment(taken["id"]).status == AppointmentStatus.awaiting_payment
+    assert payment("chk_1").status == PaymentStatus.paid
     assert audit_count("payment.needs_refund") == 1
 
 
-def test_late_payment_outcome_depends_on_unrelated_cleanup(client, sms, chargily):
-    """Evidence for PAY-01: the same late payment is refunded instead of
-    confirmed as soon as *any* patient makes *any* hold (here: another slot),
-    because every hold purges every expired hold."""
+def test_late_payment_outcome_does_not_depend_on_unrelated_holds(client, sms, chargily):
+    """PAY-01: a hold on a different slot no longer purges the run-out hold
+    that still has an open checkout, so the late payment still confirms."""
     doctor, _, h = paid_card_appointment(client, sms, chargily)
     expire_holds()
     other = verified_patient(client, sms, PHONE_C)
     assert hold(client, other, doctor, NEXT).status_code == 201   # a different slot
     assert send(client, event("checkout.paid", "chk_1")).status_code == 200
-    assert appointment(h["id"]) is None
-    assert payment("chk_1").status == PaymentStatus.paid
-    assert audit_count("payment.needs_refund") == 1
-
-
-def test_expired_hold_shows_free_while_a_late_payment_can_still_confirm_it(client, sms, chargily):
-    """Evidence for PAY-01: between expiry and the webhook, the calendar
-    offers the slot to everybody, yet the paid webhook confirms it."""
-    doctor, _, h = paid_card_appointment(client, sms, chargily)
-    expire_holds()
-    other = verified_patient(client, sms, PHONE_B)
-    cal = client.get(f"/v1/doctors/{doctor.user_id}/calendar", headers=headers(other))
-    assert cal.status_code == 200, cal.text
-    slots = [s for d in cal.json()["days"] for s in d["slots"] if s["start"] == SLOT]
-    assert slots and slots[0]["free"] is True
-    assert send(client, event("checkout.paid", "chk_1")).status_code == 200
     assert appointment(h["id"]).status == AppointmentStatus.confirmed
+    assert audit_count("payment.needs_refund") == 0
+
+
+def test_expired_hold_without_a_checkout_is_still_purged_by_any_hold(client, sms, chargily):
+    """A run-out hold nobody is paying for is given back as before."""
+    doctor, _, h = paid_card_appointment(client, sms, chargily)
+    with Session(engine) as db:
+        db.query(Payment).delete()
+        db.commit()
+    expire_holds()
+    other = verified_patient(client, sms, PHONE_C)
+    assert hold(client, other, doctor, NEXT).status_code == 201
+    assert appointment(h["id"]) is None
 
 
 def test_failed_webhook_after_the_slot_was_retaken_leaves_the_new_hold(client, sms, chargily):
