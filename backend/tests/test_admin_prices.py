@@ -37,7 +37,8 @@ def test_new_price_applies_to_new_bookings_only(client, sms):
     r = client.put(price_url(doc.user_id), json={"price_dzd": 3000}, headers=doc_headers(client, ADMIN))
     assert r.status_code == 200
     assert r.json()["price_dzd"] == 3000
-    held = hold(client, session, doc)
+    # The follow-up, 30 days after the earlier visit.
+    held = hold(client, session, doc, "2026-11-19T08:00:00Z")
     assert held.json()["price_dzd"] == 3000
     with Session(engine) as db:
         assert db.get(Appointment, earlier.id).price_dzd == 2000

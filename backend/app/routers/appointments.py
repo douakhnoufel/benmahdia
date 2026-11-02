@@ -29,6 +29,8 @@ from .doctors import DoctorOut, doctor_out, utc_iso
 router = APIRouter(prefix="/v1/appointments", tags=["appointments"])
 
 FOLLOW_UP_DAYS = 30
+# A follow-up is bookable only this many days before or after its target.
+FOLLOW_UP_WINDOW_DAYS = 2
 
 
 class HoldIn(BaseModel):
@@ -77,6 +79,8 @@ class FollowUpOut(BaseModel):
     # Suggested clinic day, e.g. 2026-11-20.
     day: str
     days: int
+    # The follow-up must fall within this many days of [day].
+    window_days: int = FOLLOW_UP_WINDOW_DAYS
 
 
 def _out(db: Session, a: Appointment) -> AppointmentOut:
@@ -135,6 +139,28 @@ def _drop_expired_holds(
     )
 
 
+def _clinic_day(value: datetime) -> date:
+    return value.replace(tzinfo=timezone.utc).astimezone(scheduling.CLINIC_TZ).date()
+
+
+def _follow_up_target(db: Session, patient_id: uuid.UUID) -> tuple[Appointment, int, date] | None:
+    """The patient's latest booked visit, the interval the doctor chose after
+    it, and the target day of the next one. None before the first visit."""
+    last = db.scalar(
+        select(Appointment)
+        .where(
+            Appointment.patient_id == patient_id,
+            Appointment.status.in_((AppointmentStatus.completed, AppointmentStatus.confirmed)),
+        )
+        .order_by(Appointment.start_utc.desc())
+        .limit(1)
+    )
+    if last is None:
+        return None
+    days = last.next_follow_up_days or FOLLOW_UP_DAYS
+    return last, days, _clinic_day(last.start_utc) + timedelta(days=days)
+
+
 def _valid_slot(db: Session, profile: DoctorProfile, start: datetime, now: datetime) -> bool:
     """Whether [start] is one of the doctor's real slots, inside the notice
     and the booking horizon."""
@@ -177,6 +203,13 @@ def hold_slot(
     start = _naive_utc(body.start)
     if not _valid_slot(db, profile, start, now):
         raise ApiError(409, "slot_unavailable")
+    # After the first visit, the next one is bookable only near the target
+    # the doctor chose (15, 30 or 60 days), never in the same week.
+    target = _follow_up_target(db, patient.id)
+    if target is not None:
+        _, _, day = target
+        if abs((_clinic_day(start) - day).days) > FOLLOW_UP_WINDOW_DAYS:
+            raise ApiError(409, "outside_follow_up_window", day=day.isoformat(), window_days=FOLLOW_UP_WINDOW_DAYS)
     end = start + timedelta(minutes=profile.slot_minutes)
 
     _drop_expired_holds(db, now, profile.user_id, start, end)
@@ -308,25 +341,13 @@ def mine(
 def follow_up(
     patient: User = Depends(verified_patient), db: Session = Depends(get_db)
 ) -> FollowUpOut | None:
-    """The next visit the app suggests: 30 days after the latest one (PRD 4.3).
-    The patient may still pick an earlier or later day."""
-    last = db.scalar(
-        select(Appointment)
-        .where(
-            Appointment.patient_id == patient.id,
-            Appointment.status.in_((AppointmentStatus.completed, AppointmentStatus.confirmed)),
-        )
-        .order_by(Appointment.start_utc.desc())
-        .limit(1)
-    )
-    if last is None:
+    """The next visit: 15, 30 or 60 days after the latest one, as the doctor
+    chose (30 by default). It can be booked only within two days of it."""
+    target = _follow_up_target(db, patient.id)
+    if target is None:
         return None
-    visit_day = last.start_utc.replace(tzinfo=timezone.utc).astimezone(scheduling.CLINIC_TZ).date()
-    return FollowUpOut(
-        after=_out(db, last),
-        day=(visit_day + timedelta(days=FOLLOW_UP_DAYS)).isoformat(),
-        days=FOLLOW_UP_DAYS,
-    )
+    last, days, day = target
+    return FollowUpOut(after=_out(db, last), day=day.isoformat(), days=days)
 
 
 def build_receipt(db: Session, a: Appointment) -> ReceiptOut:

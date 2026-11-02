@@ -9,6 +9,7 @@ every doctor of the clinic reads it. It is encrypted at rest, never sent to
 the patient or the AI, and never logged (the audit keeps the note id only)."""
 
 import uuid
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
@@ -45,6 +46,17 @@ class VisitOut(BaseModel):
     # The doctor's own note, or a colleague's note that its author shared.
     has_note: bool = False
     note_shared: bool = False
+    # Days until the next visit the doctor chose (15, 30 or 60); None = 30.
+    next_follow_up_days: int | None = None
+
+
+class FollowUpIn(BaseModel):
+    days: Literal[15, 30, 60]
+
+
+class FollowUpSetOut(BaseModel):
+    appointment_id: uuid.UUID
+    next_follow_up_days: int
 
 
 class NoteIn(BaseModel):
@@ -119,6 +131,7 @@ def patient_appointments(
                 price_dzd=a.price_dzd,
                 has_note=a.id in noted,
                 note_shared=noted.get(a.id, False),
+                next_follow_up_days=a.next_follow_up_days,
             )
             for a in rows
         ],
@@ -194,3 +207,27 @@ def write_note(
     audit.record(db, "appointment.note_saved", actor_id=doctor.user_id, target=str(note.id), request=request)
     db.commit()
     return _note_out(a, note, doctor)
+
+
+# The follow-up is computed from the latest booked visit.
+_FOLLOWABLE = (AppointmentStatus.confirmed, AppointmentStatus.completed)
+
+
+@router.put("/appointments/{appointment_id}/follow-up", response_model=FollowUpSetOut)
+def set_follow_up(
+    appointment_id: uuid.UUID,
+    body: FollowUpIn,
+    request: Request,
+    doctor: DoctorProfile = Depends(current_doctor),
+    db: Session = Depends(get_db),
+) -> FollowUpSetOut:
+    """Sets when the patient's next visit should be after this one: 15 days
+    (high-risk), 30 (default) or 60 (stable). The patient can then book only
+    within two days of that day."""
+    a = _own(db, doctor, appointment_id)
+    if a.status not in _FOLLOWABLE:
+        raise ApiError(409, "not_followable")
+    a.next_follow_up_days = body.days
+    audit.record(db, "appointment.follow_up_set", actor_id=doctor.user_id, target=str(a.id), request=request)
+    db.commit()
+    return FollowUpSetOut(appointment_id=a.id, next_follow_up_days=body.days)

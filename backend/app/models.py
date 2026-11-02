@@ -299,6 +299,10 @@ class Appointment(Base):
     __table_args__ = (
         CheckConstraint("end_utc > start_utc", name="ck_appointment_range"),
         CheckConstraint("price_dzd >= 0", name="ck_appointments_price_dzd"),
+        CheckConstraint(
+            "next_follow_up_days IS NULL OR next_follow_up_days IN (15, 30, 60)",
+            name="ck_appointments_next_follow_up_days",
+        ),
         Index("ix_appointments_doctor_start", "doctor_id", "start_utc"),
         # The clinic-wide day list, across doctors.
         Index("ix_appointments_start_utc", "start_utc"),
@@ -335,6 +339,9 @@ class Appointment(Base):
     checkin_code: Mapped[str | None] = mapped_column(String(8))
     # Set when the doctor's dashboard accepted the code on the day.
     checked_in_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Days until the suggested follow-up after this visit; the doctor sets it
+    # per visit (15 high-risk, 30 default, 60 stable). NULL falls back to 30.
+    next_follow_up_days: Mapped[int | None] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 

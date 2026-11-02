@@ -7,7 +7,7 @@ from app.db import engine
 from app.models import PrimaryDoctor
 
 from .booking_helpers import headers, make_doctor, verified_patient
-from .test_appointments import NEXT, SLOT, confirm, hold
+from .test_appointments import FOLLOW_UP, NEXT, SLOT, confirm, hold
 from .test_payments import chargily, checkout, event, send  # noqa: F401  (chargily is a fixture)
 from .test_qa_booking_rules import second_doctor
 
@@ -56,7 +56,7 @@ def test_a_later_booking_with_a_colleague_keeps_the_first(client, sms):
     colleague = second_doctor()
     s = verified_patient(client, sms, PHONE)
     book(client, s, first)
-    book(client, s, colleague, NEXT)
+    book(client, s, colleague, FOLLOW_UP)
     assert my_doctor(client, s)["id"] == str(first.user_id)
     with Session(engine) as db:
         assert db.query(PrimaryDoctor).count() == 1
