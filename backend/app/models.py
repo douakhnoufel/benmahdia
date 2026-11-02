@@ -597,6 +597,34 @@ class HabitLog(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
+class CravingLog(Base):
+    """One difficult moment the patient rode out (urge surfing): how strong
+    the craving was when it began and when it passed (1–10), and the HALT
+    triggers they picked. Never any free text."""
+
+    __tablename__ = "craving_logs"
+    __table_args__ = (
+        CheckConstraint(
+            "intensity_before BETWEEN 1 AND 10", name="ck_craving_logs_intensity_before"
+        ),
+        CheckConstraint(
+            "intensity_after IS NULL OR intensity_after BETWEEN 1 AND 10",
+            name="ck_craving_logs_intensity_after",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    patient_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    intensity_before: Mapped[int] = mapped_column(Integer)
+    # "hungry", "angry", "lonely", "tired", "other"; may be empty.
+    triggers: Mapped[list[str]] = mapped_column(JSON, default=list)
+    passed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    intensity_after: Mapped[int | None] = mapped_column(Integer)
+
+
 class Medication(Base):
     """One medicine a doctor prescribed to a patient (PRD 5.3). [times] are
     clinic wall-clock "HH:MM" times, one dose each, every day from
