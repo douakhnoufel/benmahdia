@@ -1515,7 +1515,7 @@ void main() {
           tester.getSemantics(
             find.byKey(ValueKey('rating-${_ar.dailyCheckCraving}-3')),
           ),
-          isSemantics(isButton: true, hasTapAction: true),
+          matchesSemantics(isButton: true, hasTapAction: true),
         );
         handle.dispose();
       },
@@ -1535,7 +1535,7 @@ void main() {
         await _scrollTo(tester, box);
         expect(
           tester.getSemantics(box),
-          isSemantics(hasCheckedState: true, hasTapAction: true),
+          matchesSemantics(hasCheckedState: true, hasTapAction: true),
         );
         handle.dispose();
       },
@@ -1550,7 +1550,7 @@ void main() {
         await _pump(tester, screens['addiction form']!, repo: _Repo());
         expect(
           tester.getSemantics(find.byIcon(Icons.event_rounded)),
-          isSemantics(isButton: true, hasTapAction: true),
+          matchesSemantics(isButton: true, hasTapAction: true),
         );
         handle.dispose();
       },
