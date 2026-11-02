@@ -35,7 +35,7 @@ checks before and after, stop after each step with a summary and changed files.
   - `GET /v1/staff/patients/{id}/cravings` via `clinic_patient` (colleague access audited)
   - Path is `/v1/me/cravings` to match `/v1/me/habits` (the plan said `/v1/recovery/cravings`).
 - `backend/app/main.py`: both routers registered.
-- `backend/tests/test_cravings.py`: 9 tests. **8 passed; the window test was
+- `backend/tests/test_cravings.py`: 9 tests, all pass. Backend baseline: only pre-existing failure `test_identity.py::test_nothing_readable_is_stored`.
   just rewritten** (old row moved back 40 days in the DB instead of advancing the
   clock, which tripped token expiry) and **has not been run yet**. Run:
   `cd backend && .venv/Scripts/python -m pytest tests/test_cravings.py -q`.

@@ -73,8 +73,11 @@ def test_list_is_newest_first_and_limited_to_the_window(client, sms):
         row = db.get(CravingLog, uuid.UUID(old["id"]))
         row.started_at = clock.now() - timedelta(days=40)
         db.commit()
-    start(client, s, intensity=8)
+    earlier = start(client, s, intensity=8).json()
     start(client, s, intensity=6)
+    with Session(engine) as db:
+        db.get(CravingLog, uuid.UUID(earlier["id"])).started_at = clock.now() - timedelta(hours=1)
+        db.commit()
     r = client.get("/v1/me/cravings", headers=bearer(s))
     assert r.status_code == 200, r.text
     rows = r.json()
