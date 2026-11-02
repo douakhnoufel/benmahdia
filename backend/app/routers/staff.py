@@ -6,7 +6,7 @@ import uuid
 from datetime import date, datetime, timedelta, timezone
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -497,3 +497,34 @@ def reject(
     if declaration is not None:
         selfies.delete(old_file)
     return _signup_out(user)
+
+
+@router.delete("/patients/{user_id}", status_code=204)
+def delete_patient(
+    user_id: uuid.UUID,
+    request: Request,
+    doctor: DoctorProfile = Depends(current_doctor),
+    db: Session = Depends(get_db),
+) -> Response:
+    """Permanently removes a patient account and all of its data from the
+    dashboard. Any clinic doctor may do this (PRD 3: shared files). This is a
+    hard delete, stronger than the patient's own self-service deletion
+    (PRD 12.5): the user row is removed at once and the database cascades the
+    appointments, payments, addictions, habits, medications, logs and
+    bookmarks. The audit trail has no foreign key to the user, so it survives;
+    an entry records who deleted whom. Only patient accounts can be deleted
+    here — never a doctor or the super admin."""
+    target = db.get(User, user_id)
+    if target is None or target.role != Role.patient:
+        raise ApiError(404, "patient_not_found")
+    selfie_file = (
+        target.id_declaration.selfie_file if target.id_declaration is not None else None
+    )
+    audit.record(
+        db, "patient.hard_deleted", actor_id=doctor.user_id, target=str(user_id), request=request
+    )
+    db.delete(target)
+    db.commit()
+    if selfie_file:
+        selfies.delete(selfie_file)
+    return Response(status_code=204)

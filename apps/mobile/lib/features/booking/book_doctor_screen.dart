@@ -31,6 +31,40 @@ class _BookDoctorScreenState extends ConsumerState<BookDoctorScreen> {
 
   Future<List<Doctor>> _load() => ref.read(bookingRepositoryProvider).doctors();
 
+  /// Warns the patient about the no-show policy before moving to slot pick:
+  /// a paid-at-clinic no-show risks the blacklist, while an online payment can
+  /// be refunded or rescheduled. Guards against fake bookings. Proceeds only
+  /// if the patient confirms.
+  Future<void> _confirmPolicy(Doctor picked) async {
+    final l10n = AppLocalizations.of(context);
+    final text = Theme.of(context).textTheme;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(
+          Icons.warning_amber_rounded,
+          color: AppColors.warning,
+          size: 32,
+        ),
+        title: Text(l10n.bookPolicyTitle),
+        content: SingleChildScrollView(
+          child: Text(l10n.bookPolicyBody, style: text.bodyMedium),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.bookPolicyBack),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.bookPolicyContinue),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) widget.onNext(picked);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -108,7 +142,7 @@ class _BookDoctorScreenState extends ConsumerState<BookDoctorScreen> {
                     FilledButton(
                       onPressed: picked == null
                           ? null
-                          : () => widget.onNext(picked),
+                          : () => _confirmPolicy(picked),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

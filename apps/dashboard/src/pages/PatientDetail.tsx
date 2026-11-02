@@ -48,7 +48,78 @@ export function PatientDetail({ patient, onBack }: { patient: Pick<Patient, 'id'
       <Addictions patientId={patient.id} />
       <Habits patientId={patient.id} />
       <Medications patientId={patient.id} />
+      <DeleteAccount patient={patient} onDeleted={onBack} />
     </section>
+  );
+}
+
+/** Danger zone: permanently delete the patient account (PRD 3, shared files —
+ * any clinic doctor may do it). A confirmation that makes the doctor type the
+ * patient's phone guards against a mis-click; the backend is the real gate. */
+function DeleteAccount({
+  patient,
+  onDeleted,
+}: {
+  patient: Pick<Patient, 'id' | 'phone'>;
+  onDeleted: () => void;
+}) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  const [confirm, setConfirm] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const matches = patient.phone != null && confirm.trim() === patient.phone;
+
+  async function remove() {
+    if (!matches) return;
+    setBusy(true);
+    setFailed(false);
+    try {
+      await api.deletePatient(patient.id);
+      onDeleted();
+    } catch {
+      setFailed(true);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="flex flex-col gap-md border-danger/40">
+      <h3 className="text-h3 text-danger">{t('deleteAccount')}</h3>
+      <Notice>{t('deleteAccountWarning')}</Notice>
+      {!open ? (
+        <div>
+          <Button variant="danger" onClick={() => setOpen(true)}>{t('deleteAccount')}</Button>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-md">
+          <Input
+            label={t('deleteConfirmPrompt')}
+            dir="ltr"
+            autoComplete="off"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+          />
+          {failed && <p role="alert" className="text-danger">{t('deleteFailed')}</p>}
+          <div className="flex gap-sm">
+            <Button variant="danger" disabled={!matches || busy} onClick={remove}>
+              {t('deleteConfirmButton')}
+            </Button>
+            <Button
+              variant="ghost"
+              disabled={busy}
+              onClick={() => {
+                setOpen(false);
+                setConfirm('');
+                setFailed(false);
+              }}
+            >
+              {t('cancel')}
+            </Button>
+          </div>
+        </div>
+      )}
+    </Card>
   );
 }
 

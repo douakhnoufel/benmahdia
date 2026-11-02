@@ -58,7 +58,7 @@ Four roles. A patient sees only their own data; every doctor of the clinic sees 
 | --- | --- | --- | --- |
 | Super admin | One of the 3 doctors (also holds the Doctor role) | Create and deactivate doctor accounts, approve new patient accounts, view platform stats, manage quotes library, configure AI settings | Read other doctors' patient conversations or notes through admin screens |
 | Clinic staff | Reception / front desk | Review ID declarations the app could not approve automatically, approve or reject any declaration (including overturning an automatic approval) with a reason | See clinical data, conversations, notes or medications |
-| Doctor (admin) | Psychiatrist | Manage the clinic's patients, set availability, manage appointments (and see every doctor's appointments and agenda in the clinic), prescribe medication schedules, set addiction profiles, review AI alerts and summaries | See a colleague's private visit notes (unless the author shares them) |
+| Doctor (admin) | Psychiatrist | Manage the clinic's patients (including permanently deleting a patient account from the dashboard, §12.6), set availability, manage appointments (and see every doctor's appointments and agenda in the clinic), prescribe medication schedules, set addiction profiles, review AI alerts and summaries | See a colleague's private visit notes (unless the author shares them); delete a doctor or staff account |
 | Patient | Person in treatment | Book, pay for and cancel appointments, enter their addictions, track sobriety, confirm medications, read articles, chat with the AI companion, delete their account | See other patients, edit their medications, delete relapse history |
 
 **Multi-doctor rules**
@@ -159,7 +159,11 @@ The patient pays for each appointment in the app through Chargily Pay; a slot is
 - **Flow:** patient picks a slot → slot is held → Chargily checkout opens → Chargily sends a signed webhook to the backend → appointment becomes confirmed and both sides are notified: the patient in the app, the doctor by a dashboard alert (also when the patient cancels). Alerts carry no medical content.
 - **Price:** set per doctor by the super admin.
 - **Receipts:** the patient sees a receipt in the app for each paid appointment (reference number, doctor, time, amount, method, payment date, Chargily reference for cards) and can copy it as text. It is a payment receipt, not a tax invoice. The doctor and super admin see paid / unpaid status per appointment.
-- **Cancellations and refunds:** deadline, refund or credit, and no-show rules to decide with the clinic.
+- **Pay at the clinic:** besides paying online, a patient may choose to pay at the clinic. The slot is then held under the no-show policy below instead of being paid up front.
+- **No-show policy (anti fake-booking):** before picking a slot the app warns the patient (on the doctor step) that this policy applies.
+  - A patient who books with **pay at the clinic** and does not show up may be added to a **blacklist** that blocks further bookings. The clinic lifts a blacklisting manually.
+  - A patient who **paid online** and cannot attend is offered a **refund or a reschedule** — they are not blacklisted for a visit they already paid for.
+- **Cancellations and refunds:** cancellation is allowed up to the doctor's notice window (§4.3). Online payments cancelled in time are refunded or rescheduled; the exact deadline and any credit are configured with the clinic.
 - **Security:** the app never sees or stores card numbers; only Chargily's payment id and status are kept.
 
 **Acceptance criteria**
@@ -474,7 +478,7 @@ The biggest risks are GPU hosting availability in Algeria and the AI's behaviour
 - [ ] Final hosting provider and server specs.
 - [ ] Languages for v1: Arabic + French only, or Darja and English too?
 
-* [ ] Appointment price, and refund rules for cancellations and no-shows.
+* [ ] Appointment price. No-show / refund rules decided (§4.4): pay-at-clinic no-show risks the blacklist; online payers get a refund or reschedule. Blacklist enforcement and online refunds are not built yet.
 * [ ] Whose Chargily account receives the payments: the clinic's or yours?
 * [ ] Who writes and approves the articles, and how many at launch?
 * [ ] coconutStudio: confirm hosting in Algeria, pricing and data-processing terms.
@@ -518,6 +522,15 @@ The five flows below are what the backend, the patient app and the dashboard mus
 1. Settings → Delete account → confirm with PIN.
 2. The account is disabled at once and the doctor is notified.
 3. Personal data is erased after the grace period; records the clinic must keep follow the retention policy.
+
+### 12.6 Staff deletion of a patient account
+
+Separate from the patient's own self-service deletion (§12.5), a doctor can permanently delete a patient account from the dashboard (PRD 3: shared files, so any clinic doctor may do it).
+
+1. Patient file → Delete account → confirm by typing the patient's phone number.
+2. The patient row and all of its data (appointments, payments, addictions, habits, medications, daily checks, alerts, favourites, ID declaration, selfie) are removed at once — a hard delete, with no grace period.
+3. The audit log records which doctor deleted which patient; the audit trail is kept even though the account is gone.
+4. Only patient accounts can be deleted this way, never a doctor or the super admin.
 
 ## 13. Build steps
 

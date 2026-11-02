@@ -706,6 +706,8 @@ void main() {
       await pumpFor(tester, _second);
       await tester.tap(find.text(_ar.bookChooseTime));
       await pumpFor(tester, _second);
+      await tester.tap(find.text(_ar.bookPolicyContinue));
+      await pumpFor(tester, _second);
       await tester.tap(find.text('09:00'));
       await pumpFor(tester, _second);
       await tester.tap(find.text(_ar.bookContinue));

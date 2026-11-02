@@ -325,6 +325,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get bookChooseTime => 'اختيار اليوم والوقت';
 
   @override
+  String get bookPolicyTitle => 'تنبيه مهم';
+
+  @override
+  String get bookPolicyBody =>
+      'إذا حجزت واخترت الدفع في العيادة ولم تحضر، قد يُدرَج حسابك في القائمة السوداء. لا تحجز إلا إذا كنت متأكداً من الحضور.\n\nأما إذا دفعت عبر الإنترنت، فنوفّر لك استرجاع المبلغ أو إعادة جدولة الموعد.';
+
+  @override
+  String get bookPolicyContinue => 'فهمت، متابعة';
+
+  @override
+  String get bookPolicyBack => 'تراجع';
+
+  @override
   String get bookSlotTitle => 'اليوم والوقت';
 
   @override

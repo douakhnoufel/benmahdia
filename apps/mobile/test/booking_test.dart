@@ -99,7 +99,34 @@ void main() {
 
       // A single doctor is picked already.
       await tester.tap(find.text('اختيار اليوم والوقت'));
+      await tester.pumpAndSettle();
+      // The no-show policy warning stands between the doctor and the slots.
+      expect(find.text('تنبيه مهم'), findsOneWidget);
+      expect(next, isNull);
+      await tester.tap(find.text('فهمت، متابعة'));
+      await tester.pumpAndSettle();
       expect(next?.id, 'benmahdia');
+    });
+
+    testWidgets('the policy warning can be dismissed without booking', (
+      tester,
+    ) async {
+      Doctor? next;
+      await pumpApp(
+        tester,
+        BookDoctorScreen(onNext: (d) => next = d),
+        overrides: _with(_repo()),
+      );
+      await pumpFor(tester, _second);
+      await tester.tap(find.text('اختيار اليوم والوقت'));
+      await tester.pumpAndSettle();
+      expect(find.text('تنبيه مهم'), findsOneWidget);
+      // Backing out leaves the patient on the doctor step, nothing booked.
+      await tester.tap(find.text('تراجع'));
+      await tester.pumpAndSettle();
+      expect(find.text('تنبيه مهم'), findsNothing);
+      expect(next, isNull);
+      expect(find.text('اختيار اليوم والوقت'), findsOneWidget);
     });
 
     testWidgets('French', (tester) async {
@@ -620,6 +647,8 @@ void main() {
     await tester.tap(find.text('go'));
     await pumpFor(tester, _second);
     await tester.tap(find.text('اختيار اليوم والوقت'));
+    await pumpFor(tester, _second);
+    await tester.tap(find.text('فهمت، متابعة'));
     await pumpFor(tester, _second);
     await tester.tap(find.text('09:00'));
     await pumpFor(tester, _second);

@@ -332,6 +332,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get bookChooseTime => 'Choisir le jour et l\'heure';
 
   @override
+  String get bookPolicyTitle => 'Avertissement important';
+
+  @override
+  String get bookPolicyBody =>
+      'Si vous réservez en choisissant de payer à la clinique et que vous ne venez pas, votre compte peut être ajouté à la liste noire. Ne réservez que si vous êtes sûr de pouvoir venir.\n\nSi vous payez en ligne, nous offrons un remboursement ou un report du rendez-vous.';
+
+  @override
+  String get bookPolicyContinue => 'J\'ai compris, continuer';
+
+  @override
+  String get bookPolicyBack => 'Retour';
+
+  @override
   String get bookSlotTitle => 'Jour et heure';
 
   @override

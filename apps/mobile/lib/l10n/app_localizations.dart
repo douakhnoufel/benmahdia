@@ -644,6 +644,30 @@ abstract class AppLocalizations {
   /// **'اختيار اليوم والوقت'**
   String get bookChooseTime;
 
+  /// No description provided for @bookPolicyTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تنبيه مهم'**
+  String get bookPolicyTitle;
+
+  /// No description provided for @bookPolicyBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'إذا حجزت واخترت الدفع في العيادة ولم تحضر، قد يُدرَج حسابك في القائمة السوداء. لا تحجز إلا إذا كنت متأكداً من الحضور.\n\nأما إذا دفعت عبر الإنترنت، فنوفّر لك استرجاع المبلغ أو إعادة جدولة الموعد.'**
+  String get bookPolicyBody;
+
+  /// No description provided for @bookPolicyContinue.
+  ///
+  /// In ar, this message translates to:
+  /// **'فهمت، متابعة'**
+  String get bookPolicyContinue;
+
+  /// No description provided for @bookPolicyBack.
+  ///
+  /// In ar, this message translates to:
+  /// **'تراجع'**
+  String get bookPolicyBack;
+
   /// No description provided for @bookSlotTitle.
   ///
   /// In ar, this message translates to:
