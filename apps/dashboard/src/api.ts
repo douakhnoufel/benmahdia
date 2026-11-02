@@ -101,14 +101,23 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
 /** Like [request], for a binary answer (the patient's selfie). */
 async function requestBlob(path: string): Promise<Blob> {
+  return (await requestFile(path)).blob;
+}
+
+/** A binary answer with the file name the server suggests. */
+async function requestFile(path: string): Promise<{ blob: Blob; filename: string }> {
   let res = await raw('GET', path, undefined, session?.access_token);
   if (res.status === 401 && (await refresh())) {
     res = await raw('GET', path, undefined, session?.access_token);
   }
   if (res.status === 401) setSession(null);
   if (!res.ok) return parse<never>(res);
-  return res.blob();
+  const disposition = res.headers.get('content-disposition') ?? '';
+  const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? 'export.csv';
+  return { blob: await res.blob(), filename };
 }
+
+export type ExportSheet = 'patients' | 'appointments';
 
 /** Who is signed in. The super admin is also a doctor (PRD 3). */
 export type Me = { id: string; role: 'doctor' | 'super_admin'; name_ar: string; name_fr: string };
@@ -443,4 +452,6 @@ export const api = {
   updateArticle: (id: string, article: ArticleInput) => request<Article>('PUT', `v1/staff/articles/${id}`, article),
   /** A temporary browser URL for the selfie; release it with URL.revokeObjectURL. */
   selfie: async (id: string) => URL.createObjectURL(await requestBlob(`v1/staff/signups/${id}/selfie`)),
+  /** Super admin only: a CSV that Excel opens (no clinical data). */
+  exportSheet: (sheet: ExportSheet) => requestFile(`v1/admin/export/${sheet}.csv`),
 };
