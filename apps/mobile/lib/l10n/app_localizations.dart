@@ -1139,8 +1139,14 @@ abstract class AppLocalizations {
   /// No description provided for @bookFollowUpBody.
   ///
   /// In ar, this message translates to:
-  /// **'بعد {span} من موعدك يوم {date}. يمكنك اختيار يوم قبله أو بعده.'**
+  /// **'بعد {span} من موعدك يوم {date}. يمكنك الحجز قبله أو بعده بيومين على الأكثر.'**
   String bookFollowUpBody(String span, String date);
+
+  /// No description provided for @bookOutsideFollowUp.
+  ///
+  /// In ar, this message translates to:
+  /// **'حدّد طبيبك موعد متابعتك: الحجز متاح فقط قبل اليوم المقترح أو بعده بيومين.'**
+  String get bookOutsideFollowUp;
 
   /// No description provided for @bookFollowUpOverdueTitle.
   ///

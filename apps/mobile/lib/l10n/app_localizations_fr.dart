@@ -666,8 +666,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String bookFollowUpBody(String span, String date) {
-    return '$span après votre rendez-vous du $date. Vous pouvez choisir un jour avant ou après.';
+    return '$span après votre rendez-vous du $date. Vous pouvez réserver jusqu\'à deux jours avant ou après.';
   }
+
+  @override
+  String get bookOutsideFollowUp =>
+      'Votre médecin a fixé votre suivi : seuls les deux jours avant et après la date conseillée sont ouverts.';
 
   @override
   String get bookFollowUpOverdueTitle => 'C\'est le moment de votre suivi';

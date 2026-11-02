@@ -125,6 +125,10 @@ class FakeBookingRepository implements BookingRepository {
     final day = _day(doctor, DateTime(start.year, start.month, start.day));
     final free = day.slots.any((s) => s.start == start && s.free);
     if (!free) throw const SlotUnavailable();
+    final next = await followUp();
+    if (next != null && !next.allows(start, now())) {
+      throw const SlotUnavailable();
+    }
     _reserved.add(start);
     return Hold(
       id: 'h${_nextId++}',

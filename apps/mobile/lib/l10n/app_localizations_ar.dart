@@ -650,8 +650,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String bookFollowUpBody(String span, String date) {
-    return 'بعد $span من موعدك يوم $date. يمكنك اختيار يوم قبله أو بعده.';
+    return 'بعد $span من موعدك يوم $date. يمكنك الحجز قبله أو بعده بيومين على الأكثر.';
   }
+
+  @override
+  String get bookOutsideFollowUp =>
+      'حدّد طبيبك موعد متابعتك: الحجز متاح فقط قبل اليوم المقترح أو بعده بيومين.';
 
   @override
   String get bookFollowUpOverdueTitle => 'حان وقت موعد المتابعة';

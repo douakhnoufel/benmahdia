@@ -40,7 +40,7 @@ class Slot {
 }
 
 /// Why a day offers no slots.
-enum DayClosure { none, tooSoon, closed }
+enum DayClosure { none, tooSoon, closed, outsideFollowUp }
 
 /// The slots of one day, or the reason there are none.
 class DaySlots {
@@ -180,24 +180,44 @@ class Receipt {
       languageCode == 'ar' ? doctorNameAr : doctorNameFr;
 }
 
-/// The next visit the app suggests: [days] days after the patient's latest
-/// visit. The patient may still book an earlier or later day, and it costs
-/// the same as any appointment.
+/// The next visit: [days] days after the patient's latest one (15, 30 or 60,
+/// as the doctor chose). It can be booked only within [windowDays] days of
+/// [day]; once that window has gone by, any day is open again. It costs the
+/// same as any appointment.
 class FollowUp {
-  const FollowUp({required this.after, required this.day, required this.days});
+  const FollowUp({
+    required this.after,
+    required this.day,
+    required this.days,
+    this.windowDays = 2,
+  });
 
   /// The visit the follow-up counts from.
   final Appointment after;
 
-  /// The suggested day, at midnight clinic time.
+  /// The target day, at midnight clinic time.
   final DateTime day;
 
   /// Days between [after] and [day].
   final int days;
 
-  /// Whether the suggested day has already gone by on [now].
-  bool overdueOn(DateTime now) =>
-      day.isBefore(DateTime(now.year, now.month, now.day));
+  /// How many days before or after [day] the follow-up may be booked.
+  final int windowDays;
+
+  /// Whether the booking window has already gone by on [now].
+  bool overdueOn(DateTime now) => DateTime(
+    day.year,
+    day.month,
+    day.day + windowDays,
+  ).isBefore(DateTime(now.year, now.month, now.day));
+
+  /// Whether [other] may be booked on [now].
+  bool allows(DateTime other, DateTime now) {
+    if (overdueOn(now)) return true;
+    final d = DateTime.utc(other.year, other.month, other.day);
+    final t = DateTime.utc(day.year, day.month, day.day);
+    return d.difference(t).inDays.abs() <= windowDays;
+  }
 }
 
 /// Someone else took the slot first.

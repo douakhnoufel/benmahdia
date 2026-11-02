@@ -133,7 +133,10 @@ class ApiBookingRepository implements BookingRepository {
     final detail = body is Map ? body['detail'] : null;
     final code = detail is Map ? detail['code'] : null;
     return switch (code) {
-      'slot_unavailable' || 'hold_expired' => const SlotUnavailable(),
+      // The doctor changed the follow-up meanwhile: reload the calendar.
+      'slot_unavailable' ||
+      'hold_expired' ||
+      'outside_follow_up_window' => const SlotUnavailable(),
       'too_late_to_cancel' => const TooLateToCancel(),
       'not_a_hold' || 'appointment_not_found' => const SlotUnavailable(),
       'not_verified' => const BookingRefused(BookingRefusal.notVerified),
@@ -255,6 +258,7 @@ class ApiBookingRepository implements BookingRepository {
       after: _appointmentFrom(map['after'] as Map<String, dynamic>),
       day: _day(map['day'] as String),
       days: map['days'] as int,
+      windowDays: map['window_days'] as int? ?? 2,
     );
   }
 
