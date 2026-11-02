@@ -10,7 +10,7 @@ from app.clock import clock
 from app.db import engine
 from app.models import AuditLog, CravingLog
 
-from .conftest import bearer, register
+from .conftest import advance, bearer, register
 from .test_medications import unlocked
 from .test_staff import login, other_doctor
 from .test_substance_tracking import setup
@@ -74,6 +74,8 @@ def test_list_is_newest_first_and_limited_to_the_window(client, sms):
         row.started_at = clock.now() - timedelta(days=40)
         db.commit()
     start(client, s, intensity=8)
+    # The frozen clock would stamp both rows with the same started_at.
+    advance(minutes=5)
     start(client, s, intensity=6)
     r = client.get("/v1/me/cravings", headers=bearer(s))
     assert r.status_code == 200, r.text

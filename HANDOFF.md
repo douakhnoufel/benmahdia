@@ -35,27 +35,47 @@ checks before and after, stop after each step with a summary and changed files.
   - `GET /v1/staff/patients/{id}/cravings` via `clinic_patient` (colleague access audited)
   - Path is `/v1/me/cravings` to match `/v1/me/habits` (the plan said `/v1/recovery/cravings`).
 - `backend/app/main.py`: both routers registered.
-- `backend/tests/test_cravings.py`: 9 tests. **8 passed; the window test was
-  just rewritten** (old row moved back 40 days in the DB instead of advancing the
-  clock, which tripped token expiry) and **has not been run yet**. Run:
+- `backend/tests/test_cravings.py`: 9 tests, **all passing**. The window test
+  was failing: the conftest clock is frozen, so two cravings logged in one test
+  got the same `started_at` and "newest first" had no defined order. It now
+  calls `advance(minutes=5)` between the two rows. Run:
   `cd backend && .venv/Scripts/python -m pytest tests/test_cravings.py -q`.
 
-## Still to do (mobile)
-- `lib/features/craving/`: `craving_models.dart`, `craving_repository.dart`
-  (interface + provider switched on `API_BASE_URL`, same as recovery),
-  `fake_craving_repository.dart`, `api_craving_repository.dart`,
-  `breathing_circle.dart` (inhale 4 · hold 4 · exhale 6; still under reduced
-  motion), `difficult_moment_screen.dart` (intensity 1–10, HALT chips, breathing,
-  rotating tip, if-then plan + call clinic, clinic open/closed, companion link,
-  urgent help via existing `showCrisisSheet`, "craving passed" → before/after).
-- `lib/widgets/sharing_label.dart`: "Only you" / "Your doctor sees this".
-- Touch: `recovery_screen.dart` (entry card only), `app_tokens.dart` (breathing
-  timings), `local_store.dart` (if-then plan), `app_ar.arb` / `app_fr.arb`
-  (~30 `moment…` keys) + `flutter gen-l10n`.
-- Tests: `test/difficult_moment_test.dart`, `test/sharing_label_test.dart` (ar+fr,
-  reduced motion).
-- Push screens with `Navigator.of(context).push` like `recovery_screen.dart`; no go_router.
-- After: rerun the four checks, run on the phone, summary + changed files.
+## Done (mobile, branch feat/difficult-moment-mobile)
+- `lib/features/craving/craving_models.dart`: `CravingTrigger` (HALT, 5),
+  `CravingLog`, `IfThenPlan`, `CravingAlreadyPassed` (extends
+  `RecoveryUnavailable`), intensity bounds 1–10.
+- `craving_repository.dart` (interface + provider switched on `API_BASE_URL`),
+  `fake_craving_repository.dart` (`locked` / `failing` / `seed` for tests),
+  `api_craving_repository.dart` (same http plumbing as recovery: 401 refresh
+  once, `recovery_locked`, 409 → `CravingAlreadyPassed`, malformed answer →
+  `RecoveryUnavailable`, never a crash).
+- `breathing_circle.dart`: inhale 4 · hold 4 · exhale 6 from the new
+  `AppMotion.breatheInMs/HoldMs/OutMs`; under reduced motion it is still and
+  shows one calm instruction with no countdown.
+- `difficult_moment_screen.dart`: four steps (start → breathing → closing →
+  passed) with intensity 1–10 (44 px targets that wrap), HALT chips, rotating
+  tip (spicy · mint gum · water · walk), the if-then plan, clinic open/closed
+  from `ClinicInfo.hours` + tap to call, companion link, urgent help in the
+  app bar at every step, then before → after. Also `DifficultMomentCard` and
+  `openDifficultMoment` for the way in.
+- `lib/widgets/sharing_label.dart`: "Only you" (lock) / "Your doctor sees
+  this" (eye).
+- Touched: `recovery_screen.dart` (entry card above the daily check only),
+  `app_tokens.dart` (breath timings), `local_store.dart` (if-then plan; the
+  write is fire-and-forget like `writeLocale` / `writeSession` — an awaited
+  secure-storage write never completes under `flutter test`), `app_ar.arb`
+  (60 entries) / `app_fr.arb` (58) + `flutter gen-l10n`.
+- Tests: `test/difficult_moment_test.dart` (12), `test/sharing_label_test.dart`
+  (3), ar + fr, reduced motion, failing-save path. The sample clinic answers
+  after 200 ms, so those tests wait for it explicitly.
+
+## Still to do (step 1)
+- Run it on the phone (ARTEMIS or a device) and look at the screen.
+- The clinic must approve the four tip wordings before launch; a per-patient
+  on/off for the doctor comes later.
+- A month chart of cravings and the trigger insight from the design's
+  "craving passed" screen are not built: step 1 shows before → after only.
 
 ## Repo cautions
 - Another session (`benmahdia-0f`) works in this repo and commits whatever is

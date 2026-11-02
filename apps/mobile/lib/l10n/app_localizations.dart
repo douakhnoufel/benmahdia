@@ -2941,6 +2941,354 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'متابعة'**
   String get milestoneContinue;
+
+  /// No description provided for @momentEntryTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'أواجه لحظة صعبة'**
+  String get momentEntryTitle;
+
+  /// No description provided for @momentEntryBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'تنفّس، اقتراح تجرّبه، وخطتك. ومعها طريق للوصول إلى العيادة.'**
+  String get momentEntryBody;
+
+  /// No description provided for @momentEntryAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ'**
+  String get momentEntryAction;
+
+  /// No description provided for @momentTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لحظة صعبة'**
+  String get momentTitle;
+
+  /// No description provided for @momentStartTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'ما مدى قوة الرغبة الآن؟'**
+  String get momentStartTitle;
+
+  /// No description provided for @momentIntensityBefore.
+  ///
+  /// In ar, this message translates to:
+  /// **'قوة الرغبة الآن'**
+  String get momentIntensityBefore;
+
+  /// No description provided for @momentIntensityAfter.
+  ///
+  /// In ar, this message translates to:
+  /// **'قوة الرغبة بعد أن مرّت'**
+  String get momentIntensityAfter;
+
+  /// No description provided for @momentIntensityValue.
+  ///
+  /// In ar, this message translates to:
+  /// **'{label}: {value} من 10'**
+  String momentIntensityValue(String label, int value);
+
+  /// No description provided for @momentIntensityLow.
+  ///
+  /// In ar, this message translates to:
+  /// **'خفيفة'**
+  String get momentIntensityLow;
+
+  /// No description provided for @momentIntensityHigh.
+  ///
+  /// In ar, this message translates to:
+  /// **'قوية'**
+  String get momentIntensityHigh;
+
+  /// No description provided for @momentTriggersTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'ما الذي تشعر به الآن؟'**
+  String get momentTriggersTitle;
+
+  /// No description provided for @momentTriggersHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختياري، ويساعد على فهم ما يسبق الرغبة'**
+  String get momentTriggersHint;
+
+  /// No description provided for @momentTriggerHungry.
+  ///
+  /// In ar, this message translates to:
+  /// **'جائع'**
+  String get momentTriggerHungry;
+
+  /// No description provided for @momentTriggerAngry.
+  ///
+  /// In ar, this message translates to:
+  /// **'غاضب'**
+  String get momentTriggerAngry;
+
+  /// No description provided for @momentTriggerLonely.
+  ///
+  /// In ar, this message translates to:
+  /// **'وحيد'**
+  String get momentTriggerLonely;
+
+  /// No description provided for @momentTriggerTired.
+  ///
+  /// In ar, this message translates to:
+  /// **'متعب'**
+  String get momentTriggerTired;
+
+  /// No description provided for @momentTriggerOther.
+  ///
+  /// In ar, this message translates to:
+  /// **'شيء آخر'**
+  String get momentTriggerOther;
+
+  /// No description provided for @momentNeedIntensity.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر قوة الرغبة لنبدأ'**
+  String get momentNeedIntensity;
+
+  /// No description provided for @momentStart.
+  ///
+  /// In ar, this message translates to:
+  /// **'لنتنفّس معاً'**
+  String get momentStart;
+
+  /// No description provided for @momentSurfBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرغبة موجة: تعلو ثم تهدأ. ابقَ هنا حتى تهدأ.'**
+  String get momentSurfBody;
+
+  /// No description provided for @momentBreatheIn.
+  ///
+  /// In ar, this message translates to:
+  /// **'شهيق'**
+  String get momentBreatheIn;
+
+  /// No description provided for @momentBreatheHold.
+  ///
+  /// In ar, this message translates to:
+  /// **'احبس'**
+  String get momentBreatheHold;
+
+  /// No description provided for @momentBreatheOut.
+  ///
+  /// In ar, this message translates to:
+  /// **'زفير'**
+  String get momentBreatheOut;
+
+  /// No description provided for @momentBreatheSlowly.
+  ///
+  /// In ar, this message translates to:
+  /// **'تنفّس ببطء'**
+  String get momentBreatheSlowly;
+
+  /// No description provided for @momentTipTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'جرّب الآن'**
+  String get momentTipTitle;
+
+  /// No description provided for @momentTipSpicy.
+  ///
+  /// In ar, this message translates to:
+  /// **'تناول شيئاً حارّاً مثل الهريسة أو الفلفل الحار: الطعم القوي يشغل الحواس.'**
+  String get momentTipSpicy;
+
+  /// No description provided for @momentTipGum.
+  ///
+  /// In ar, this message translates to:
+  /// **'علكة بالنعناع: المضغ والطعم المنعش يشغلان الحواس.'**
+  String get momentTipGum;
+
+  /// No description provided for @momentTipWater.
+  ///
+  /// In ar, this message translates to:
+  /// **'اشرب كأس ماء ببطء، جرعة جرعة.'**
+  String get momentTipWater;
+
+  /// No description provided for @momentTipWalk.
+  ///
+  /// In ar, this message translates to:
+  /// **'امشِ خمس دقائق، حتى داخل المنزل.'**
+  String get momentTipWalk;
+
+  /// No description provided for @momentTipAnother.
+  ///
+  /// In ar, this message translates to:
+  /// **'اقتراح آخر'**
+  String get momentTipAnother;
+
+  /// No description provided for @momentPlanTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'خطتي'**
+  String get momentPlanTitle;
+
+  /// No description provided for @momentPlanWhen.
+  ///
+  /// In ar, this message translates to:
+  /// **'عندما'**
+  String get momentPlanWhen;
+
+  /// No description provided for @momentPlanThen.
+  ///
+  /// In ar, this message translates to:
+  /// **'سوف'**
+  String get momentPlanThen;
+
+  /// No description provided for @momentPlanWhenHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'عندما أشعر بالتعب في المساء'**
+  String get momentPlanWhenHint;
+
+  /// No description provided for @momentPlanThenHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'أشرب كأس ماء وأتصل بأخي'**
+  String get momentPlanThenHint;
+
+  /// No description provided for @momentPlanSave.
+  ///
+  /// In ar, this message translates to:
+  /// **'احفظ الخطة'**
+  String get momentPlanSave;
+
+  /// No description provided for @momentPlanSaved.
+  ///
+  /// In ar, this message translates to:
+  /// **'حُفظت الخطة على هاتفك'**
+  String get momentPlanSaved;
+
+  /// No description provided for @momentPlanEmpty.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد خطة بعد. اكتب خطوة واحدة تساعدك في اللحظة الصعبة.'**
+  String get momentPlanEmpty;
+
+  /// No description provided for @momentPlanWrite.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب خطتي'**
+  String get momentPlanWrite;
+
+  /// No description provided for @momentPlanChange.
+  ///
+  /// In ar, this message translates to:
+  /// **'عدّل الخطة'**
+  String get momentPlanChange;
+
+  /// No description provided for @momentPlanLine.
+  ///
+  /// In ar, this message translates to:
+  /// **'عندما {when}، سوف {then}.'**
+  String momentPlanLine(String when, String then);
+
+  /// No description provided for @momentClinicOpen.
+  ///
+  /// In ar, this message translates to:
+  /// **'العيادة مفتوحة الآن'**
+  String get momentClinicOpen;
+
+  /// No description provided for @momentClinicClosed.
+  ///
+  /// In ar, this message translates to:
+  /// **'العيادة مغلقة الآن'**
+  String get momentClinicClosed;
+
+  /// No description provided for @momentCallClinic.
+  ///
+  /// In ar, this message translates to:
+  /// **'اتصل بالعيادة'**
+  String get momentCallClinic;
+
+  /// No description provided for @momentCompanion.
+  ///
+  /// In ar, this message translates to:
+  /// **'تحدّث مع المرافق'**
+  String get momentCompanion;
+
+  /// No description provided for @momentUrgent.
+  ///
+  /// In ar, this message translates to:
+  /// **'مساعدة عاجلة'**
+  String get momentUrgent;
+
+  /// No description provided for @momentPassedAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرّت الرغبة'**
+  String get momentPassedAction;
+
+  /// No description provided for @momentClosingTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'كيف هي الرغبة الآن؟'**
+  String get momentClosingTitle;
+
+  /// No description provided for @momentSave.
+  ///
+  /// In ar, this message translates to:
+  /// **'احفظ'**
+  String get momentSave;
+
+  /// No description provided for @momentBackToBreathing.
+  ///
+  /// In ar, this message translates to:
+  /// **'عد إلى التنفّس'**
+  String get momentBackToBreathing;
+
+  /// No description provided for @momentPassedTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لقد تجاوزت هذه اللحظة'**
+  String get momentPassedTitle;
+
+  /// No description provided for @momentPassedLower.
+  ///
+  /// In ar, this message translates to:
+  /// **'هدأت الرغبة. كل مرة تمرّ فيها تصبح أسهل.'**
+  String get momentPassedLower;
+
+  /// No description provided for @momentPassedSteady.
+  ///
+  /// In ar, this message translates to:
+  /// **'ما زالت قوية، ومع ذلك لم تستسلم. هذا يُحسب لك.'**
+  String get momentPassedSteady;
+
+  /// No description provided for @momentBefore.
+  ///
+  /// In ar, this message translates to:
+  /// **'قبل'**
+  String get momentBefore;
+
+  /// No description provided for @momentAfter.
+  ///
+  /// In ar, this message translates to:
+  /// **'بعد'**
+  String get momentAfter;
+
+  /// No description provided for @momentDone.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم'**
+  String get momentDone;
+
+  /// No description provided for @sharingOnlyYou.
+  ///
+  /// In ar, this message translates to:
+  /// **'أنت فقط ترى هذا'**
+  String get sharingOnlyYou;
+
+  /// No description provided for @sharingDoctorSees.
+  ///
+  /// In ar, this message translates to:
+  /// **'طبيبك يرى هذا'**
+  String get sharingDoctorSees;
 }
 
 class _AppLocalizationsDelegate

@@ -120,6 +120,13 @@ abstract final class AppMotion {
   /// One full breath of the splash logo (rings grow and fade, mark swells).
   static const breath = Duration(milliseconds: 4000);
 
+  /// One breath of the difficult-moment circle: inhale 4 s, hold 4 s,
+  /// exhale 6 s (habit-tracking design, step 1). Milliseconds, so the whole
+  /// cycle stays a compile-time constant.
+  static const breatheInMs = 4000;
+  static const breatheHoldMs = 4000;
+  static const breatheOutMs = 6000;
+
   /// Day-counter ring filling while its number counts up.
   static const ringFill = Duration(milliseconds: 1200);
 

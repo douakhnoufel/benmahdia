@@ -13,6 +13,7 @@ import '../articles/articles_screen.dart';
 import '../booking/booking_models.dart';
 import '../booking/booking_repository.dart';
 import '../booking/booking_widgets.dart';
+import '../craving/difficult_moment_screen.dart';
 import '../home/home_scope.dart';
 import 'addiction_form_screen.dart';
 import 'daily_check_screen.dart';
@@ -493,6 +494,11 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
                   label: Text(l10n.addictionAddAnother),
                 ),
               ],
+              // A difficult moment can come at any time, so the way in
+              // sits above the daily check (habit-tracking design).
+              DifficultMomentCard(
+                onOpen: () => unawaited(openDifficultMoment(context)),
+              ),
               // With an addiction, the day is done once each one was checked
               // (PRD 5.6); without, the simple "day without use" tick.
               WeekCheckCard(

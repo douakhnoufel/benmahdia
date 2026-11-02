@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../features/auth/auth_models.dart';
+import '../features/craving/craving_models.dart';
 import '../features/auth/phone_number.dart';
 
 /// What the phone keeps between launches: the chosen language and the login
@@ -15,6 +16,7 @@ class LocalStore {
   static const _storage = FlutterSecureStorage();
   static const _localeKey = 'locale';
   static const _sessionKey = 'session';
+  static const _ifThenKey = 'if_then_plan';
 
   static Future<String?> _read(String key) async {
     try {
@@ -81,4 +83,25 @@ class LocalStore {
   );
 
   static Future<void> clearSession() => _delete(_sessionKey);
+
+  /// The patient's own plan, "When ___, I will ___" (habit-tracking design,
+  /// step 1). It stays on the phone: "Only you".
+  static Future<IfThenPlan?> readIfThenPlan() async {
+    final raw = await _read(_ifThenKey);
+    if (raw == null) return null;
+    try {
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+      return IfThenPlan(
+        when: json['when'] as String,
+        then: json['then'] as String,
+      );
+    } on Object {
+      // Unreadable: drop it rather than keep failing on it.
+      await _delete(_ifThenKey);
+      return null;
+    }
+  }
+
+  static Future<void> writeIfThenPlan(IfThenPlan plan) =>
+      _write(_ifThenKey, jsonEncode({'when': plan.when, 'then': plan.then}));
 }
