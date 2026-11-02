@@ -13,6 +13,7 @@ import '../articles/articles_screen.dart';
 import '../booking/booking_models.dart';
 import '../booking/booking_repository.dart';
 import '../booking/booking_widgets.dart';
+import '../craving/difficult_moment_screen.dart';
 import '../home/home_scope.dart';
 import 'addiction_form_screen.dart';
 import 'daily_check_screen.dart';
@@ -493,6 +494,27 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
                   label: Text(l10n.addictionAddAnother),
                 ),
               ],
+              Card(
+                child: ListTile(
+                  minVerticalPadding: AppSpace.md,
+                  leading: const Icon(
+                    Icons.self_improvement_rounded,
+                    color: AppColors.teal600,
+                  ),
+                  title: Text(l10n.momentEntryTitle),
+                  subtitle: Text(l10n.momentEntryBody),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => unawaited(
+                    Navigator.of(context).push<void>(
+                      appRoute(
+                        const DifficultMomentScreen(),
+                        reduced: AppMotion.reduced(context),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
               // With an addiction, the day is done once each one was checked
               // (PRD 5.6); without, the simple "day without use" tick.
               WeekCheckCard(

@@ -1704,4 +1704,130 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get milestoneContinue => 'Continuer';
+
+  @override
+  String get sharingOnlyYou => 'Vous seul(e)';
+
+  @override
+  String get sharingDoctor => 'Votre médecin voit ceci';
+
+  @override
+  String get momentEntryTitle => 'Je vis un moment difficile';
+
+  @override
+  String get momentEntryBody => 'Respirez avec nous et passez-le pas à pas';
+
+  @override
+  String get momentTitle => 'Moment difficile';
+
+  @override
+  String get momentHowStrong => 'Quelle est la force de l\'envie ? De 1 à 10';
+
+  @override
+  String get momentTriggersTitle => 'Qu\'y a-t-il derrière ? (facultatif)';
+
+  @override
+  String get momentTriggerHungry => 'Faim';
+
+  @override
+  String get momentTriggerAngry => 'Colère';
+
+  @override
+  String get momentTriggerLonely => 'Solitude';
+
+  @override
+  String get momentTriggerTired => 'Fatigue';
+
+  @override
+  String get momentTriggerOther => 'Autre chose';
+
+  @override
+  String get momentStart => 'Commencer';
+
+  @override
+  String get momentBreathe => 'Respirez avec le cercle';
+
+  @override
+  String get momentInhale => 'Inspirez';
+
+  @override
+  String get momentHold => 'Retenez';
+
+  @override
+  String get momentExhale => 'Expirez';
+
+  @override
+  String get momentTipTitle => 'Essayez ceci';
+
+  @override
+  String get momentTip1 =>
+      'Mangez quelque chose de piquant, comme de la harissa ou du piment';
+
+  @override
+  String get momentTip2 => 'Mâchez un chewing-gum à la menthe';
+
+  @override
+  String get momentTip3 => 'Buvez lentement un verre d\'eau';
+
+  @override
+  String get momentTip4 => 'Marchez quelques minutes';
+
+  @override
+  String get momentTipAnother => 'Un autre conseil';
+
+  @override
+  String get momentPlanTitle => 'Mon plan';
+
+  @override
+  String get momentPlanEmpty =>
+      'Écrivez ce que vous ferez quand l\'envie arrive';
+
+  @override
+  String get momentPlanHint => 'Quand ..., je ...';
+
+  @override
+  String get momentPlanEdit => 'Modifier';
+
+  @override
+  String get momentPlanSave => 'Enregistrer';
+
+  @override
+  String get momentCallClinic => 'Appeler le cabinet';
+
+  @override
+  String get momentClinicOpen => 'Le cabinet est ouvert maintenant';
+
+  @override
+  String get momentClinicClosed => 'Le cabinet est fermé maintenant';
+
+  @override
+  String get momentCompanion => 'Parler au compagnon';
+
+  @override
+  String get momentUrgent => 'Aide urgente';
+
+  @override
+  String get momentPassed => 'L\'envie est passée';
+
+  @override
+  String get momentHowNow => 'Quelle est sa force maintenant ? De 1 à 10';
+
+  @override
+  String get momentSave => 'Enregistrer';
+
+  @override
+  String get momentDoneTitle => 'Bravo, vous l\'avez traversée';
+
+  @override
+  String get momentDoneBody =>
+      'Chaque moment difficile passé est un pas vers le rétablissement';
+
+  @override
+  String get momentBefore => 'Avant';
+
+  @override
+  String get momentAfter => 'Après';
+
+  @override
+  String get momentClose => 'Fermer';
 }

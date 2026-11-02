@@ -15,6 +15,7 @@ class LocalStore {
   static const _storage = FlutterSecureStorage();
   static const _localeKey = 'locale';
   static const _sessionKey = 'session';
+  static const _ifThenKey = 'if_then_plan';
 
   static Future<String?> _read(String key) async {
     try {
@@ -81,4 +82,11 @@ class LocalStore {
   );
 
   static Future<void> clearSession() => _delete(_sessionKey);
+
+  /// The patient's own when-then plan; stays on the phone.
+  static Future<String?> readIfThenPlan() => _read(_ifThenKey);
+
+  static Future<void> writeIfThenPlan(String plan) => plan.trim().isEmpty
+      ? _delete(_ifThenKey)
+      : _write(_ifThenKey, plan.trim());
 }

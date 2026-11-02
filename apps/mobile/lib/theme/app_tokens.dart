@@ -129,6 +129,11 @@ abstract final class AppMotion {
   /// One beat of the pulse around the selfie oval.
   static const pulse = Duration(milliseconds: 1400);
 
+  /// Breathing guide: inhale 4 s, hold 4 s, exhale 6 s.
+  static const breatheIn = Duration(seconds: 4);
+  static const breatheHold = Duration(seconds: 4);
+  static const breatheOut = Duration(seconds: 6);
+
   /// Shortest time the splash stays on screen, so it never just flashes.
   static const splashMinimum = Duration(milliseconds: 1600);
 

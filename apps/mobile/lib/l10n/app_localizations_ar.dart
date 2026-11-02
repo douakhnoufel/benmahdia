@@ -1677,4 +1677,127 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get milestoneContinue => 'متابعة';
+
+  @override
+  String get sharingOnlyYou => 'أنت فقط';
+
+  @override
+  String get sharingDoctor => 'طبيبك يرى هذا';
+
+  @override
+  String get momentEntryTitle => 'أمرّ بلحظة صعبة';
+
+  @override
+  String get momentEntryBody => 'تنفّس معنا وتجاوزها خطوة بخطوة';
+
+  @override
+  String get momentTitle => 'لحظة صعبة';
+
+  @override
+  String get momentHowStrong => 'ما قوة الرغبة الآن؟ من 1 إلى 10';
+
+  @override
+  String get momentTriggersTitle => 'ما الذي وراءها؟ (اختياري)';
+
+  @override
+  String get momentTriggerHungry => 'جوع';
+
+  @override
+  String get momentTriggerAngry => 'غضب';
+
+  @override
+  String get momentTriggerLonely => 'وحدة';
+
+  @override
+  String get momentTriggerTired => 'تعب';
+
+  @override
+  String get momentTriggerOther => 'شيء آخر';
+
+  @override
+  String get momentStart => 'ابدأ';
+
+  @override
+  String get momentBreathe => 'تنفّس مع الدائرة';
+
+  @override
+  String get momentInhale => 'شهيق';
+
+  @override
+  String get momentHold => 'احبس النفَس';
+
+  @override
+  String get momentExhale => 'زفير';
+
+  @override
+  String get momentTipTitle => 'جرّب هذا';
+
+  @override
+  String get momentTip1 => 'تناول شيئًا حارًا، مثل الهريسة أو الفلفل الحار';
+
+  @override
+  String get momentTip2 => 'امضغ علكة بالنعناع';
+
+  @override
+  String get momentTip3 => 'اشرب كوب ماء ببطء';
+
+  @override
+  String get momentTip4 => 'امشِ قليلًا لبضع دقائق';
+
+  @override
+  String get momentTipAnother => 'نصيحة أخرى';
+
+  @override
+  String get momentPlanTitle => 'خطتي';
+
+  @override
+  String get momentPlanEmpty => 'اكتب ما ستفعله عندما تأتي الرغبة';
+
+  @override
+  String get momentPlanHint => 'عندما ... سأ...';
+
+  @override
+  String get momentPlanEdit => 'تعديل';
+
+  @override
+  String get momentPlanSave => 'حفظ';
+
+  @override
+  String get momentCallClinic => 'اتصل بالعيادة';
+
+  @override
+  String get momentClinicOpen => 'العيادة مفتوحة الآن';
+
+  @override
+  String get momentClinicClosed => 'العيادة مغلقة الآن';
+
+  @override
+  String get momentCompanion => 'تحدّث مع المرافق';
+
+  @override
+  String get momentUrgent => 'مساعدة عاجلة';
+
+  @override
+  String get momentPassed => 'مرّت الرغبة';
+
+  @override
+  String get momentHowNow => 'ما قوتها الآن؟ من 1 إلى 10';
+
+  @override
+  String get momentSave => 'تسجيل';
+
+  @override
+  String get momentDoneTitle => 'أحسنت، لقد تجاوزتها';
+
+  @override
+  String get momentDoneBody => 'كل لحظة صعبة تعدّها خطوة نحو التعافي';
+
+  @override
+  String get momentBefore => 'قبل';
+
+  @override
+  String get momentAfter => 'بعد';
+
+  @override
+  String get momentClose => 'إغلاق';
 }
