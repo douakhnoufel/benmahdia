@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { api, ApiError } from '../api';
 import { useI18n, type StringKey } from '../i18n';
 import { Button, Card, Input } from '../components/ui';
+import { ClinicLogo } from '../components/ClinicLogo';
 
 export function Login() {
   const { t, lang, setLang } = useI18n();
@@ -28,7 +29,10 @@ export function Login() {
     <main className="flex min-h-screen items-center justify-center p-lg">
       <Card className="w-full max-w-sm">
         <div className="mb-xl flex items-center justify-between gap-md">
-          <h1 className="text-h2 text-ink-strong">{t('appName')}</h1>
+          <div className="flex items-center gap-md">
+            <ClinicLogo size="lg" />
+            <h1 className="text-h2 text-ink-strong">{t('appName')}</h1>
+          </div>
           <Button variant="ghost" onClick={() => setLang(lang === 'ar' ? 'fr' : 'ar')}>
             {t('switchLang')}
           </Button>

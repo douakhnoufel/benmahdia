@@ -9,7 +9,6 @@ this folder. They are the clinic's own files; nothing here is drawn or generated
 | `logo_source.jpg` | 2048 × 2048 | Launcher icon, Android and iOS (`flutter_launcher_icons`) |
 | `logo_padded.png` | 1024 × 1024 | Android adaptive icon foreground, native splash before Android 12 and on iOS (`flutter_native_splash`) |
 | `logo_android12.png` | 1152 × 1152 | Android 12+ native splash |
-| `logo_green.jpg` | 2048 × 2048 | Green splash variant (`life_quality_splash_screen.dart`) |
 
 The mobile app reads its copies from `apps/mobile/assets/brand/` (Flutter assets
 must live inside the package). Keep both folders identical when the clinic sends
