@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 /// The three tabs of the signed-in app, in bar order.
-enum HomeTab { appointments, recovery, companion }
+enum HomeTab { appointments, recovery, companion, profile }
 
 /// Lets a screen inside the home shell switch tabs, or reload the tabs after
 /// it changed something they show (e.g. a new booking).

@@ -187,8 +187,9 @@ trailing chevron `text.muted`, divider `border`.
 **Chat bubble** — incoming = `surface`+`border` radius `card` (tail start);
 outgoing = `teal.500`/`on.primary` (tail end). Quick-reply = outline chips.
 
-**Bottom nav** — 3 tabs, in this order: Appointments (مواعيدي / Rendez-vous),
-Recovery (تعافيّ / Mon parcours, the home tab), Companion (المرافق / Compagnon).
+**Bottom nav** — 4 tabs, in this order: Appointments (مواعيدي / Rendez-vous),
+Recovery (تعافيّ / Mon parcours, the home tab), Companion (المرافق / Compagnon),
+Profile (حسابي / Profil: account, language, sign-out).
 `surface`, top hairline `border`; active tab = `teal.50` pill indicator with
 icon + label in `teal.700`; inactive icon + label `text.body` (so 12–13 px
 labels stay readable). Labels always shown.

@@ -40,6 +40,61 @@ class AppLocalizationsAr extends AppLocalizations {
   String get logout => 'تسجيل الخروج';
 
   @override
+  String get navProfile => 'حسابي';
+
+  @override
+  String get accountTitle => 'الحساب والإعدادات';
+
+  @override
+  String get profilePhone => 'رقم الهاتف';
+
+  @override
+  String get profileEmail => 'البريد الإلكتروني للتواصل';
+
+  @override
+  String get profileNone => 'غير محدد';
+
+  @override
+  String get profileEmailHint =>
+      'للتواصل معك فقط، وليس وسيلة لتسجيل الدخول. اتركه فارغا لحذفه.';
+
+  @override
+  String get profileEmailInvalid => 'عنوان البريد الإلكتروني غير صالح.';
+
+  @override
+  String get profileSave => 'حفظ';
+
+  @override
+  String get profileCancel => 'إلغاء';
+
+  @override
+  String get profileSaveFailed => 'تعذّر الحفظ. حاول مجددا.';
+
+  @override
+  String get profileIdStatus => 'بطاقة الهوية';
+
+  @override
+  String get profileIdNone => 'لم يُصرَّح بها بعد';
+
+  @override
+  String get accountIdDeclared => 'مُصرَّح بها، قيد المراجعة';
+
+  @override
+  String get profileIdApproved => 'هوية مُصرَّح بها';
+
+  @override
+  String get profileIdRejected => 'مرفوضة: صرّح بها مجددا';
+
+  @override
+  String get profileLanguage => 'اللغة';
+
+  @override
+  String get profileLoadFailed => 'تعذّر تحميل حسابك.';
+
+  @override
+  String get profileRetry => 'اضغط لإعادة المحاولة';
+
+  @override
   String get splashLine1 => 'خطوة بخطوة نحو التعافي';
 
   @override

@@ -42,6 +42,61 @@ class AppLocalizationsFr extends AppLocalizations {
   String get logout => 'Se déconnecter';
 
   @override
+  String get navProfile => 'Profil';
+
+  @override
+  String get accountTitle => 'Profil et réglages';
+
+  @override
+  String get profilePhone => 'Numéro de téléphone';
+
+  @override
+  String get profileEmail => 'E-mail de contact';
+
+  @override
+  String get profileNone => 'Non renseigné';
+
+  @override
+  String get profileEmailHint =>
+      'Pour vous joindre. Ce n\'est pas un moyen de connexion. Laissez vide pour l\'effacer.';
+
+  @override
+  String get profileEmailInvalid => 'Cette adresse e-mail n\'est pas valide.';
+
+  @override
+  String get profileSave => 'Enregistrer';
+
+  @override
+  String get profileCancel => 'Annuler';
+
+  @override
+  String get profileSaveFailed => 'Enregistrement impossible. Réessayez.';
+
+  @override
+  String get profileIdStatus => 'Pièce d\'identité';
+
+  @override
+  String get profileIdNone => 'Pas encore déclarée';
+
+  @override
+  String get accountIdDeclared => 'Déclarée, en cours de vérification';
+
+  @override
+  String get profileIdApproved => 'Pièce déclarée';
+
+  @override
+  String get profileIdRejected => 'Refusée : déclarez-la à nouveau';
+
+  @override
+  String get profileLanguage => 'Langue';
+
+  @override
+  String get profileLoadFailed => 'Impossible de charger votre compte.';
+
+  @override
+  String get profileRetry => 'Toucher pour réessayer';
+
+  @override
   String get splashLine1 => 'Pas à pas vers le rétablissement';
 
   @override

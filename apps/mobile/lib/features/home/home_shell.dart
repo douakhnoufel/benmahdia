@@ -7,11 +7,10 @@ import '../../core/app_route.dart';
 import '../../core/locale_provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_tokens.dart';
-import '../auth/auth_repository.dart';
+import '../account/profile_screen.dart';
 import '../booking/booking_flow.dart';
 import '../companion/companion_screen.dart';
 import '../recovery/recovery_screen.dart';
-import '../welcome/welcome_entry.dart';
 import 'home_scope.dart';
 
 /// Replaces everything (welcome, sign-in) with the signed-in app.
@@ -24,8 +23,8 @@ void openHome(BuildContext context, {HomeTab tab = HomeTab.recovery}) {
   );
 }
 
-/// The signed-in app: appointments, recovery and the companion behind a
-/// bottom bar. Each tab keeps its state while another is shown. Recovery is
+/// The signed-in app: appointments, recovery, the companion and the profile
+/// behind a bottom bar. Each tab keeps its state while another is shown. Recovery is
 /// the home tab (PRD 5: the reason patients open the app every day).
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key, this.initial = HomeTab.recovery});
@@ -64,18 +63,16 @@ class _HomeShellState extends State<HomeShell> {
                 ),
                 RecoveryScreen(key: ValueKey('recovery$_generation')),
                 const CompanionScreen(),
+                ProfileScreen(key: ValueKey('profile$_generation')),
               ],
             ),
-            const PositionedDirectional(
-              top: 0,
-              end: 0,
-              child: SafeArea(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [_LogoutButton(), _LanguageButton()],
-                ),
+            // Profile has its own language and sign-out rows.
+            if (_tab != HomeTab.profile)
+              const PositionedDirectional(
+                top: 0,
+                end: 0,
+                child: SafeArea(child: _LanguageButton()),
               ),
-            ),
           ],
         ),
         bottomNavigationBar: DecoratedBox(
@@ -100,69 +97,15 @@ class _HomeShellState extends State<HomeShell> {
                 selectedIcon: const Icon(Icons.chat_bubble_rounded),
                 label: l10n.navCompanion,
               ),
+              NavigationDestination(
+                icon: const Icon(Icons.person_outline_rounded),
+                selectedIcon: const Icon(Icons.person_rounded),
+                label: l10n.navProfile,
+              ),
             ],
           ),
         ),
       ),
-    );
-  }
-}
-
-class _LogoutButton extends ConsumerStatefulWidget {
-  const _LogoutButton();
-
-  @override
-  ConsumerState<_LogoutButton> createState() => _LogoutButtonState();
-}
-
-class _LogoutButtonState extends ConsumerState<_LogoutButton> {
-  bool _loggingOut = false;
-
-  Future<void> _logOut() async {
-    if (_loggingOut) return;
-    setState(() => _loggingOut = true);
-
-    final session = ref.read(sessionProvider);
-    if (session != null) {
-      unawaited(
-        ref
-            .read(authRepositoryProvider)
-            .logOut(session)
-            .catchError((Object _) {}),
-      );
-    }
-    await ref.read(sessionProvider.notifier).clear();
-
-    if (!mounted) return;
-    final reduced = AppMotion.reduced(context);
-    unawaited(
-      Navigator.of(context).pushAndRemoveUntil<void>(
-        appRoute(
-          Builder(
-            builder: (entryContext) => welcomeEntry(
-              entryContext,
-              onOpenHome: () => openHome(entryContext),
-            ),
-          ),
-          reduced: reduced,
-        ),
-        (route) => false,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return IconButton(
-      tooltip: l10n.logout,
-      onPressed: _loggingOut ? null : _logOut,
-      icon: _loggingOut
-          ? const SizedBox.square(
-              dimension: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : const Icon(Icons.logout_rounded),
     );
   }
 }

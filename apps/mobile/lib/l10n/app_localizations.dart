@@ -158,6 +158,114 @@ abstract class AppLocalizations {
   /// **'تسجيل الخروج'**
   String get logout;
 
+  /// No description provided for @navProfile.
+  ///
+  /// In ar, this message translates to:
+  /// **'حسابي'**
+  String get navProfile;
+
+  /// No description provided for @accountTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'الحساب والإعدادات'**
+  String get accountTitle;
+
+  /// No description provided for @profilePhone.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم الهاتف'**
+  String get profilePhone;
+
+  /// No description provided for @profileEmail.
+  ///
+  /// In ar, this message translates to:
+  /// **'البريد الإلكتروني للتواصل'**
+  String get profileEmail;
+
+  /// No description provided for @profileNone.
+  ///
+  /// In ar, this message translates to:
+  /// **'غير محدد'**
+  String get profileNone;
+
+  /// No description provided for @profileEmailHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'للتواصل معك فقط، وليس وسيلة لتسجيل الدخول. اتركه فارغا لحذفه.'**
+  String get profileEmailHint;
+
+  /// No description provided for @profileEmailInvalid.
+  ///
+  /// In ar, this message translates to:
+  /// **'عنوان البريد الإلكتروني غير صالح.'**
+  String get profileEmailInvalid;
+
+  /// No description provided for @profileSave.
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ'**
+  String get profileSave;
+
+  /// No description provided for @profileCancel.
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء'**
+  String get profileCancel;
+
+  /// No description provided for @profileSaveFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر الحفظ. حاول مجددا.'**
+  String get profileSaveFailed;
+
+  /// No description provided for @profileIdStatus.
+  ///
+  /// In ar, this message translates to:
+  /// **'بطاقة الهوية'**
+  String get profileIdStatus;
+
+  /// No description provided for @profileIdNone.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُصرَّح بها بعد'**
+  String get profileIdNone;
+
+  /// No description provided for @accountIdDeclared.
+  ///
+  /// In ar, this message translates to:
+  /// **'مُصرَّح بها، قيد المراجعة'**
+  String get accountIdDeclared;
+
+  /// No description provided for @profileIdApproved.
+  ///
+  /// In ar, this message translates to:
+  /// **'هوية مُصرَّح بها'**
+  String get profileIdApproved;
+
+  /// No description provided for @profileIdRejected.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرفوضة: صرّح بها مجددا'**
+  String get profileIdRejected;
+
+  /// No description provided for @profileLanguage.
+  ///
+  /// In ar, this message translates to:
+  /// **'اللغة'**
+  String get profileLanguage;
+
+  /// No description provided for @profileLoadFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر تحميل حسابك.'**
+  String get profileLoadFailed;
+
+  /// No description provided for @profileRetry.
+  ///
+  /// In ar, this message translates to:
+  /// **'اضغط لإعادة المحاولة'**
+  String get profileRetry;
+
   /// No description provided for @splashLine1.
   ///
   /// In ar, this message translates to:
