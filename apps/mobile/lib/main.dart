@@ -1,6 +1,5 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,18 +7,23 @@ import 'core/local_store.dart';
 import 'core/locale_provider.dart';
 import 'features/auth/auth_models.dart';
 import 'features/auth/auth_repository.dart';
-import 'features/splash/life_quality_splash_screen.dart';
 import 'features/start/app_start.dart';
 import 'l10n/app_localizations.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Transparent status bar so the splash gradient runs edge to edge; dark
+  // icons suit the app's light screens.
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
+    ),
+  );
   final locale = await LocalStore.readLocale();
   final saved = await LocalStore.readSession();
-  // The splash alternates its logo from one launch to the next.
-  final launch = await LocalStore.readLaunchCount();
-  unawaited(LocalStore.writeLaunchCount(launch + 1));
   final container = ProviderContainer(
     overrides: [
       if (locale != null)
@@ -30,10 +34,7 @@ Future<void> main() async {
     UncontrolledProviderScope(
       container: container,
       child: BenMahdiaApp(
-        home: AppStart(
-          ready: _restoreSession(container, saved),
-          splashVariant: SplashVariant.forLaunch(launch),
-        ),
+        home: AppStart(ready: _restoreSession(container, saved)),
       ),
     ),
   );

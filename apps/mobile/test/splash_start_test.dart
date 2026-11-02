@@ -57,37 +57,30 @@ void main() {
     expect(done, 1);
   });
 
-  testWidgets('splash shows the logo and LIFE QUALITY, in both looks, still '
+  testWidgets('splash shows the logo and LIFE QUALITY, still '
       'under reduced motion', (tester) async {
-    for (final variant in SplashVariant.values) {
-      for (final reduce in [false, true]) {
-        await pumpApp(
-          tester,
-          LifeQualitySplashScreen(
-            variant: variant,
-            ready: Completer<void>().future,
-            onFinish: () {},
-          ),
-          reduceMotion: reduce,
-        );
-        await tester.pump();
-        expect(find.byType(Image), findsWidgets);
-        expect(find.text('LIFE QUALITY'), findsOneWidget);
-        expect(tester.takeException(), isNull);
-        if (reduce) {
-          await tester.pump(AppMotion.fast);
-          expect(tester.hasRunningAnimations, isFalse);
-        }
-        await tester.pump(_fourSeconds);
+    for (final reduce in [false, true]) {
+      await pumpApp(
+        tester,
+        LifeQualitySplashScreen(
+          ready: Completer<void>().future,
+          onFinish: () {},
+        ),
+        reduceMotion: reduce,
+      );
+      await tester.pump();
+      expect(
+        find.image(const AssetImage('assets/brand/logo.png')),
+        findsOneWidget,
+      );
+      expect(find.text('LIFE QUALITY'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      if (reduce) {
+        await tester.pump(AppMotion.fast);
+        expect(tester.hasRunningAnimations, isFalse);
       }
+      await tester.pump(_fourSeconds);
     }
-  });
-
-  test('the splash look alternates from one launch to the next', () {
-    expect(SplashVariant.forLaunch(0), SplashVariant.blue);
-    expect(SplashVariant.forLaunch(1), SplashVariant.green);
-    expect(SplashVariant.forLaunch(2), SplashVariant.blue);
-    expect(SplashVariant.forLaunch(7), SplashVariant.green);
   });
 
   testWidgets('without a callback, the splash fades to the next screen', (

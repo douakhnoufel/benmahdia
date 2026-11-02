@@ -12,17 +12,10 @@ enum _Stage { splash, intro, welcome }
 
 /// Cold start: splash → intro slides → welcome, cross-fading between them.
 class AppStart extends StatefulWidget {
-  const AppStart({
-    super.key,
-    required this.ready,
-    this.splashVariant = SplashVariant.blue,
-  });
+  const AppStart({super.key, required this.ready});
 
   /// Startup work the splash waits for.
   final Future<void> ready;
-
-  /// Which splash look this launch shows (alternates per launch).
-  final SplashVariant splashVariant;
 
   @override
   State<AppStart> createState() => _AppStartState();
@@ -43,7 +36,6 @@ class _AppStartState extends State<AppStart> {
       child: switch (_stage) {
         _Stage.splash => LifeQualitySplashScreen(
           key: const ValueKey(_Stage.splash),
-          variant: widget.splashVariant,
           ready: widget.ready,
           // A restored login goes straight to the app.
           onFinish: () =>

@@ -47,13 +47,6 @@ abstract final class AppColors {
   static const argonBlue = Color(0xFF5A95C7);
   static const argonInk = Color(0xFF1E3A5F);
 
-  // Same splash, sage-green variant matching the green logo. The splash
-  // alternates blue / green from one launch to the next.
-  static const sageBgTop = Color(0xFFF5FAF4);
-  static const sageBgBottom = Color(0xFFE6F1E4);
-  static const sageGreen = Color(0xFF8FBF8A);
-  static const sageInk = Color(0xFF1F4A33);
-
   // Third-party sign-in buttons: colours fixed by Google's and Apple's
   // branding guidelines, not ours.
   static const googleSurface = Color(0xFFFFFFFF);

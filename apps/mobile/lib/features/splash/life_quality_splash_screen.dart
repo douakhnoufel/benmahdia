@@ -6,48 +6,18 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_tokens.dart';
 
-/// The two looks of the launch splash. The app shows them in turn, one per
-/// launch (see [SplashVariant.forLaunch]).
-enum SplashVariant {
-  blue(
-    logoAsset: 'assets/brand/logo.png',
-    bgTop: AppColors.argonBgTop,
-    bgBottom: AppColors.argonBgBottom,
-    accent: AppColors.argonBlue,
-    ink: AppColors.argonInk,
-  ),
-  green(
-    logoAsset: 'assets/brand/logo_green.jpg',
-    bgTop: AppColors.sageBgTop,
-    bgBottom: AppColors.sageBgBottom,
-    accent: AppColors.sageGreen,
-    ink: AppColors.sageInk,
-  );
-
-  const SplashVariant({
-    required this.logoAsset,
-    required this.bgTop,
-    required this.bgBottom,
-    required this.accent,
-    required this.ink,
-  });
-
-  final String logoAsset;
-  final Color bgTop;
-  final Color bgBottom;
-  final Color accent;
-  final Color ink;
-
-  /// Launch 0 is blue, launch 1 green, launch 2 blue again, and so on.
-  static SplashVariant forLaunch(int launch) =>
-      values[launch.abs() % values.length];
+/// The splash look: the clinic's blue logo on the Argon blue palette.
+abstract final class _Look {
+  static const logoAsset = 'assets/brand/logo.png';
+  static const bgTop = AppColors.argonBgTop;
+  static const bgBottom = AppColors.argonBgBottom;
+  static const accent = AppColors.argonBlue;
+  static const ink = AppColors.argonInk;
 }
 
 /// Splash-only measurements from the Argon launch spec. Kept here, in one
 /// place, rather than scattered through the widget tree.
 abstract final class _Splash {
-  /// Shown if a variant's logo file is missing from the bundle.
-  static const fallbackLogo = 'assets/brand/logo.png';
   static const logoSize = 180.0;
   static const cardRadius = 32.0;
   static const cardPadding = AppSpace.xxl;
@@ -74,7 +44,7 @@ abstract final class _Splash {
 
 /// Launch splash in the Argon style: a frosted glass card on a soft
 /// gradient, the logo with small bubbles floating up beside it, and the
-/// "LIFE QUALITY" title. [variant] picks the logo and its matching colours.
+/// "LIFE QUALITY" title.
 ///
 /// It stays for [splashDuration] (clamped to 3–5 s) and, if given, until
 /// [ready] completes — whichever is later — then calls [onFinish], or fades
@@ -83,7 +53,6 @@ abstract final class _Splash {
 class LifeQualitySplashScreen extends StatefulWidget {
   const LifeQualitySplashScreen({
     super.key,
-    this.variant = SplashVariant.blue,
     this.splashDuration = const Duration(seconds: 4),
     this.ready,
     this.onFinish,
@@ -93,7 +62,6 @@ class LifeQualitySplashScreen extends StatefulWidget {
          'Give onFinish or nextScreen',
        );
 
-  final SplashVariant variant;
   final Duration splashDuration;
 
   /// Startup work to wait for (restoring the session…). Must not fail.
@@ -214,9 +182,8 @@ class _LifeQualitySplashScreenState extends State<LifeQualitySplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    final v = widget.variant;
     return Scaffold(
-      backgroundColor: v.bgTop,
+      backgroundColor: _Look.bgTop,
       body: Semantics(
         label: 'LIFE QUALITY',
         container: true,
@@ -225,13 +192,13 @@ class _LifeQualitySplashScreenState extends State<LifeQualitySplashScreen>
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [v.bgTop, v.bgBottom],
+              colors: [_Look.bgTop, _Look.bgBottom],
             ),
           ),
           child: Stack(
             fit: StackFit.expand,
             children: [
-              _AmbientCircles(accent: v.accent),
+              _AmbientCircles(accent: _Look.accent),
               SafeArea(
                 child: Center(
                   child: AnimatedBuilder(
@@ -255,21 +222,21 @@ class _LifeQualitySplashScreenState extends State<LifeQualitySplashScreen>
                       );
                     },
                     child: _GlassCard(
-                      accent: v.accent,
+                      accent: _Look.accent,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           _LogoWithBubbles(
-                            asset: v.logoAsset,
-                            accent: v.accent,
+                            asset: _Look.logoAsset,
+                            accent: _Look.accent,
                             bubbles: _bubbles,
                             fade: _bubbleFade,
                           ),
                           const SizedBox(height: AppSpace.xl),
                           _Title(
                             progress: _title,
-                            ink: v.ink,
-                            accent: v.accent,
+                            ink: _Look.ink,
+                            accent: _Look.accent,
                           ),
                         ],
                       ),
@@ -285,7 +252,7 @@ class _LifeQualitySplashScreenState extends State<LifeQualitySplashScreen>
   }
 }
 
-/// Soft blobs behind the card in the variant's colour. Decorative.
+/// Soft blobs behind the card in the accent colour. Decorative.
 class _AmbientCircles extends StatelessWidget {
   const _AmbientCircles({required this.accent});
 
@@ -386,13 +353,12 @@ class _LogoWithBubbles extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget logo(String path, {ImageErrorWidgetBuilder? onError}) => Image.asset(
+    Widget logo(String path) => Image.asset(
       path,
       width: _Splash.logoSize,
       height: _Splash.logoSize,
       fit: BoxFit.contain,
       excludeFromSemantics: true,
-      errorBuilder: onError,
     );
 
     return SizedBox(
@@ -401,7 +367,7 @@ class _LogoWithBubbles extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          logo(asset, onError: (_, _, _) => logo(_Splash.fallbackLogo)),
+          logo(asset),
           Positioned.fill(
             child: ExcludeSemantics(
               child: RepaintBoundary(

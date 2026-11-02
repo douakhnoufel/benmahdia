@@ -34,7 +34,6 @@ flutter:
   generate: true
   assets:
     - assets/brand/logo.png
-    - assets/brand/logo_green.jpg
 
 # App icon from the clinic logo: dart run flutter_launcher_icons
 flutter_launcher_icons:
@@ -47,9 +46,9 @@ flutter_launcher_icons:
 
 # Launch screen before Flutter starts: dart run flutter_native_splash:create
 flutter_native_splash:
-  color: "#063A35" # AppColors.teal900, same as the splash screen
+  color: "#F4F8FB" # AppColors.argonBgTop, same as the splash screen
   image: assets/brand/logo_padded.png
   android_12:
-    color: "#063A35"
-    icon_background_color: "#FFFFFF"
+    color: "#F4F8FB"
+    icon_background_color: "#F4F8FB"
     image: assets/brand/logo_android12.png
