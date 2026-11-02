@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { api, type Visit } from '../api';
+import { api, type FollowUpDays, type Visit } from '../api';
 import { useI18n } from '../i18n';
 import { ReceiptPanel } from '../components/ReceiptPanel';
 import { Badge, Button, Card, Notice } from '../components/ui';
@@ -95,9 +95,58 @@ function VisitRow({ visit, onNoted }: { visit: Visit; onNoted: (has: boolean, sh
           )}
         </div>
       </div>
+      {visit.mine && (visit.status === 'confirmed' || visit.status === 'completed') && <FollowUpPicker visit={visit} />}
       {receipt && <ReceiptPanel appointmentId={visit.id} onClose={() => setReceipt(false)} />}
       {editing && <NoteEditor appointmentId={visit.id} onClose={() => setEditing(false)} onNoted={onNoted} />}
     </li>
+  );
+}
+
+const FOLLOW_UP_CHOICES: FollowUpDays[] = [15, 30, 60];
+
+/** The doctor picks when the next visit should be after this one. The patient
+ * can then book only within two days of that date. */
+function FollowUpPicker({ visit }: { visit: Visit }) {
+  const { t } = useI18n();
+  const [days, setDays] = useState<FollowUpDays>(visit.next_follow_up_days ?? 30);
+  const [busy, setBusy] = useState(false);
+  const [outcome, setOutcome] = useState<'saved' | 'failed' | null>(null);
+
+  async function change(next: FollowUpDays) {
+    const before = days;
+    setDays(next);
+    setBusy(true);
+    setOutcome(null);
+    try {
+      await api.setFollowUp(visit.id, next);
+      setOutcome('saved');
+    } catch {
+      setDays(before);
+      setOutcome('failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-sm">
+      <label className="flex items-center gap-sm text-label text-ink-strong">
+        {t('followUpLabel')}
+        <select
+          className="rounded-field border border-border bg-surface px-sm py-xs text-body text-ink-strong focus:border-teal-500 focus:outline-none"
+          value={days}
+          disabled={busy}
+          onChange={(e) => change(Number(e.target.value) as FollowUpDays)}
+        >
+          {FOLLOW_UP_CHOICES.map((d) => (
+            <option key={d} value={d}>{t(`followUp${d}` as const)}</option>
+          ))}
+        </select>
+      </label>
+      <span className="text-caption text-ink-muted">{t('followUpHint')}</span>
+      {outcome === 'saved' && <span role="status" className="text-caption text-success">{t('saved')}</span>}
+      {outcome === 'failed' && <span role="alert" className="text-caption text-danger">{t('saveFailed')}</span>}
+    </div>
   );
 }
 
