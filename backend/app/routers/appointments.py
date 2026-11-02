@@ -204,11 +204,13 @@ def hold_slot(
     if not _valid_slot(db, profile, start, now):
         raise ApiError(409, "slot_unavailable")
     # After the first visit, the next one is bookable only near the target
-    # the doctor chose (15, 30 or 60 days), never in the same week.
+    # the doctor chose (15, 30 or 60 days), never in the same week. Once the
+    # window has gone by, the patient is overdue and may book any day.
     target = _follow_up_target(db, patient.id)
     if target is not None:
         _, _, day = target
-        if abs((_clinic_day(start) - day).days) > FOLLOW_UP_WINDOW_DAYS:
+        overdue = day + timedelta(days=FOLLOW_UP_WINDOW_DAYS) < scheduling.clinic_today(now)
+        if not overdue and abs((_clinic_day(start) - day).days) > FOLLOW_UP_WINDOW_DAYS:
             raise ApiError(409, "outside_follow_up_window", day=day.isoformat(), window_days=FOLLOW_UP_WINDOW_DAYS)
     end = start + timedelta(minutes=profile.slot_minutes)
 

@@ -84,6 +84,14 @@ def test_window_follows_the_latest_booked_visit(client, sms):
     assert hold(client, session, doc, "2026-11-25T08:00:00Z").status_code == 201
 
 
+def test_a_missed_window_reopens_booking(client, sms):
+    doc = doctor_with_password()
+    session = verified_patient(client, sms)
+    # Visit 40 days ago: target was 10 days ago, window long gone.
+    add_appointment(doc.user_id, user_id(), clock.now() - timedelta(days=40))
+    assert hold(client, session, doc).status_code == 201
+
+
 def test_cancelled_visits_do_not_count(client, sms):
     doc = doctor_with_password()
     session = verified_patient(client, sms)
