@@ -3,6 +3,7 @@ import { isSignedIn, onSessionChange, signOut } from './api';
 import { useI18n, type StringKey } from './i18n';
 import { api, type Me } from './api';
 import { Button } from './components/ui';
+import { ClinicLogo } from './components/ClinicLogo';
 import { Alerts } from './pages/Alerts';
 import { Articles } from './pages/Articles';
 import { AvailabilityPage } from './pages/Availability';
@@ -62,7 +63,10 @@ export function App() {
     <div className="min-h-screen">
       <header className="border-b border-border bg-surface">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-lg px-xl py-md">
-          <h1 className="text-h3 text-ink-strong">{t('appName')}</h1>
+          <div className="flex items-center gap-sm">
+            <ClinicLogo size="sm" />
+            <h1 className="text-h3 text-ink-strong">{t('appName')}</h1>
+          </div>
           <nav className="flex flex-wrap gap-sm">
             {pages.map((p) => (
               <Button key={p} variant={p === page ? 'primary' : 'ghost'} aria-current={p === page ? 'page' : undefined}

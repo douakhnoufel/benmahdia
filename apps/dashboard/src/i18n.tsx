@@ -6,6 +6,7 @@ export type Lang = 'ar' | 'fr';
 const strings = {
   ar: {
     appName: 'بن مهدية — فضاء الطبيب',
+    clinicLogoAlt: 'شعار العيادة',
     switchLang: 'Français',
     signIn: 'تسجيل الدخول',
     email: 'البريد الإلكتروني',
@@ -295,6 +296,7 @@ const strings = {
   },
   fr: {
     appName: 'BenMahdia — Espace médecin',
+    clinicLogoAlt: 'Logo de la clinique',
     switchLang: 'العربية',
     signIn: 'Se connecter',
     email: 'E-mail',
