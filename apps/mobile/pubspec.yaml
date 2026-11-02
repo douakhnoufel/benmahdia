@@ -34,6 +34,7 @@ flutter:
   generate: true
   assets:
     - assets/brand/logo.png
+    - assets/brand/logo_green.jpg
 
 # App icon from the clinic logo: dart run flutter_launcher_icons
 flutter_launcher_icons:

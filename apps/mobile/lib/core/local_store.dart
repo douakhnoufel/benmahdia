@@ -81,4 +81,14 @@ class LocalStore {
   );
 
   static Future<void> clearSession() => _delete(_sessionKey);
+
+  /// How many times the app was opened, so the splash can alternate its
+  /// logo from one launch to the next. 0 when unknown.
+  static Future<int> readLaunchCount() async =>
+      int.tryParse(await _read(_launchesKey) ?? '') ?? 0;
+
+  static Future<void> writeLaunchCount(int count) =>
+      _write(_launchesKey, '$count');
+
+  static const _launchesKey = 'launches';
 }

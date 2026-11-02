@@ -40,6 +40,20 @@ abstract final class AppColors {
   static const onPrimary = Color(0xFFFFFFFF);
   static const onSand = Color(0xFF10302C);
 
+  // Argon splash — a cool blue set used only by the launch splash
+  // (LifeQualitySplashScreen). Kept apart from the teal brand on purpose.
+  static const argonBgTop = Color(0xFFF4F8FB);
+  static const argonBgBottom = Color(0xFFE5EFF8);
+  static const argonBlue = Color(0xFF5A95C7);
+  static const argonInk = Color(0xFF1E3A5F);
+
+  // Same splash, sage-green variant matching the green logo. The splash
+  // alternates blue / green from one launch to the next.
+  static const sageBgTop = Color(0xFFF5FAF4);
+  static const sageBgBottom = Color(0xFFE6F1E4);
+  static const sageGreen = Color(0xFF8FBF8A);
+  static const sageInk = Color(0xFF1F4A33);
+
   // Third-party sign-in buttons: colours fixed by Google's and Apple's
   // branding guidelines, not ours.
   static const googleSurface = Color(0xFFFFFFFF);

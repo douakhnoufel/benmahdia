@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:benmahdia_mobile/features/splash/splash_screen.dart';
+import 'package:benmahdia_mobile/features/splash/life_quality_splash_screen.dart';
 import 'package:benmahdia_mobile/features/start/app_start.dart';
 import 'package:benmahdia_mobile/theme/app_tokens.dart';
 import 'package:benmahdia_mobile/widgets/breathing_logo.dart';
@@ -9,15 +9,17 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers.dart';
 
+const _fourSeconds = Duration(seconds: 4);
+
 void main() {
   testWidgets('splash waits for startup work', (tester) async {
     final ready = Completer<void>();
     var done = 0;
     await pumpApp(
       tester,
-      SplashScreen(ready: ready.future, onDone: () => done++),
+      LifeQualitySplashScreen(ready: ready.future, onFinish: () => done++),
     );
-    await tester.pump(AppMotion.splashMinimum * 2);
+    await tester.pump(_fourSeconds * 2);
     expect(done, 0);
 
     ready.complete();
@@ -25,28 +27,79 @@ void main() {
     expect(done, 1);
   });
 
-  testWidgets('splash stays at least the minimum time', (tester) async {
+  testWidgets('splash stays for its duration, 4 s by default', (tester) async {
     var done = 0;
     await pumpApp(
       tester,
-      SplashScreen(ready: Future<void>.value(), onDone: () => done++),
+      LifeQualitySplashScreen(
+        ready: Future<void>.value(),
+        onFinish: () => done++,
+      ),
     );
-    await tester.pump(AppMotion.splashMinimum - AppMotion.fast);
+    await tester.pump(_fourSeconds - AppMotion.fast);
     expect(done, 0);
     await tester.pump(AppMotion.fast * 2);
     expect(done, 1);
   });
 
-  testWidgets('splash shows the name and both lines', (tester) async {
+  testWidgets('splash duration is kept between 3 and 5 s', (tester) async {
+    var done = 0;
     await pumpApp(
       tester,
-      SplashScreen(ready: Completer<void>().future, onDone: () {}),
+      LifeQualitySplashScreen(
+        splashDuration: const Duration(seconds: 1),
+        onFinish: () => done++,
+      ),
     );
-    await tester.pump();
-    expect(find.text('بن مهدية'), findsOneWidget);
-    expect(find.text('خطوة بخطوة نحو التعافي'), findsOneWidget);
-    expect(find.text('من أجل جودة الحياة'), findsOneWidget);
-    await tester.pump(AppMotion.splashMinimum);
+    await tester.pump(const Duration(milliseconds: 2900));
+    expect(done, 0);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(done, 1);
+  });
+
+  testWidgets('splash shows the logo and LIFE QUALITY, in both looks, still '
+      'under reduced motion', (tester) async {
+    for (final variant in SplashVariant.values) {
+      for (final reduce in [false, true]) {
+        await pumpApp(
+          tester,
+          LifeQualitySplashScreen(
+            variant: variant,
+            ready: Completer<void>().future,
+            onFinish: () {},
+          ),
+          reduceMotion: reduce,
+        );
+        await tester.pump();
+        expect(find.byType(Image), findsWidgets);
+        expect(find.text('LIFE QUALITY'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        if (reduce) {
+          await tester.pump(AppMotion.fast);
+          expect(tester.hasRunningAnimations, isFalse);
+        }
+        await tester.pump(_fourSeconds);
+      }
+    }
+  });
+
+  test('the splash look alternates from one launch to the next', () {
+    expect(SplashVariant.forLaunch(0), SplashVariant.blue);
+    expect(SplashVariant.forLaunch(1), SplashVariant.green);
+    expect(SplashVariant.forLaunch(2), SplashVariant.blue);
+    expect(SplashVariant.forLaunch(7), SplashVariant.green);
+  });
+
+  testWidgets('without a callback, the splash fades to the next screen', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      const LifeQualitySplashScreen(nextScreen: Scaffold(body: Text('next'))),
+    );
+    await pumpFor(tester, _fourSeconds + AppMotion.slow * 2);
+    expect(find.byType(LifeQualitySplashScreen), findsNothing);
+    expect(find.text('next'), findsOneWidget);
   });
 
   testWidgets('logo breathes, and stays still under reduced motion', (
@@ -62,35 +115,13 @@ void main() {
     expect(tester.hasRunningAnimations, isFalse);
   });
 
-  testWidgets('splash shows the clinic logo and a spinner, still under '
-      'reduced motion', (tester) async {
-    for (final reduce in [false, true]) {
-      await pumpApp(
-        tester,
-        SplashScreen(ready: Completer<void>().future, onDone: () {}),
-        reduceMotion: reduce,
-      );
-      await tester.pump();
-      expect(
-        find.image(const AssetImage('assets/brand/logo.png')),
-        findsOneWidget,
-      );
-      final spinner = tester.widget<CircularProgressIndicator>(
-        find.byKey(const ValueKey('splash-loading')),
-      );
-      expect(spinner.value, reduce ? isNotNull : isNull);
-      expect(tester.takeException(), isNull);
-      await tester.pump(AppMotion.splashMinimum);
-    }
-  });
-
   testWidgets('app start: splash, then intro, then welcome', (tester) async {
     await pumpApp(tester, AppStart(ready: Future<void>.value()));
     await tester.pump();
-    expect(find.byType(SplashScreen), findsOneWidget);
+    expect(find.byType(LifeQualitySplashScreen), findsOneWidget);
 
-    await pumpFor(tester, AppMotion.splashMinimum + AppMotion.slow * 2);
-    expect(find.byType(SplashScreen), findsNothing);
+    await pumpFor(tester, _fourSeconds + AppMotion.slow * 2);
+    expect(find.byType(LifeQualitySplashScreen), findsNothing);
     expect(find.text('كل يوم يُحسب'), findsOneWidget);
 
     await tester.tap(find.text('تخطي'));
